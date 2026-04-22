@@ -4,8 +4,7 @@
   "type": "module",
   "scripts": {
     "build": "nuxt build",
-    "dev:nuxt": "nuxt dev",
-    "dev": "firebase emulators:start",
+    "dev": "pnpm -C ../functions build & pnpm firebase emulators:exec --ui --only firestore,auth,functions,storage 'pnpm nuxi dev'",
     "generate": "nuxt generate",
     "preview": "nuxt preview",
     "postinstall": "nuxt prepare",
@@ -18,7 +17,7 @@
     "@iconify-json/simple-icons": "^1.2.50",
     "@nuxt/ui": "^3.3.3",
     "@pinia/nuxt": "^0.11.3",
-    "firebase": "^12.12.1",
+    "firebase": "12.12.1",
     "firebase-admin": "^13.8.0",
     "nuxt": "^4.1.2",
     "nuxt-vuefire": "^1.1.2",

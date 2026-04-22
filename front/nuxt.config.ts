@@ -1,18 +1,16 @@
 // https://nuxt.com/docs/api/configuration/nuxt-config
 export default defineNuxtConfig({
   devtools: { enabled: true },
-
+  ssr: false,
   modules: [
     '@nuxt/ui',
     '@nuxt/eslint',
     'nuxt-vuefire',
     '@pinia/nuxt',
   ],
-
   vuefire: {
     auth: {
       enabled: true,
-      sessionCookie: false,
     },
     config: {
       apiKey: process.env.NUXT_PUBLIC_FIREBASE_API_KEY,
@@ -25,12 +23,7 @@ export default defineNuxtConfig({
   },
 
   runtimeConfig: {
-    // Private — server only
-    firebaseAdminProjectId: process.env.NUXT_FIREBASE_ADMIN_PROJECT_ID,
-    firebaseAdminClientEmail: process.env.NUXT_FIREBASE_ADMIN_CLIENT_EMAIL,
-    firebaseAdminPrivateKey: process.env.NUXT_FIREBASE_ADMIN_PRIVATE_KEY,
-
-    // Public — exposed to client
+    // ✅ No more private Admin SDK keys — backend logic lives in Cloud Functions
     public: {
       firebaseApiKey: process.env.NUXT_PUBLIC_FIREBASE_API_KEY,
       firebaseAuthDomain: process.env.NUXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
@@ -38,6 +31,28 @@ export default defineNuxtConfig({
       firebaseStorageBucket: process.env.NUXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
       firebaseMessagingSenderId: process.env.NUXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
       firebaseAppId: process.env.NUXT_PUBLIC_FIREBASE_APP_ID,
+      firebase: {
+        firestore: {
+          enable: true,
+        },
+        functions: {
+          enable: true,
+          location: 'europe-west3',
+          enableEmulator: process.env.NODE_ENV !== 'production',
+          emulatorPort: 5001,
+          emulatorHost: '127.0.0.1',
+        },
+        analytics: {
+          enable: ['production', 'staging'].includes(process.env.ENVIRONMENT!),
+        },
+        storage: {
+          enable: true,
+          location: 'europe-west3',
+          enableEmulator: process.env.NODE_ENV !== 'production',
+          emulatorPort: 9199,
+          emulatorHost: '127.0.0.1',
+        },
+      },
     },
   },
 

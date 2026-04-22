@@ -1,4 +1,5 @@
 import { collection, query, where, orderBy } from 'firebase/firestore'
+import { httpsCallable } from 'firebase/functions'
 import { useCollection, useFirestore } from 'vuefire'
 
 export interface Fine {
@@ -36,7 +37,7 @@ export const useFinesStore = defineStore('fines', () => {
   const acting = ref(false)
 
   /**
-   * Police: POST /api/fines/issue — issues a fine against a report.
+   * Police: issues a fine against a report via Cloud Function.
    */
   async function issueFine(payload: {
     reportId: string
@@ -46,14 +47,14 @@ export const useFinesStore = defineStore('fines', () => {
     notes?: string
   }) {
     acting.value = true
-    const token = await authStore.getIdToken()
     try {
-      await $fetch('/api/fines/issue', {
-        method: 'POST',
-        headers: { Authorization: `Bearer ${token}` },
-        body: payload,
+      const { $functions } = useNuxtApp()
+      await httpsCallable($functions, 'issueFine')(payload)
+      toast.add({
+        title: 'Fine issued!',
+        description: `€${payload.amount} fine issued for plate ${payload.plateNumber}.`,
+        color: 'success',
       })
-      toast.add({ title: 'Fine issued!', description: `€${payload.amount} fine issued for plate ${payload.plateNumber}.`, color: 'success' })
     }
     catch (e: unknown) {
       const msg = e instanceof Error ? e.message : 'Failed to issue fine'
@@ -66,17 +67,13 @@ export const useFinesStore = defineStore('fines', () => {
   }
 
   /**
-   * Owner: POST /api/fines/pay — marks a fine as paid.
+   * Owner: marks a fine as paid via Cloud Function.
    */
   async function payFine(fineId: string) {
     acting.value = true
-    const token = await authStore.getIdToken()
     try {
-      await $fetch('/api/fines/pay', {
-        method: 'POST',
-        headers: { Authorization: `Bearer ${token}` },
-        body: { fineId },
-      })
+      const { $functions } = useNuxtApp()
+      await httpsCallable($functions, 'payFine')({ fineId })
       toast.add({ title: 'Fine marked as paid', color: 'success' })
     }
     catch (e: unknown) {

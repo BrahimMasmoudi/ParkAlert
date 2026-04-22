@@ -1,4 +1,5 @@
 import { doc } from 'firebase/firestore'
+import { httpsCallable } from 'firebase/functions'
 import { useDocument, useFirestore } from 'vuefire'
 
 export const useUserStore = defineStore('user', () => {
@@ -19,22 +20,18 @@ export const useUserStore = defineStore('user', () => {
 
   /**
    * Called from the onboarding page.
-   * POST /api/users/role — server route writes the role securely.
+   * Calls the setUserRole Cloud Function — writes the role securely via Firebase Auth context.
    */
   async function setRole(role: 'agent' | 'police' | 'owner') {
-    const token = await authStore.getIdToken()
     const user = authStore.currentUser!
 
     try {
-      await $fetch('/api/users/role', {
-        method: 'POST',
-        headers: { Authorization: `Bearer ${token}` },
-        body: {
-          role,
-          name: user.displayName ?? user.email ?? 'Unknown',
-          email: user.email,
-          phone: user.phoneNumber ?? '',
-        },
+      const { $functions } = useNuxtApp()
+      await httpsCallable($functions, 'setUserRole')({
+        role,
+        name: user.displayName ?? user.email ?? 'Unknown',
+        email: user.email,
+        phone: user.phoneNumber ?? '',
       })
       toast.add({ title: 'Role saved!', color: 'success' })
       await router.push(`/${role}`)
