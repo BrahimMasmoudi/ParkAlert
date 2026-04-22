@@ -165,7 +165,8 @@ const columns = [
     </UModal>
 
     <!-- ── Issue Fine Modal ────────────────────────────────────────────────── -->
-    <UModal v-model:open="isFineOpen" title="Issue Fine" 
+    <UModal
+v-model:open="isFineOpen" title="Issue Fine" 
     :ui="{ 
     overlay: 'bg-slate-950/80 backdrop-blur-sm', // Darkens the background
     content: 'bg-slate-900 border border-slate-800',

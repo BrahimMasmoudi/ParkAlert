@@ -9,11 +9,10 @@ import {
     setUserProperties,
 } from 'firebase/analytics'
 import { connectFunctionsEmulator, getFunctions } from 'firebase/functions'
-import { useFirebaseApp, useFirestore, getCurrentUser, useFirebaseStorage } from 'vuefire'
+import { useFirebaseApp, useFirestore, getCurrentUser, useFirebaseStorage, useFirebaseAuth  } from 'vuefire'
 import { getMessaging } from 'firebase/messaging'
 import { onAuthStateChanged } from 'firebase/auth'
 import { initializeAppCheck, ReCaptchaV3Provider, CustomProvider } from 'firebase/app-check'
-import { useFirebaseAuth } from 'vuefire'
 
 type RemoteConfig = Record<string, any>
 
