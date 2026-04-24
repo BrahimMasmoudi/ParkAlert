@@ -18,7 +18,7 @@ function requireAuth(auth) {
 // createReport — agents only
 // Migrated from: POST /api/reports
 // ─────────────────────────────────────────────────────────────────
-exports.createReport = (0, https_1.onCall)({ region: 'europe-west3' }, async (request) => {
+exports.createReport = (0, https_1.onCall)({ region: 'europe-west3', enforceAppCheck: true }, async (request) => {
     const uid = requireAuth(request.auth);
     const userSnap = await db.collection('users').doc(uid).get();
     if (userSnap.data()?.role !== 'agent') {
@@ -47,7 +47,7 @@ exports.createReport = (0, https_1.onCall)({ region: 'europe-west3' }, async (re
 // issueFine — police only
 // Migrated from: POST /api/fines/issue
 // ─────────────────────────────────────────────────────────────────
-exports.issueFine = (0, https_1.onCall)({ region: 'europe-west3' }, async (request) => {
+exports.issueFine = (0, https_1.onCall)({ region: 'europe-west3', enforceAppCheck: true }, async (request) => {
     const uid = requireAuth(request.auth);
     const callerSnap = await db.collection('users').doc(uid).get();
     if (callerSnap.data()?.role !== 'police') {
@@ -77,7 +77,7 @@ exports.issueFine = (0, https_1.onCall)({ region: 'europe-west3' }, async (reque
 // payFine — fine owner only
 // Migrated from: POST /api/fines/pay
 // ─────────────────────────────────────────────────────────────────
-exports.payFine = (0, https_1.onCall)({ region: 'europe-west3' }, async (request) => {
+exports.payFine = (0, https_1.onCall)({ region: 'europe-west3', enforceAppCheck: true }, async (request) => {
     const uid = requireAuth(request.auth);
     const { fineId } = request.data;
     if (!fineId)
@@ -108,7 +108,7 @@ exports.payFine = (0, https_1.onCall)({ region: 'europe-west3' }, async (request
 // setUserRole — any authenticated user (onboarding)
 // Migrated from: POST /api/users/role
 // ─────────────────────────────────────────────────────────────────
-exports.setUserRole = (0, https_1.onCall)({ region: 'europe-west3' }, async (request) => {
+exports.setUserRole = (0, https_1.onCall)({ region: 'europe-west3', enforceAppCheck: true }, async (request) => {
     const uid = requireAuth(request.auth);
     const { role, name, email, phone } = request.data;
     if (!['agent', 'police', 'owner'].includes(role)) {

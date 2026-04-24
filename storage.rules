@@ -3,7 +3,7 @@ service firebase.storage {
   match /b/{bucket}/o {
     
     function isSecureRequest() {
-      return request.auth != null && request.app != null;
+      return request.auth != null;
     }
 
     // Report photos: only authenticated agents can upload to their own folder; police can read

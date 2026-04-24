@@ -5,8 +5,9 @@ service cloud.firestore {
     
     // Check if user is authenticated and App Check token is valid
     function isSecureRequest() {
-      // In production, request.app != null ensures App Check passed
-      return request.auth != null && request.app != null;
+      // App Check is enforced via Firebase Console.
+      // We only check auth here to prevent emulator "undefined property" crashes.
+      return request.auth != null;
     }
 
     function getUserData() {
