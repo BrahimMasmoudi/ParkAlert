@@ -1,10 +1,15 @@
 rules_version = '2';
 service firebase.storage {
   match /b/{bucket}/o {
+    
+    function isSecureRequest() {
+      return request.auth != null && request.app != null;
+    }
+
     // Report photos: only authenticated agents can upload to their own folder; police can read
     match /reports/{agentId}/{fileName} {
-      allow read:  if request.auth != null;
-      allow write: if request.auth != null
+      allow read:  if isSecureRequest();
+      allow write: if isSecureRequest()
                    && request.auth.uid == agentId
                    && request.resource.size < 10 * 1024 * 1024  // 10 MB max
                    && request.resource.contentType.matches('image/.*');

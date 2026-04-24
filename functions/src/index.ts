@@ -18,7 +18,7 @@ function requireAuth(auth: { uid: string } | undefined): string {
 // Migrated from: POST /api/reports
 // ─────────────────────────────────────────────────────────────────
 export const createReport = onCall(
-  { region: 'europe-west3' },
+  { region: 'europe-west3', enforceAppCheck: true },
   async (request) => {
     const uid = requireAuth(request.auth)
 
@@ -66,7 +66,7 @@ export const createReport = onCall(
 // Migrated from: POST /api/fines/issue
 // ─────────────────────────────────────────────────────────────────
 export const issueFine = onCall(
-  { region: 'europe-west3' },
+  { region: 'europe-west3', enforceAppCheck: true },
   async (request) => {
     const uid = requireAuth(request.auth)
 
@@ -115,7 +115,7 @@ export const issueFine = onCall(
 // Migrated from: POST /api/fines/pay
 // ─────────────────────────────────────────────────────────────────
 export const payFine = onCall(
-  { region: 'europe-west3' },
+  { region: 'europe-west3', enforceAppCheck: true },
   async (request) => {
     const uid = requireAuth(request.auth)
 
@@ -154,7 +154,7 @@ export const payFine = onCall(
 // Migrated from: POST /api/users/role
 // ─────────────────────────────────────────────────────────────────
 export const setUserRole = onCall(
-  { region: 'europe-west3' },
+  { region: 'europe-west3', enforceAppCheck: true },
   async (request) => {
     const uid = requireAuth(request.auth)
 

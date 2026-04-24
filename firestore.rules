@@ -1,18 +1,41 @@
-rules_version='2'
+rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
+    
+    // Check if user is authenticated and App Check token is valid
+    function isSecureRequest() {
+      // In production, request.app != null ensures App Check passed
+      return request.auth != null && request.app != null;
+    }
+
+    function getUserData() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
+    }
+
+    // Default deny
     match /{document=**} {
-      // This rule allows anyone with your database reference to view, edit,
-      // and delete all data in your database. It is useful for getting
-      // started, but it is configured to expire after 30 days because it
-      // leaves your app open to attackers. At that time, all client
-      // requests to your database will be denied.
-      //
-      // Make sure to write security rules for your app before that time, or
-      // else all client requests to your database will be denied until you
-      // update your rules.
-      allow read, write: if request.time < timestamp.date(2026, 5, 22);
+      allow read, write: if false; 
+    }
+
+    match /users/{userId} {
+      // Users can read their own profile.
+      allow read: if isSecureRequest() && request.auth.uid == userId;
+      // All writes are done via Cloud Functions (setUserRole)
+      allow write: if false; 
+    }
+
+    match /reports/{reportId} {
+      // Agents and Police can read reports
+      allow read: if isSecureRequest() && (getUserData().role == 'police' || getUserData().role == 'agent');
+      allow write: if false;
+    }
+
+    match /fines/{fineId} {
+      // Police can read all fines
+      // Owners can read ONLY their own fines
+      allow read: if isSecureRequest() && (getUserData().role == 'police' || (getUserData().role == 'owner' && resource.data.ownerId == request.auth.uid));
+      allow write: if false;
     }
   }
 }
