@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.cancelCarDeletion = exports.requestCarDeletion = exports.addCar = exports.setUserRole = exports.payFine = exports.issueFine = exports.createReport = void 0;
+exports.cancelCarDeletion = exports.requestCarDeletion = exports.addCar = exports.updateUserProfile = exports.setUserRole = exports.payFine = exports.issueFine = exports.createReport = void 0;
 const app_1 = require("firebase-admin/app");
 const firestore_1 = require("firebase-admin/firestore");
 const https_1 = require("firebase-functions/v2/https");
@@ -122,9 +122,28 @@ exports.setUserRole = (0, https_1.onCall)({ region: 'europe-west3', enforceAppCh
         email: email ?? request.auth.token['email'] ?? '',
         name: name ?? request.auth.token['name'] ?? '',
         phone: phone ?? '',
+        photoURL: request.auth.token['picture'] ?? '',
         role,
         createdAt: firestore_1.FieldValue.serverTimestamp(),
     }, { merge: true });
+    return { ok: true };
+});
+// ─────────────────────────────────────────────────────────────────
+// updateUserProfile — any authenticated user
+// ─────────────────────────────────────────────────────────────────
+exports.updateUserProfile = (0, https_1.onCall)({ region: 'europe-west3', enforceAppCheck: true }, async (request) => {
+    const uid = requireAuth(request.auth);
+    const { fullName, identityNumber, birthDate, phone } = request.data;
+    const updates = { updatedAt: firestore_1.FieldValue.serverTimestamp() };
+    if (fullName !== undefined)
+        updates.fullName = fullName;
+    if (identityNumber !== undefined)
+        updates.identityNumber = identityNumber;
+    if (birthDate !== undefined)
+        updates.birthDate = birthDate;
+    if (phone !== undefined)
+        updates.phone = phone;
+    await db.collection('users').doc(uid).update(updates);
     return { ok: true };
 });
 // ─────────────────────────────────────────────────────────────────

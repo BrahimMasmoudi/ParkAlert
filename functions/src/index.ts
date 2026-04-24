@@ -178,11 +178,39 @@ export const setUserRole = onCall(
           email: email ?? request.auth!.token['email'] ?? '',
           name: name ?? request.auth!.token['name'] ?? '',
           phone: phone ?? '',
+          photoURL: request.auth!.token['picture'] ?? '',
           role,
           createdAt: FieldValue.serverTimestamp(),
         },
         { merge: true },
       )
+
+    return { ok: true }
+  },
+)
+
+// ─────────────────────────────────────────────────────────────────
+// updateUserProfile — any authenticated user
+// ─────────────────────────────────────────────────────────────────
+export const updateUserProfile = onCall(
+  { region: 'europe-west3', enforceAppCheck: true },
+  async (request) => {
+    const uid = requireAuth(request.auth)
+
+    const { fullName, identityNumber, birthDate, phone } = request.data as {
+      fullName?: string
+      identityNumber?: string
+      birthDate?: string
+      phone?: string
+    }
+
+    const updates: any = { updatedAt: FieldValue.serverTimestamp() }
+    if (fullName !== undefined) updates.fullName = fullName
+    if (identityNumber !== undefined) updates.identityNumber = identityNumber
+    if (birthDate !== undefined) updates.birthDate = birthDate
+    if (phone !== undefined) updates.phone = phone
+
+    await db.collection('users').doc(uid).update(updates)
 
     return { ok: true }
   },
