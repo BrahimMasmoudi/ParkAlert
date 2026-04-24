@@ -1,6 +1,5 @@
-import { useCurrentUser } from 'vuefire'
+import { useCurrentUser, useFirestore  } from 'vuefire'
 import { doc, getDoc } from 'firebase/firestore'
-import { useFirestore } from 'vuefire'
 
 export default defineNuxtRouteMiddleware(async (to) => {
   const user = useCurrentUser()

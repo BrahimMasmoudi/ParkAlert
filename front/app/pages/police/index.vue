@@ -40,10 +40,11 @@ async function submitFine() {
 }
 
 const columns = [
-  { key: 'plateNumber', label: 'Plate' },
-  { key: 'address', label: 'Location' },
-  { key: 'timestamp', label: 'Time' },
-  { key: 'actions', label: '' },
+  { accessorKey: 'plateNumber', header: 'Plate' },
+  { accessorKey: 'address', header: 'Location' },
+  { accessorKey: 'status', header: 'Status' },
+  { accessorKey: 'timestamp', header: 'Time' },
+  { id: 'actions', header: 'Actions' },
 ]
 </script>
 
@@ -71,24 +72,44 @@ const columns = [
       </div>
 
       <!-- Table -->
-      <UTable
-        v-else
+            <UTable
         :data="reportsStore.pendingReports"
-        :columns="columns"
-        class="bg-slate-900/60 border border-slate-800 rounded-2xl"
-      >
+        :columns="columns">
         <template #plateNumber-cell="{ row }">
-          <span class="font-mono font-bold tracking-wider text-amber-400">{{ row.plateNumber }}</span>
-        </template>
-        <template #timestamp-cell="{ row }">
-          <span class="text-slate-400 text-sm">
-            {{ row.timestamp?.toDate ? row.timestamp.toDate().toLocaleString() : '—' }}
+          <span class="font-mono font-bold text-amber-400">
+            {{ row.original.plateNumber }}
           </span>
         </template>
+
+        <template #status-cell="{ row }">
+          <UBadge
+            :color="row.original.status === 'pending' ? 'warning' : 'success'"
+            variant="subtle"
+            class="capitalize"
+          >
+            {{ row.original.status }}
+          </UBadge>
+        </template>
+
+        <template #address-cell="{ row }">
+          <span class="text-slate-300">
+            {{ row.original.address || '—' }}
+          </span>
+        </template>
+
+        <template #timestamp-cell="{ row }">
+          <span class="text-slate-400 text-sm">
+            {{ new Date(row.original.timestamp).toLocaleString() }}
+          </span>
+        </template>
+
         <template #actions-cell="{ row }">
-          <UButton size="sm" variant="ghost" @click="openReport(row)">
-            View
-          </UButton>
+          <UButton 
+            variant="ghost" 
+            color="primary" 
+            icon="i-lucide-eye"
+            @click="openReport(row.original)"
+          />
         </template>
       </UTable>
     </UContainer>
@@ -144,48 +165,75 @@ const columns = [
     </UModal>
 
     <!-- ── Issue Fine Modal ────────────────────────────────────────────────── -->
-    <UModal v-model:open="isFineOpen" title="Issue Fine" :ui="{ content: 'bg-slate-900 border border-slate-700' }">
+    <UModal
+v-model:open="isFineOpen" title="Issue Fine" 
+    :ui="{ 
+    overlay: 'bg-slate-950/80 backdrop-blur-sm', // Darkens the background
+    content: 'bg-slate-900 border border-slate-800',
+    header: 'border-b border-slate-800',
+    title: 'text-white font-bold' // Makes title readable
+  }"
+  >
       <template #body>
-        <div class="space-y-4">
-          <UFormField label="Owner UID or Plate Lookup" name="ownerId" required>
-            <UInput
-              id="owner-id-input"
-              v-model="fineForm.ownerId"
-              placeholder="Enter the owner's UID"
-              size="lg"
-            />
-          </UFormField>
-          <UFormField label="Fine Amount (€)" name="amount" required>
-            <UInput
-              id="fine-amount-input"
-              v-model.number="fineForm.amount"
-              type="number"
-              min="10"
-              max="10000"
-              size="lg"
-            />
-          </UFormField>
-          <UFormField label="Notes (optional)" name="notes">
-            <UTextarea
-              id="fine-notes-input"
-              v-model="fineForm.notes"
-              placeholder="Additional context..."
-              rows="3"
-            />
-          </UFormField>
-          <UButton
-            id="confirm-fine-btn"
-            block
-            size="lg"
-            :loading="finesStore.acting"
-            :disabled="!fineForm.ownerId"
-            class="bg-red-600 hover:bg-red-500 text-white font-semibold"
-            @click="submitFine"
-          >
-            Confirm & Issue Fine
-          </UButton>
-        </div>
-      </template>
+  <div class="space-y-4 p-4 bg-slate-900">
+    <UFormField 
+      label="Owner UID or Plate Lookup" 
+      name="ownerId" 
+      required
+      :ui="{ label: 'text-slate-300 font-medium' }" 
+    >
+      <UInput
+        v-model="fineForm.ownerId"
+        placeholder="Enter the owner's UID"
+        size="lg"
+        variant="outline"
+        :ui="{ 
+          base: 'bg-slate-800 text-white border-slate-700 focus:ring-amber-500',
+          placeholder: 'text-slate-500'
+        }"
+      />
+    </UFormField>
+
+    <UFormField 
+      label="Fine Amount (€)" 
+      name="amount" 
+      required
+      :ui="{ label: 'text-slate-300 font-medium' }"
+    >
+      <UInput
+        v-model.number="fineForm.amount"
+        type="number"
+        size="lg"
+        :ui="{ base: 'bg-slate-800 text-white border-slate-700' }"
+      />
+    </UFormField>
+
+    <UFormField 
+      label="Notes (optional)" 
+      :ui="{ label: 'text-slate-300 font-medium' }"
+    >
+      <UTextarea
+        v-model="fineForm.notes"
+        placeholder="Additional context..."
+        :ui="{ base: 'bg-slate-800 text-white border-slate-700' }"
+      />
+    </UFormField>
+
+    <UButton
+      block
+      size="lg"
+      class="bg-red-600 hover:bg-red-500 text-white mt-4"
+      @click="submitFine"
+    >
+      Confirm & Issue Fine
+    </UButton>
+  </div>
+</template>
     </UModal>
   </div>
 </template>
+<style scoped>
+:deep(th) {
+    color: white !important;
+}
+</style>
