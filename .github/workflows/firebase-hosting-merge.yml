@@ -56,6 +56,6 @@ jobs:
       - name: '🚀 Deploy to Firebase'
         uses: w9jds/firebase-action@v15.10.1
         with:
-          args: deploy --only functions,hosting,firestore,storage --project park-alert --force
+          args: deploy --only functions,hosting,firestore,storage --project my-park-alert --force
         env:
           GCP_SA_KEY: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_PARK_ALERT_PROD }}
