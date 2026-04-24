@@ -186,10 +186,16 @@ const locationAddress = ref('')
 const plateNumber = ref('')
 const uploading = ref(false)
 
-const { isFrenchPlateValid } = useVehicleValidation()
+const { isFrenchPlateValid, formatFrenchPlate } = useVehicleValidation()
 
 const isPlateValid = computed(() => {
   return isFrenchPlateValid(plateNumber.value.trim())
+})
+
+watch(plateNumber, (newVal) => {
+  if (newVal) {
+    plateNumber.value = formatFrenchPlate(newVal)
+  }
 })
 
 function resetForm() {

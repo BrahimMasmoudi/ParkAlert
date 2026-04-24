@@ -23,9 +23,15 @@ const formState = ref({
 const selectedFile = ref<File | null>(null)
 const uploadLoading = ref(false)
 
-const { isFrenchPlateValid } = useVehicleValidation()
+const { isFrenchPlateValid, formatFrenchPlate } = useVehicleValidation()
 
 const isPlateValid = computed(() => isFrenchPlateValid(formState.value.plateNumber))
+
+watch(() => formState.value.plateNumber, (newVal) => {
+  if (newVal) {
+    formState.value.plateNumber = formatFrenchPlate(newVal)
+  }
+})
 
 const plateError = computed(() => {
   if (formState.value.plateNumber && !isPlateValid.value) {
