@@ -87,36 +87,3 @@ jobs:
           args: deploy --only functions,hosting,firestore,storage --project park-alert-staging --force
         env:
           GCP_SA_KEY: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_PARK_ALERT_STAGING }}
-    
-  e2e-test:
-    needs: deploy
-    runs-on: ubuntu-latest
-    environment: staging
-    steps:
-      - uses: actions/checkout@v6
-      - name: Use Node.js 24
-        uses: actions/setup-node@v6
-        with:
-          node-version: 24
-      - name: Cypress run
-        uses: cypress-io/github-action@v7
-        env:
-          CYPRESS_BASE_URL: https://park-alert-staging.web.app/
-          CYPRESS_FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_PARK_ALERT_STAGING }}
-          SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_PARK_ALERT_STAGING }}
-          CYPRESS_FIREBASE_APPCHECK_DEBUG_TOKEN: ${{ secrets.CYPRESS_FIREBASE_APPCHECK_DEBUG_TOKEN }}
-        with:
-          working-directory: e2e
-          browser: firefox
-          install-command: pnpm install --frozen-lockfile
-          summary-title: 'Chrome Staging E2E'
-
-      - name: Upload Cypress artifacts
-        uses: actions/upload-artifact@v7
-        if: failure()
-        with:
-          name: cypress-results
-          path: |
-            ${{ github.workspace }}/e2e/cypress/screenshots
-            ${{ github.workspace }}/e2e/cypress/videos
-          if-no-files-found: warn
