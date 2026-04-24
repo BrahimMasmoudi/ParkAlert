@@ -38,5 +38,11 @@ service cloud.firestore {
       allow read: if isSecureRequest() && (getUserData().role == 'police' || (getUserData().role == 'owner' && resource.data.ownerId == request.auth.uid));
       allow write: if false;
     }
+
+    match /cars/{carId} {
+      // Owners can read their own cars; Police can read all cars
+      allow read: if isSecureRequest() && (getUserData().role == 'police' || (getUserData().role == 'owner' && resource.data.ownerId == request.auth.uid));
+      allow write: if false;
+    }
   }
 }

@@ -187,3 +187,111 @@ export const setUserRole = onCall(
     return { ok: true }
   },
 )
+
+// ─────────────────────────────────────────────────────────────────
+// addCar — owner only
+// ─────────────────────────────────────────────────────────────────
+export const addCar = onCall(
+  { region: 'europe-west3', enforceAppCheck: true },
+  async (request) => {
+    const uid = requireAuth(request.auth)
+
+    const callerSnap = await db.collection('users').doc(uid).get()
+    if (callerSnap.data()?.role !== 'owner') {
+      throw new HttpsError('permission-denied', 'Only owners can add cars')
+    }
+
+    const { plateNumber, brand, model, color, carteGriseUrl } = request.data as {
+      plateNumber: string
+      brand: string
+      model: string
+      color: string
+      carteGriseUrl: string
+    }
+
+    if (!plateNumber || !brand || !model || !color || !carteGriseUrl) {
+      throw new HttpsError(
+        'invalid-argument',
+        'plateNumber, brand, model, color, and carteGriseUrl are required',
+      )
+    }
+
+    const carRef = db.collection('cars').doc()
+    await carRef.set({
+      id: carRef.id,
+      ownerId: uid,
+      plateNumber: String(plateNumber).toUpperCase(),
+      brand,
+      model,
+      color,
+      carteGriseUrl,
+      status: 'activation_pending',
+      createdAt: FieldValue.serverTimestamp(),
+    })
+
+    return { ok: true, carId: carRef.id }
+  },
+)
+
+// ─────────────────────────────────────────────────────────────────
+// requestCarDeletion — owner only
+// ─────────────────────────────────────────────────────────────────
+export const requestCarDeletion = onCall(
+  { region: 'europe-west3', enforceAppCheck: true },
+  async (request) => {
+    const uid = requireAuth(request.auth)
+
+    const { carId } = request.data as { carId: string }
+    if (!carId) throw new HttpsError('invalid-argument', 'carId is required')
+
+    const carRef = db.collection('cars').doc(carId)
+    const carSnap = await carRef.get()
+
+    if (!carSnap.exists) throw new HttpsError('not-found', 'Car not found')
+
+    const car = carSnap.data()!
+    if (car.ownerId !== uid) {
+      throw new HttpsError('permission-denied', 'You can only request deletion of your own cars')
+    }
+
+    await carRef.update({
+      status: 'delete_pending',
+      updatedAt: FieldValue.serverTimestamp(),
+    })
+
+    return { ok: true }
+  },
+)
+
+// ─────────────────────────────────────────────────────────────────
+// cancelCarDeletion — owner only
+// ─────────────────────────────────────────────────────────────────
+export const cancelCarDeletion = onCall(
+  { region: 'europe-west3', enforceAppCheck: true },
+  async (request) => {
+    const uid = requireAuth(request.auth)
+
+    const { carId } = request.data as { carId: string }
+    if (!carId) throw new HttpsError('invalid-argument', 'carId is required')
+
+    const carRef = db.collection('cars').doc(carId)
+    const carSnap = await carRef.get()
+
+    if (!carSnap.exists) throw new HttpsError('not-found', 'Car not found')
+
+    const car = carSnap.data()!
+    if (car.ownerId !== uid) {
+      throw new HttpsError('permission-denied', 'You can only manage your own cars')
+    }
+    if (car.status !== 'delete_pending') {
+      throw new HttpsError('failed-precondition', 'Car is not pending deletion')
+    }
+
+    await carRef.update({
+      status: 'active',
+      updatedAt: FieldValue.serverTimestamp(),
+    })
+
+    return { ok: true }
+  },
+)

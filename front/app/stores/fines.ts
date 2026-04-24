@@ -28,7 +28,7 @@ export const useFinesStore = defineStore('fines', () => {
         )
       : null,
   )
-  const { data: myFines, pending: finesLoading } = useCollection(ownerFinesQuery)
+  const { data: myFines, pending: finesLoading } = useCollection(ownerFinesQuery, { ssrKey: 'ownerFines' })
 
   const hasUnpaidFines = computed(() =>
     myFines.value?.some(f => f.status === 'unpaid') ?? false,
