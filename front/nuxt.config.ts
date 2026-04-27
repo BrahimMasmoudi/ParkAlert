@@ -57,7 +57,9 @@ export default defineNuxtConfig({
   },
 
   css: ['~/assets/css/main.css'],
-
+  ui: {
+    global: true
+  },
   compatibilityDate: '2025-07-16',
   vite: {
     optimizeDeps: {
