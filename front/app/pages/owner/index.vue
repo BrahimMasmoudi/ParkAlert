@@ -21,7 +21,7 @@ const openDeleteConfirm = (carId: string) => {
 const handleCarDeleteAction = (carId: string) => {
   const car = myCars.value.find(c => c.id === carId)
   if (car?.status === 'delete_pending') {
-    carsStore.cancelDeletion(carId)
+    carsStore.cancelCarDeletion(carId)
   } else {
     openDeleteConfirm(carId)
   }

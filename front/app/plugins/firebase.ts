@@ -9,7 +9,7 @@ import {
     setUserProperties,
 } from 'firebase/analytics'
 import { connectFunctionsEmulator, getFunctions } from 'firebase/functions'
-import { useFirebaseApp, useFirestore, getCurrentUser, useFirebaseStorage, useFirebaseAuth  } from 'vuefire'
+import { useFirebaseApp, useFirestore, getCurrentUser, useFirebaseStorage, useFirebaseAuth } from 'vuefire'
 import { getMessaging } from 'firebase/messaging'
 import { onAuthStateChanged } from 'firebase/auth'
 import { initializeAppCheck, ReCaptchaV3Provider, CustomProvider } from 'firebase/app-check'
@@ -89,16 +89,6 @@ export default defineNuxtPlugin(async ({ provide, $config }) => {
             } catch (e) {
                 console.debug('App Check already initialized or failed:', e)
             }
-        }
-    }
-
-    if (import.meta.client) {
-        const auth = useFirebaseAuth()
-
-        if (auth) {
-            onAuthStateChanged(auth, (u) => {
-                console.log('user', u)
-            })
         }
     }
 

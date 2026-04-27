@@ -23,7 +23,7 @@ export const createReport = onCall(
     const uid = requireAuth(request.auth)
 
     const userSnap = await db.collection('users').doc(uid).get()
-    if (userSnap.data()?.role !== 'agent') {
+    if (userSnap.data()?.role !== 'police') {
       throw new HttpsError('permission-denied', 'Only agents can file reports')
     }
 
@@ -278,22 +278,28 @@ export const requestCarDeletion = onCall(
     if (!carSnap.exists) throw new HttpsError('not-found', 'Car not found')
 
     const car = carSnap.data()!
+
     if (car.ownerId !== uid) {
-      throw new HttpsError('permission-denied', 'You can only request deletion of your own cars')
+      throw new HttpsError('permission-denied', 'You can only delete your own cars')
     }
 
     await carRef.update({
-      status: 'delete_pending',
+      status: 'deletion_requested',
+      deletionRequestedAt: FieldValue.serverTimestamp(),
       updatedAt: FieldValue.serverTimestamp(),
+    })
+
+    await db.collection('car_audit_logs').add({
+      carId,
+      actorId: uid,
+      action: 'DELETION_REQUESTED',
+      timestamp: FieldValue.serverTimestamp(),
     })
 
     return { ok: true }
   },
 )
 
-// ─────────────────────────────────────────────────────────────────
-// cancelCarDeletion — owner only
-// ─────────────────────────────────────────────────────────────────
 export const cancelCarDeletion = onCall(
   { region: 'europe-west3', enforceAppCheck: true },
   async (request) => {
@@ -308,16 +314,157 @@ export const cancelCarDeletion = onCall(
     if (!carSnap.exists) throw new HttpsError('not-found', 'Car not found')
 
     const car = carSnap.data()!
+
     if (car.ownerId !== uid) {
-      throw new HttpsError('permission-denied', 'You can only manage your own cars')
+      throw new HttpsError('permission-denied', 'Not your car')
     }
-    if (car.status !== 'delete_pending') {
-      throw new HttpsError('failed-precondition', 'Car is not pending deletion')
+
+    if (car.status !== 'deletion_requested') {
+      throw new HttpsError('failed-precondition', 'Not pending deletion')
+    }
+
+    await carRef.update({
+      status: 'active',
+      deletionRequestedAt: null,
+      updatedAt: FieldValue.serverTimestamp(),
+    })
+
+    await db.collection('car_audit_logs').add({
+      carId,
+      actorId: uid,
+      action: 'DELETION_CANCELLED',
+      timestamp: FieldValue.serverTimestamp(),
+    })
+
+    return { ok: true }
+  },
+)
+
+export const approveCar = onCall(
+  { region: 'europe-west3', enforceAppCheck: true },
+  async (request) => {
+    requireAuth(request.auth)
+
+    const { carId } = request.data as { carId: string }
+
+    if (!carId) {
+      throw new HttpsError('invalid-argument', 'carId is required')
+    }
+
+    const carRef = db.collection('cars').doc(carId)
+    const carSnap = await carRef.get()
+
+    if (!carSnap.exists) {
+      throw new HttpsError('not-found', 'Car not found')
+    }
+
+    const car = carSnap.data()!
+
+    if (car.status !== 'activation_pending') {
+      throw new HttpsError(
+        'failed-precondition',
+        'Car is not pending approval',
+      )
     }
 
     await carRef.update({
       status: 'active',
       updatedAt: FieldValue.serverTimestamp(),
+    })
+    const uid = requireAuth(request.auth)
+
+    await db.collection('car_audit_logs').add({
+      carId,
+      actorId: uid,
+      action: 'APPROVED',
+      timestamp: FieldValue.serverTimestamp(),
+    })
+
+    return { ok: true }
+  },
+)
+
+export const rejectCar = onCall(
+  { region: 'europe-west3', enforceAppCheck: true },
+  async (request) => {
+    requireAuth(request.auth)
+
+    const { carId } = request.data as { carId: string }
+
+    if (!carId) {
+      throw new HttpsError('invalid-argument', 'carId is required')
+    }
+
+    const carRef = db.collection('cars').doc(carId)
+    const carSnap = await carRef.get()
+
+    if (!carSnap.exists) {
+      throw new HttpsError('not-found', 'Car not found')
+    }
+
+    const car = carSnap.data()!
+
+    if (car.status !== 'activation_pending') {
+      throw new HttpsError(
+        'failed-precondition',
+        'Car is not pending approval',
+      )
+    }
+
+    await carRef.update({
+      status: 'rejected',
+      updatedAt: FieldValue.serverTimestamp(),
+    })
+
+    const uid = requireAuth(request.auth)
+
+    await db.collection('car_audit_logs').add({
+      carId,
+      actorId: uid,
+      action: 'REJECTED',
+      timestamp: FieldValue.serverTimestamp(),
+    })
+
+    return { ok: true }
+  },
+)
+
+export const approveCarDeletion = onCall(
+  { region: 'europe-west3', enforceAppCheck: true },
+  async (request) => {
+    const uid = requireAuth(request.auth)
+
+    const callerSnap = await db.collection('users').doc(uid).get()
+    if (callerSnap.data()?.role !== 'police') {
+      throw new HttpsError('permission-denied', 'Only police can approve deletions')
+    }
+
+    const { carId } = request.data as { carId: string }
+    if (!carId) throw new HttpsError('invalid-argument', 'carId is required')
+
+    const carRef = db.collection('cars').doc(carId)
+    const carSnap = await carRef.get()
+
+    if (!carSnap.exists) throw new HttpsError('not-found', 'Car not found')
+
+    const car = carSnap.data()!
+
+    if (car.status !== 'deletion_requested') {
+      throw new HttpsError('failed-precondition', 'Car not pending deletion')
+    }
+
+    await carRef.update({
+      status: 'archived',
+      archivedAt: FieldValue.serverTimestamp(),
+      archivedBy: uid,
+      updatedAt: FieldValue.serverTimestamp(),
+    })
+
+    await db.collection('car_audit_logs').add({
+      carId,
+      actorId: uid,
+      action: 'DELETION_APPROVED',
+      timestamp: FieldValue.serverTimestamp(),
     })
 
     return { ok: true }

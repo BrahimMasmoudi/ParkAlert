@@ -9,7 +9,6 @@ const props = defineProps<{
 const isOpen = defineModel<boolean>('open', { required: true })
 
 const carsStore = useCarsStore()
-const { actionLoading } = storeToRefs(carsStore)
 
 const confirmDelete = async () => {
   if (!props.carId) return
@@ -27,10 +26,11 @@ const confirmDelete = async () => {
         </div>
         <div>
           <p class="text-slate-300 mt-1">
-            Are you sure you want to remove this vehicle from your profile? 
+            Are you sure you want to remove this vehicle from your profile?
           </p>
           <p class="text-amber-400 text-sm mt-3 bg-amber-500/10 p-3 rounded-lg border border-amber-500/20 font-medium">
-            Note: This action requires police approval. The vehicle will be marked as "Pending" until a police officer reviews the request.
+            Note: This action requires police approval. The vehicle will be marked as "Pending" until a police officer
+            reviews the request.
           </p>
         </div>
       </div>
@@ -38,8 +38,8 @@ const confirmDelete = async () => {
 
     <template #footer>
       <div class="flex justify-end gap-3">
-        <UButton label="Cancel" color="neutral" variant="ghost" @click="isOpen = false" :disabled="actionLoading" />
-        <UButton label="Confirm Request" color="error" @click="confirmDelete" :loading="actionLoading" />
+        <UButton label="Cancel" color="neutral" variant="ghost" @click="isOpen = false" />
+        <UButton label="Confirm Request" color="error" @click="confirmDelete" />
       </div>
     </template>
   </UModal>

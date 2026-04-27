@@ -10,7 +10,6 @@ const isOpen = defineModel<boolean>('open', { required: true })
 const userStore = useUserStore()
 const carsStore = useCarsStore()
 const { userProfile } = storeToRefs(userStore)
-const { actionLoading } = storeToRefs(carsStore)
 const storage = useFirebaseStorage()
 const toast = useToast()
 
@@ -177,14 +176,14 @@ const submitAddCar = async () => {
           size="xl"
           class="flex-1 sm:flex-none justify-center font-semibold"
           @click="isOpen = false" 
-          :disabled="uploadLoading || actionLoading" 
+          :disabled="uploadLoading" 
         />
         <UButton 
           label="Submit Registration" 
           color="primary" 
           size="xl"
           class="flex-1 sm:flex-none justify-center font-bold shadow-lg shadow-indigo-500/25"
-          :loading="uploadLoading || actionLoading" 
+          :loading="uploadLoading" 
           :disabled="!isFormValid"
           @click="submitAddCar"
         />

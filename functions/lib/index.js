@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.cancelCarDeletion = exports.requestCarDeletion = exports.addCar = exports.updateUserProfile = exports.setUserRole = exports.payFine = exports.issueFine = exports.createReport = void 0;
+exports.approveCarDeletion = exports.rejectCar = exports.approveCar = exports.cancelCarDeletion = exports.requestCarDeletion = exports.addCar = exports.updateUserProfile = exports.setUserRole = exports.payFine = exports.issueFine = exports.createReport = void 0;
 const app_1 = require("firebase-admin/app");
 const firestore_1 = require("firebase-admin/firestore");
 const https_1 = require("firebase-functions/v2/https");
@@ -21,7 +21,7 @@ function requireAuth(auth) {
 exports.createReport = (0, https_1.onCall)({ region: 'europe-west3', enforceAppCheck: true }, async (request) => {
     const uid = requireAuth(request.auth);
     const userSnap = await db.collection('users').doc(uid).get();
-    if (userSnap.data()?.role !== 'agent') {
+    if (userSnap.data()?.role !== 'police') {
         throw new https_1.HttpsError('permission-denied', 'Only agents can file reports');
     }
     const { plateNumber, location, photoUrl, address } = request.data;
@@ -187,17 +187,21 @@ exports.requestCarDeletion = (0, https_1.onCall)({ region: 'europe-west3', enfor
         throw new https_1.HttpsError('not-found', 'Car not found');
     const car = carSnap.data();
     if (car.ownerId !== uid) {
-        throw new https_1.HttpsError('permission-denied', 'You can only request deletion of your own cars');
+        throw new https_1.HttpsError('permission-denied', 'You can only delete your own cars');
     }
     await carRef.update({
-        status: 'delete_pending',
+        status: 'deletion_requested',
+        deletionRequestedAt: firestore_1.FieldValue.serverTimestamp(),
         updatedAt: firestore_1.FieldValue.serverTimestamp(),
+    });
+    await db.collection('car_audit_logs').add({
+        carId,
+        actorId: uid,
+        action: 'DELETION_REQUESTED',
+        timestamp: firestore_1.FieldValue.serverTimestamp(),
     });
     return { ok: true };
 });
-// ─────────────────────────────────────────────────────────────────
-// cancelCarDeletion — owner only
-// ─────────────────────────────────────────────────────────────────
 exports.cancelCarDeletion = (0, https_1.onCall)({ region: 'europe-west3', enforceAppCheck: true }, async (request) => {
     const uid = requireAuth(request.auth);
     const { carId } = request.data;
@@ -209,14 +213,108 @@ exports.cancelCarDeletion = (0, https_1.onCall)({ region: 'europe-west3', enforc
         throw new https_1.HttpsError('not-found', 'Car not found');
     const car = carSnap.data();
     if (car.ownerId !== uid) {
-        throw new https_1.HttpsError('permission-denied', 'You can only manage your own cars');
+        throw new https_1.HttpsError('permission-denied', 'Not your car');
     }
-    if (car.status !== 'delete_pending') {
-        throw new https_1.HttpsError('failed-precondition', 'Car is not pending deletion');
+    if (car.status !== 'deletion_requested') {
+        throw new https_1.HttpsError('failed-precondition', 'Not pending deletion');
+    }
+    await carRef.update({
+        status: 'active',
+        deletionRequestedAt: null,
+        updatedAt: firestore_1.FieldValue.serverTimestamp(),
+    });
+    await db.collection('car_audit_logs').add({
+        carId,
+        actorId: uid,
+        action: 'DELETION_CANCELLED',
+        timestamp: firestore_1.FieldValue.serverTimestamp(),
+    });
+    return { ok: true };
+});
+exports.approveCar = (0, https_1.onCall)({ region: 'europe-west3', enforceAppCheck: true }, async (request) => {
+    requireAuth(request.auth);
+    const { carId } = request.data;
+    if (!carId) {
+        throw new https_1.HttpsError('invalid-argument', 'carId is required');
+    }
+    const carRef = db.collection('cars').doc(carId);
+    const carSnap = await carRef.get();
+    if (!carSnap.exists) {
+        throw new https_1.HttpsError('not-found', 'Car not found');
+    }
+    const car = carSnap.data();
+    if (car.status !== 'activation_pending') {
+        throw new https_1.HttpsError('failed-precondition', 'Car is not pending approval');
     }
     await carRef.update({
         status: 'active',
         updatedAt: firestore_1.FieldValue.serverTimestamp(),
+    });
+    const uid = requireAuth(request.auth);
+    await db.collection('car_audit_logs').add({
+        carId,
+        actorId: uid,
+        action: 'APPROVED',
+        timestamp: firestore_1.FieldValue.serverTimestamp(),
+    });
+    return { ok: true };
+});
+exports.rejectCar = (0, https_1.onCall)({ region: 'europe-west3', enforceAppCheck: true }, async (request) => {
+    requireAuth(request.auth);
+    const { carId } = request.data;
+    if (!carId) {
+        throw new https_1.HttpsError('invalid-argument', 'carId is required');
+    }
+    const carRef = db.collection('cars').doc(carId);
+    const carSnap = await carRef.get();
+    if (!carSnap.exists) {
+        throw new https_1.HttpsError('not-found', 'Car not found');
+    }
+    const car = carSnap.data();
+    if (car.status !== 'activation_pending') {
+        throw new https_1.HttpsError('failed-precondition', 'Car is not pending approval');
+    }
+    await carRef.update({
+        status: 'rejected',
+        updatedAt: firestore_1.FieldValue.serverTimestamp(),
+    });
+    const uid = requireAuth(request.auth);
+    await db.collection('car_audit_logs').add({
+        carId,
+        actorId: uid,
+        action: 'REJECTED',
+        timestamp: firestore_1.FieldValue.serverTimestamp(),
+    });
+    return { ok: true };
+});
+exports.approveCarDeletion = (0, https_1.onCall)({ region: 'europe-west3', enforceAppCheck: true }, async (request) => {
+    const uid = requireAuth(request.auth);
+    const callerSnap = await db.collection('users').doc(uid).get();
+    if (callerSnap.data()?.role !== 'police') {
+        throw new https_1.HttpsError('permission-denied', 'Only police can approve deletions');
+    }
+    const { carId } = request.data;
+    if (!carId)
+        throw new https_1.HttpsError('invalid-argument', 'carId is required');
+    const carRef = db.collection('cars').doc(carId);
+    const carSnap = await carRef.get();
+    if (!carSnap.exists)
+        throw new https_1.HttpsError('not-found', 'Car not found');
+    const car = carSnap.data();
+    if (car.status !== 'deletion_requested') {
+        throw new https_1.HttpsError('failed-precondition', 'Car not pending deletion');
+    }
+    await carRef.update({
+        status: 'archived',
+        archivedAt: firestore_1.FieldValue.serverTimestamp(),
+        archivedBy: uid,
+        updatedAt: firestore_1.FieldValue.serverTimestamp(),
+    });
+    await db.collection('car_audit_logs').add({
+        carId,
+        actorId: uid,
+        action: 'DELETION_APPROVED',
+        timestamp: firestore_1.FieldValue.serverTimestamp(),
     });
     return { ok: true };
 });
