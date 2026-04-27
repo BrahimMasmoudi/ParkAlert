@@ -186,12 +186,16 @@ const locationAddress = ref('')
 const plateNumber = ref('')
 const uploading = ref(false)
 
+const { isFrenchPlateValid, formatFrenchPlate } = useVehicleValidation()
+
 const isPlateValid = computed(() => {
-  const plate = plateNumber.value.trim()
-  if (!plate) return false
-  // Matches modern SIV (AB-123-CD) and older FNI (1234 AB 56) formats
-  const frenchPlateRegex = /^([A-Z]{2}[-\s]?\d{3}[-\s]?[A-Z]{2}|\d{1,4}[-\s]?[A-Z]{2,3}[-\s]?\d{2,3})$/i
-  return frenchPlateRegex.test(plate)
+  return isFrenchPlateValid(plateNumber.value.trim())
+})
+
+watch(plateNumber, (newVal) => {
+  if (newVal) {
+    plateNumber.value = formatFrenchPlate(newVal)
+  }
 })
 
 function resetForm() {

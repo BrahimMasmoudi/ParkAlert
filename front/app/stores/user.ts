@@ -43,10 +43,23 @@ export const useUserStore = defineStore('user', () => {
     }
   }
 
+  async function updateProfile(payload: { fullName: string; identityNumber: string; birthDate: string; phone: string }) {
+    try {
+      const { $functions } = useNuxtApp()
+      await httpsCallable($functions, 'updateUserProfile')(payload)
+      toast.add({ title: 'Profile updated successfully', color: 'success' })
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : 'Failed to update profile'
+      toast.add({ title: 'Error updating profile', description: msg, color: 'error' })
+      throw e
+    }
+  }
+
   return {
     userProfile,
     profileLoading,
     role,
     setRole,
+    updateProfile,
   }
 })

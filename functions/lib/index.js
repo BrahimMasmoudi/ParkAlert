@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.setUserRole = exports.payFine = exports.issueFine = exports.createReport = void 0;
+exports.cancelCarDeletion = exports.requestCarDeletion = exports.addCar = exports.updateUserProfile = exports.setUserRole = exports.payFine = exports.issueFine = exports.createReport = void 0;
 const app_1 = require("firebase-admin/app");
 const firestore_1 = require("firebase-admin/firestore");
 const https_1 = require("firebase-functions/v2/https");
@@ -122,9 +122,102 @@ exports.setUserRole = (0, https_1.onCall)({ region: 'europe-west3', enforceAppCh
         email: email ?? request.auth.token['email'] ?? '',
         name: name ?? request.auth.token['name'] ?? '',
         phone: phone ?? '',
+        photoURL: request.auth.token['picture'] ?? '',
         role,
         createdAt: firestore_1.FieldValue.serverTimestamp(),
     }, { merge: true });
+    return { ok: true };
+});
+// ─────────────────────────────────────────────────────────────────
+// updateUserProfile — any authenticated user
+// ─────────────────────────────────────────────────────────────────
+exports.updateUserProfile = (0, https_1.onCall)({ region: 'europe-west3', enforceAppCheck: true }, async (request) => {
+    const uid = requireAuth(request.auth);
+    const { fullName, identityNumber, birthDate, phone } = request.data;
+    const updates = { updatedAt: firestore_1.FieldValue.serverTimestamp() };
+    if (fullName !== undefined)
+        updates.fullName = fullName;
+    if (identityNumber !== undefined)
+        updates.identityNumber = identityNumber;
+    if (birthDate !== undefined)
+        updates.birthDate = birthDate;
+    if (phone !== undefined)
+        updates.phone = phone;
+    await db.collection('users').doc(uid).update(updates);
+    return { ok: true };
+});
+// ─────────────────────────────────────────────────────────────────
+// addCar — owner only
+// ─────────────────────────────────────────────────────────────────
+exports.addCar = (0, https_1.onCall)({ region: 'europe-west3', enforceAppCheck: true }, async (request) => {
+    const uid = requireAuth(request.auth);
+    const callerSnap = await db.collection('users').doc(uid).get();
+    if (callerSnap.data()?.role !== 'owner') {
+        throw new https_1.HttpsError('permission-denied', 'Only owners can add cars');
+    }
+    const { plateNumber, brand, model, color, carteGriseUrl } = request.data;
+    if (!plateNumber || !brand || !model || !color || !carteGriseUrl) {
+        throw new https_1.HttpsError('invalid-argument', 'plateNumber, brand, model, color, and carteGriseUrl are required');
+    }
+    const carRef = db.collection('cars').doc();
+    await carRef.set({
+        id: carRef.id,
+        ownerId: uid,
+        plateNumber: String(plateNumber).toUpperCase(),
+        brand,
+        model,
+        color,
+        carteGriseUrl,
+        status: 'activation_pending',
+        createdAt: firestore_1.FieldValue.serverTimestamp(),
+    });
+    return { ok: true, carId: carRef.id };
+});
+// ─────────────────────────────────────────────────────────────────
+// requestCarDeletion — owner only
+// ─────────────────────────────────────────────────────────────────
+exports.requestCarDeletion = (0, https_1.onCall)({ region: 'europe-west3', enforceAppCheck: true }, async (request) => {
+    const uid = requireAuth(request.auth);
+    const { carId } = request.data;
+    if (!carId)
+        throw new https_1.HttpsError('invalid-argument', 'carId is required');
+    const carRef = db.collection('cars').doc(carId);
+    const carSnap = await carRef.get();
+    if (!carSnap.exists)
+        throw new https_1.HttpsError('not-found', 'Car not found');
+    const car = carSnap.data();
+    if (car.ownerId !== uid) {
+        throw new https_1.HttpsError('permission-denied', 'You can only request deletion of your own cars');
+    }
+    await carRef.update({
+        status: 'delete_pending',
+        updatedAt: firestore_1.FieldValue.serverTimestamp(),
+    });
+    return { ok: true };
+});
+// ─────────────────────────────────────────────────────────────────
+// cancelCarDeletion — owner only
+// ─────────────────────────────────────────────────────────────────
+exports.cancelCarDeletion = (0, https_1.onCall)({ region: 'europe-west3', enforceAppCheck: true }, async (request) => {
+    const uid = requireAuth(request.auth);
+    const { carId } = request.data;
+    if (!carId)
+        throw new https_1.HttpsError('invalid-argument', 'carId is required');
+    const carRef = db.collection('cars').doc(carId);
+    const carSnap = await carRef.get();
+    if (!carSnap.exists)
+        throw new https_1.HttpsError('not-found', 'Car not found');
+    const car = carSnap.data();
+    if (car.ownerId !== uid) {
+        throw new https_1.HttpsError('permission-denied', 'You can only manage your own cars');
+    }
+    if (car.status !== 'delete_pending') {
+        throw new https_1.HttpsError('failed-precondition', 'Car is not pending deletion');
+    }
+    await carRef.update({
+        status: 'active',
+        updatedAt: firestore_1.FieldValue.serverTimestamp(),
+    });
     return { ok: true };
 });
 //# sourceMappingURL=index.js.map

@@ -73,7 +73,7 @@ export const useReportsStore = defineStore('reports', () => {
   const {
     data: pendingReports,
     pending: reportsLoading
-  } = useCollection(pendingReportsQuery)
+  } = useCollection(pendingReportsQuery, { ssrKey: 'pendingReports' })
 
   // ─────────────────────────────────────────────
   // 👮 AGENT: THEIR REPORTS

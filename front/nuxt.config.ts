@@ -7,7 +7,12 @@ export default defineNuxtConfig({
     '@nuxt/eslint',
     'nuxt-vuefire',
     '@pinia/nuxt',
+    '@nuxtjs/color-mode'
   ],
+  colorMode: {
+  preference: 'dark',
+  fallback: 'dark'
+},
   vuefire: {
     auth: {
       enabled: true,
@@ -57,7 +62,6 @@ export default defineNuxtConfig({
   },
 
   css: ['~/assets/css/main.css'],
-
   compatibilityDate: '2025-07-16',
   vite: {
     optimizeDeps: {
