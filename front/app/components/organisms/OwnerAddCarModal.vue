@@ -6,11 +6,13 @@ import { useUserStore } from '~/stores/user'
 import { storeToRefs } from 'pinia'
 
 const isOpen = defineModel<boolean>('open', { required: true })
+const props = defineProps<{
+  carToEdit?: any | null
+}>()
 
 const userStore = useUserStore()
 const carsStore = useCarsStore()
 const { userProfile } = storeToRefs(userStore)
-const { actionLoading } = storeToRefs(carsStore)
 const storage = useFirebaseStorage()
 const toast = useToast()
 
@@ -22,6 +24,26 @@ const formState = ref({
 })
 const selectedFile = ref<File | null>(null)
 const uploadLoading = ref(false)
+
+watch(() => isOpen.value, (newVal) => {
+  if (newVal && props.carToEdit) {
+    formState.value = {
+      plateNumber: props.carToEdit.plateNumber,
+      brand: props.carToEdit.brand,
+      model: props.carToEdit.model,
+      color: props.carToEdit.color,
+    }
+    selectedFile.value = null
+  } else if (newVal) {
+    formState.value = {
+      plateNumber: '',
+      brand: '',
+      model: '',
+      color: '',
+    }
+    selectedFile.value = null
+  }
+})
 
 const { isFrenchPlateValid, formatFrenchPlate } = useVehicleValidation()
 
@@ -73,10 +95,18 @@ const submitAddCar = async () => {
     const snapshot = await uploadBytes(fileRef, selectedFile.value)
     const url = await getDownloadURL(snapshot.ref)
     
-    await carsStore.addCar({
-      ...formState.value,
-      carteGriseUrl: url
-    })
+    if (props.carToEdit) {
+      await carsStore.retryCar({
+        carId: props.carToEdit.id,
+        ...formState.value,
+        carteGriseUrl: url
+      })
+    } else {
+      await carsStore.addCar({
+        ...formState.value,
+        carteGriseUrl: url
+      })
+    }
     
     isOpen.value = false
     formState.value = {
@@ -98,8 +128,8 @@ const submitAddCar = async () => {
   <UModal 
     v-model:open="isOpen" 
     prevent-close 
-    title="Register New Vehicle"
-    description="Official vehicle registration for parking enforcement."
+    :title="carToEdit ? 'Resubmit Vehicle Registration' : 'Register New Vehicle'"
+    :description="carToEdit ? 'Update your vehicle details to retry activation.' : 'Official vehicle registration for parking enforcement.'"
     :ui="{ 
       content: 'bg-slate-900 border border-slate-700 shadow-2xl shadow-black/50 rounded-2xl overflow-hidden',
       header: 'py-4 sm:py-5 border-b border-slate-800'
@@ -177,14 +207,14 @@ const submitAddCar = async () => {
           size="xl"
           class="flex-1 sm:flex-none justify-center font-semibold"
           @click="isOpen = false" 
-          :disabled="uploadLoading || actionLoading" 
+          :disabled="uploadLoading" 
         />
         <UButton 
-          label="Submit Registration" 
+          :label="carToEdit ? 'Resubmit Registration' : 'Submit Registration'" 
           color="primary" 
           size="xl"
           class="flex-1 sm:flex-none justify-center font-bold shadow-lg shadow-indigo-500/25"
-          :loading="uploadLoading || actionLoading" 
+          :loading="uploadLoading" 
           :disabled="!isFormValid"
           @click="submitAddCar"
         />

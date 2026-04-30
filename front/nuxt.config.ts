@@ -1,4 +1,5 @@
 // https://nuxt.com/docs/api/configuration/nuxt-config
+import { fileURLToPath } from 'node:url';
 export default defineNuxtConfig({
   devtools: { enabled: true },
   ssr: false,
@@ -69,5 +70,6 @@ export default defineNuxtConfig({
         'vuefire',
       ]
     }
-  }
+  },
+   spaLoadingTemplate: fileURLToPath(new URL('./spa-loading-template.html', import.meta.url)), 
 })

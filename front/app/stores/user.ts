@@ -1,4 +1,4 @@
-import { doc } from 'firebase/firestore'
+import { doc, getDoc } from 'firebase/firestore'
 import { httpsCallable } from 'firebase/functions'
 import { useDocument, useFirestore } from 'vuefire'
 
@@ -55,11 +55,36 @@ export const useUserStore = defineStore('user', () => {
     }
   }
 
+  const usersCache = ref<Record<string, any>>({})
+
+  async function fetchUser(uid: string) {
+    if (usersCache.value[uid] || !uid) return usersCache.value[uid]
+    
+    // Mark as fetching to prevent duplicate calls
+    usersCache.value[uid] = { _loading: true }
+    
+    try {
+      const snap = await getDoc(doc(db, 'users', uid))
+      if (snap.exists()) {
+        usersCache.value[uid] = snap.data()
+      } else {
+        usersCache.value[uid] = { name: 'Unknown User' }
+      }
+    } catch (e) {
+      console.error('Failed to fetch user:', e)
+      usersCache.value[uid] = { name: 'Unknown User' }
+    }
+    
+    return usersCache.value[uid]
+  }
+
   return {
     userProfile,
     profileLoading,
     role,
     setRole,
     updateProfile,
+    usersCache,
+    fetchUser,
   }
 })
