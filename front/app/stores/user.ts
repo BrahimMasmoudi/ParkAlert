@@ -78,6 +78,18 @@ export const useUserStore = defineStore('user', () => {
     return usersCache.value[uid]
   }
 
+  async function searchOwners(query: string) {
+    if (!query || query.length < 2) return []
+    try {
+      const { $functions } = useNuxtApp()
+      const res = await httpsCallable($functions, 'searchUsers')({ query })
+      return (res.data as any).users as { id: string; name: string; identityNumber: string }[]
+    } catch (e) {
+      console.error('Failed to search users:', e)
+      return []
+    }
+  }
+
   return {
     userProfile,
     profileLoading,
@@ -86,5 +98,6 @@ export const useUserStore = defineStore('user', () => {
     updateProfile,
     usersCache,
     fetchUser,
+    searchOwners,
   }
 })

@@ -14,6 +14,9 @@ const confirmDeleteModalOpen = ref(false)
 const carToDelete = ref<string | null>(null)
 const carToEdit = ref<any | null>(null)
 
+const isTransferModalOpen = ref(false)
+const carToTransfer = ref<any | null>(null)
+
 watch(isAddModalOpen, (newVal) => {
   if (!newVal) {
     setTimeout(() => { carToEdit.value = null }, 300)
@@ -41,6 +44,14 @@ const handleCarRetryAction = (carId: string) => {
     isAddModalOpen.value = true
   }
 }
+
+const handleCarTransferAction = (carId: string) => {
+  const car = myCars.value.find(c => c.id === carId)
+  if (car) {
+    carToTransfer.value = car
+    isTransferModalOpen.value = true
+  }
+}
 </script>
 
 <template>
@@ -51,7 +62,7 @@ const handleCarRetryAction = (carId: string) => {
       <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
         
         <!-- Left Column: User Profile -->
-        <div class="lg:col-span-4 space-y-6 sticky top-8">
+        <div class="lg:col-span-4 space-y-6 lg:sticky lg:top-8">
           <section>
             <h2 class="text-lg font-bold text-white mb-4 tracking-tight flex items-center gap-2">
               <UIcon name="lucide:user" class="w-5 h-5 text-indigo-400" />
@@ -114,6 +125,7 @@ const handleCarRetryAction = (carId: string) => {
                 :car="car"
                 @delete="handleCarDeleteAction"
                 @retry="handleCarRetryAction"
+                @transfer="handleCarTransferAction"
               />
             </div>
           </section>
@@ -138,5 +150,8 @@ const handleCarRetryAction = (carId: string) => {
 
     <!-- Delete Confirmation Modal -->
     <OrganismsOwnerDeleteCarModal v-model:open="confirmDeleteModalOpen" :car-id="carToDelete" />
+
+    <!-- Transfer Car Modal -->
+    <OrganismsOwnerTransferCarModal v-model:open="isTransferModalOpen" :car="carToTransfer" />
   </div>
 </template>

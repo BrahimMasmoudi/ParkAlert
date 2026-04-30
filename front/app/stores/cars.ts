@@ -140,6 +140,12 @@ export const useCarsStore = defineStore('cars', () => {
     )
   )
 
+  const transferRequestedCars = computed(() =>
+    (pendingCars.value || []).filter(
+      car => car.status === 'transfer_requested'
+    )
+  )
+
   async function callFn(name: string, payload?: any) {
     const { $functions } = useNuxtApp()
     const fn = httpsCallable($functions, name)
@@ -181,6 +187,22 @@ export const useCarsStore = defineStore('cars', () => {
     })
   }
 
+  async function requestOwnershipTransfer(payload: {
+    carId: string
+    newOwnerId: string
+    carteGriseUrl: string
+  }) {
+    return withLoading(`${payload.carId}-transfer`, async () => {
+      await callFn('requestOwnershipTransfer', payload)
+
+      toast.add({
+        title: 'Ownership transfer requested',
+        description: 'Car moved to new owner pending activation.',
+        color: 'success'
+      })
+    })
+  }
+
   async function approveCar(carId: string) {
     return withLoading(`${carId}-approve`, async () => {
       await callFn('approveCar', { carId })
@@ -199,6 +221,28 @@ export const useCarsStore = defineStore('cars', () => {
       toast.add({
         title: 'Car rejected',
         color: 'error'
+      })
+    })
+  }
+
+  async function approveTransfer(carId: string) {
+    return withLoading(`${carId}-approve`, async () => {
+      await callFn('approveTransfer', { carId })
+
+      toast.add({
+        title: 'Transfer approved',
+        color: 'success'
+      })
+    })
+  }
+
+  async function rejectTransfer(carId: string, reason: string) {
+    return withLoading(`${carId}-reject`, async () => {
+      await callFn('rejectTransfer', { carId, reason })
+
+      toast.add({
+        title: 'Transfer rejected',
+        color: 'success'
       })
     })
   }
@@ -243,11 +287,15 @@ export const useCarsStore = defineStore('cars', () => {
     pendingCarsLoading,
     activationPendingCars,
     deletionPendingCars,
+    transferRequestedCars,
     isLoading,
     addCar,
     retryCar,
+    requestOwnershipTransfer,
     approveCar,
     rejectCar,
+    approveTransfer,
+    rejectTransfer,
     approveDeletion,
     requestDeletion,
     cancelCarDeletion

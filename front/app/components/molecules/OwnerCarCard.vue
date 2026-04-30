@@ -20,6 +20,7 @@ defineProps<{
 defineEmits<{
   (e: 'delete', id: string): void
   (e: 'retry', id: string): void
+  (e: 'transfer', id: string): void
 }>()
 </script>
 
@@ -64,7 +65,17 @@ defineEmits<{
           <!-- The parent can handle the cancel deletion by detecting the status -->
         </UTooltip>
         
-        <UTooltip v-else-if="car.status !== 'deleted'" text="Request Deletion">
+        <UTooltip v-if="car.status === 'active'" text="Transfer Ownership">
+          <UButton
+            color="primary"
+            variant="ghost"
+            icon="lucide:arrow-right-left"
+            class="opacity-0 group-hover:opacity-100 transition-opacity focus:opacity-100 p-2 -m-2 mr-1"
+            @click="$emit('transfer', car.id)"
+          />
+        </UTooltip>
+        
+        <UTooltip v-else-if="car.status !== 'deleted' && car.status !== 'deletion_requested'" text="Request Deletion">
           <UButton
             color="error"
             variant="ghost"

@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.approveCarDeletion = exports.rejectCar = exports.approveCar = exports.cancelCarDeletion = exports.requestCarDeletion = exports.retryCar = exports.addCar = exports.updateUserProfile = exports.setUserRole = exports.payFine = exports.issueFine = exports.createReport = void 0;
+exports.approveCarDeletion = exports.rejectCar = exports.approveCar = exports.rejectTransfer = exports.approveTransfer = exports.requestOwnershipTransfer = exports.searchUsers = exports.cancelCarDeletion = exports.requestCarDeletion = exports.retryCar = exports.addCar = exports.updateUserProfile = exports.setUserRole = exports.payFine = exports.issueFine = exports.createReport = void 0;
 const app_1 = require("firebase-admin/app");
 const firestore_1 = require("firebase-admin/firestore");
 const https_1 = require("firebase-functions/v2/https");
@@ -270,6 +270,157 @@ exports.cancelCarDeletion = (0, https_1.onCall)({ region: 'europe-west3', enforc
         carId,
         actorId: uid,
         action: 'DELETION_CANCELLED',
+        timestamp: firestore_1.FieldValue.serverTimestamp(),
+    });
+    return { ok: true };
+});
+// ─────────────────────────────────────────────────────────────────
+// searchUsers — owner only
+// ─────────────────────────────────────────────────────────────────
+exports.searchUsers = (0, https_1.onCall)({ region: 'europe-west3', enforceAppCheck: true }, async (request) => {
+    const uid = requireAuth(request.auth);
+    const { query } = request.data;
+    if (!query || query.length < 2) {
+        return { users: [] };
+    }
+    const qLower = query.toLowerCase();
+    const usersSnap = await db.collection('users').where('role', '==', 'owner').get();
+    const results = usersSnap.docs
+        .map(doc => ({ id: doc.id, ...doc.data() }))
+        .filter(u => u.id !== uid)
+        .filter((u) => {
+        const name = (u.fullName || u.name || '').toLowerCase();
+        const ident = (u.identityNumber || '').toLowerCase();
+        return name.includes(qLower) || ident.includes(qLower);
+    })
+        .map((u) => ({
+        id: u.id,
+        name: u.fullName || u.name,
+        identityNumber: u.identityNumber
+    }))
+        .slice(0, 10);
+    return { users: results };
+});
+// ─────────────────────────────────────────────────────────────────
+// requestOwnershipTransfer — owner only
+// ─────────────────────────────────────────────────────────────────
+exports.requestOwnershipTransfer = (0, https_1.onCall)({ region: 'europe-west3', enforceAppCheck: true }, async (request) => {
+    const uid = requireAuth(request.auth);
+    const { carId, newOwnerId, carteGriseUrl } = request.data;
+    if (!carId || !newOwnerId || !carteGriseUrl) {
+        throw new https_1.HttpsError('invalid-argument', 'Missing required fields');
+    }
+    const carRef = db.collection('cars').doc(carId);
+    const carSnap = await carRef.get();
+    if (!carSnap.exists) {
+        throw new https_1.HttpsError('not-found', 'Car not found');
+    }
+    const car = carSnap.data();
+    if (car.ownerId !== uid) {
+        throw new https_1.HttpsError('permission-denied', 'Not your car');
+    }
+    const newOwnerSnap = await db.collection('users').doc(newOwnerId).get();
+    if (!newOwnerSnap.exists || newOwnerSnap.data()?.role !== 'owner') {
+        throw new https_1.HttpsError('not-found', 'New owner not found');
+    }
+    await carRef.update({
+        ownerId: newOwnerId,
+        previousOwnerId: uid,
+        status: 'transfer_requested',
+        carteGriseUrl,
+        updatedAt: firestore_1.FieldValue.serverTimestamp(),
+        transferRequestedAt: firestore_1.FieldValue.serverTimestamp(),
+        rejectionReason: firestore_1.FieldValue.delete(),
+    });
+    await db.collection('car_audit_logs').add({
+        carId,
+        actorId: uid,
+        action: 'TRANSFER_REQUESTED',
+        details: `Transferred to ${newOwnerId}`,
+        timestamp: firestore_1.FieldValue.serverTimestamp(),
+    });
+    return { ok: true };
+});
+// ─────────────────────────────────────────────────────────────────
+// approveTransfer — police only
+// ─────────────────────────────────────────────────────────────────
+exports.approveTransfer = (0, https_1.onCall)({ region: 'europe-west3', enforceAppCheck: true }, async (request) => {
+    requireAuth(request.auth);
+    const { carId } = request.data;
+    if (!carId) {
+        throw new https_1.HttpsError('invalid-argument', 'carId is required');
+    }
+    const carRef = db.collection('cars').doc(carId);
+    const carSnap = await carRef.get();
+    if (!carSnap.exists) {
+        throw new https_1.HttpsError('not-found', 'Car not found');
+    }
+    const car = carSnap.data();
+    if (car.status !== 'transfer_requested') {
+        throw new https_1.HttpsError('failed-precondition', 'Car is not pending transfer');
+    }
+    if (car.previousOwnerId) {
+        const finesSnap = await db.collection('fines')
+            .where('ownerId', '==', car.previousOwnerId)
+            .where('plateNumber', '==', car.plateNumber)
+            .where('status', '==', 'unpaid')
+            .get();
+        if (!finesSnap.empty) {
+            throw new https_1.HttpsError('failed-precondition', 'Cannot approve transfer: unpaid fines exist for this vehicle.');
+        }
+    }
+    const updates = {
+        status: 'active',
+        updatedAt: firestore_1.FieldValue.serverTimestamp(),
+    };
+    if (car.previousOwnerId) {
+        updates.previousOwnerId = firestore_1.FieldValue.delete();
+        updates.ownershipHistory = firestore_1.FieldValue.arrayUnion(car.previousOwnerId);
+    }
+    await carRef.update(updates);
+    const uid = requireAuth(request.auth);
+    await db.collection('car_audit_logs').add({
+        carId,
+        actorId: uid,
+        action: 'TRANSFER_APPROVED',
+        timestamp: firestore_1.FieldValue.serverTimestamp(),
+    });
+    return { ok: true };
+});
+// ─────────────────────────────────────────────────────────────────
+// rejectTransfer — police only
+// ─────────────────────────────────────────────────────────────────
+exports.rejectTransfer = (0, https_1.onCall)({ region: 'europe-west3', enforceAppCheck: true }, async (request) => {
+    requireAuth(request.auth);
+    const { carId, reason } = request.data;
+    if (!carId) {
+        throw new https_1.HttpsError('invalid-argument', 'carId is required');
+    }
+    if (!reason || reason.trim() === '') {
+        throw new https_1.HttpsError('invalid-argument', 'reason is required');
+    }
+    const carRef = db.collection('cars').doc(carId);
+    const carSnap = await carRef.get();
+    if (!carSnap.exists) {
+        throw new https_1.HttpsError('not-found', 'Car not found');
+    }
+    const car = carSnap.data();
+    if (car.status !== 'transfer_requested') {
+        throw new https_1.HttpsError('failed-precondition', 'Car is not pending transfer');
+    }
+    // Return it to the previous owner, or keep it rejected for the new owner?
+    // Usually rejected means they can retry. So we set status to rejected.
+    await carRef.update({
+        status: 'rejected',
+        rejectionReason: reason,
+        updatedAt: firestore_1.FieldValue.serverTimestamp(),
+    });
+    const uid = requireAuth(request.auth);
+    await db.collection('car_audit_logs').add({
+        carId,
+        actorId: uid,
+        action: 'TRANSFER_REJECTED',
+        details: reason,
         timestamp: firestore_1.FieldValue.serverTimestamp(),
     });
     return { ok: true };
