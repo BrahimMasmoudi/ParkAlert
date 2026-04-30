@@ -39,7 +39,7 @@ const confirmDelete = async () => {
     <template #footer>
       <div class="flex justify-end gap-3">
         <UButton label="Cancel" color="neutral" variant="ghost" @click="isOpen = false" />
-        <UButton label="Confirm Request" color="error" @click="confirmDelete" />
+        <UButton label="Confirm Request" color="error" :loading="props.carId ? carsStore.isLoading(props.carId) : false" @click="confirmDelete" />
       </div>
     </template>
   </UModal>

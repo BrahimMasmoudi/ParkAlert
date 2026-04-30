@@ -20,8 +20,8 @@ service cloud.firestore {
     }
 
     match /users/{userId} {
-      // Users can read their own profile.
-      allow read: if isSecureRequest() && request.auth.uid == userId;
+      // Users can read their own profile. Police can read all users.
+      allow read: if isSecureRequest() && (request.auth.uid == userId || getUserData().role == 'police');
       // All writes are done via Cloud Functions (setUserRole)
       allow write: if false; 
     }

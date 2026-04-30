@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.approveCarDeletion = exports.rejectCar = exports.approveCar = exports.cancelCarDeletion = exports.requestCarDeletion = exports.addCar = exports.updateUserProfile = exports.setUserRole = exports.payFine = exports.issueFine = exports.createReport = void 0;
+exports.approveCarDeletion = exports.rejectCar = exports.approveCar = exports.cancelCarDeletion = exports.requestCarDeletion = exports.retryCar = exports.addCar = exports.updateUserProfile = exports.setUserRole = exports.payFine = exports.issueFine = exports.createReport = void 0;
 const app_1 = require("firebase-admin/app");
 const firestore_1 = require("firebase-admin/firestore");
 const https_1 = require("firebase-functions/v2/https");
@@ -21,7 +21,7 @@ function requireAuth(auth) {
 exports.createReport = (0, https_1.onCall)({ region: 'europe-west3', enforceAppCheck: true }, async (request) => {
     const uid = requireAuth(request.auth);
     const userSnap = await db.collection('users').doc(uid).get();
-    if (userSnap.data()?.role !== 'police') {
+    if (userSnap.data()?.role !== 'agent') {
         throw new https_1.HttpsError('permission-denied', 'Only agents can file reports');
     }
     const { plateNumber, location, photoUrl, address } = request.data;
@@ -174,6 +174,49 @@ exports.addCar = (0, https_1.onCall)({ region: 'europe-west3', enforceAppCheck: 
     return { ok: true, carId: carRef.id };
 });
 // ─────────────────────────────────────────────────────────────────
+// retryCar — owner only (resubmit rejected car)
+// ─────────────────────────────────────────────────────────────────
+exports.retryCar = (0, https_1.onCall)({ region: 'europe-west3', enforceAppCheck: true }, async (request) => {
+    const uid = requireAuth(request.auth);
+    const callerSnap = await db.collection('users').doc(uid).get();
+    if (callerSnap.data()?.role !== 'owner') {
+        throw new https_1.HttpsError('permission-denied', 'Only owners can modify cars');
+    }
+    const { carId, plateNumber, brand, model, color, carteGriseUrl } = request.data;
+    if (!carId || !plateNumber || !brand || !model || !color || !carteGriseUrl) {
+        throw new https_1.HttpsError('invalid-argument', 'carId, plateNumber, brand, model, color, and carteGriseUrl are required');
+    }
+    const carRef = db.collection('cars').doc(carId);
+    const carSnap = await carRef.get();
+    if (!carSnap.exists) {
+        throw new https_1.HttpsError('not-found', 'Car not found');
+    }
+    const car = carSnap.data();
+    if (car.ownerId !== uid) {
+        throw new https_1.HttpsError('permission-denied', 'You can only modify your own cars');
+    }
+    if (car.status !== 'rejected') {
+        throw new https_1.HttpsError('failed-precondition', 'You can only retry rejected cars');
+    }
+    await carRef.update({
+        plateNumber: String(plateNumber).toUpperCase(),
+        brand,
+        model,
+        color,
+        carteGriseUrl,
+        status: 'activation_pending',
+        updatedAt: firestore_1.FieldValue.serverTimestamp(),
+        rejectionReason: firestore_1.FieldValue.delete()
+    });
+    await db.collection('car_audit_logs').add({
+        carId,
+        actorId: uid,
+        action: 'RETRY_ACTIVATION',
+        timestamp: firestore_1.FieldValue.serverTimestamp(),
+    });
+    return { ok: true };
+});
+// ─────────────────────────────────────────────────────────────────
 // requestCarDeletion — owner only
 // ─────────────────────────────────────────────────────────────────
 exports.requestCarDeletion = (0, https_1.onCall)({ region: 'europe-west3', enforceAppCheck: true }, async (request) => {
@@ -219,7 +262,7 @@ exports.cancelCarDeletion = (0, https_1.onCall)({ region: 'europe-west3', enforc
         throw new https_1.HttpsError('failed-precondition', 'Not pending deletion');
     }
     await carRef.update({
-        status: 'active',
+        status: 'activation_pending',
         deletionRequestedAt: null,
         updatedAt: firestore_1.FieldValue.serverTimestamp(),
     });
@@ -261,9 +304,12 @@ exports.approveCar = (0, https_1.onCall)({ region: 'europe-west3', enforceAppChe
 });
 exports.rejectCar = (0, https_1.onCall)({ region: 'europe-west3', enforceAppCheck: true }, async (request) => {
     requireAuth(request.auth);
-    const { carId } = request.data;
+    const { carId, reason } = request.data;
     if (!carId) {
         throw new https_1.HttpsError('invalid-argument', 'carId is required');
+    }
+    if (!reason || typeof reason !== 'string' || reason.trim() === '') {
+        throw new https_1.HttpsError('invalid-argument', 'reason is required and must not be empty');
     }
     const carRef = db.collection('cars').doc(carId);
     const carSnap = await carRef.get();
@@ -276,6 +322,7 @@ exports.rejectCar = (0, https_1.onCall)({ region: 'europe-west3', enforceAppChec
     }
     await carRef.update({
         status: 'rejected',
+        rejectionReason: reason.trim(),
         updatedAt: firestore_1.FieldValue.serverTimestamp(),
     });
     const uid = requireAuth(request.auth);
@@ -283,6 +330,7 @@ exports.rejectCar = (0, https_1.onCall)({ region: 'europe-west3', enforceAppChec
         carId,
         actorId: uid,
         action: 'REJECTED',
+        reason: reason.trim(),
         timestamp: firestore_1.FieldValue.serverTimestamp(),
     });
     return { ok: true };

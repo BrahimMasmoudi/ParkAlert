@@ -27,3 +27,5 @@ logs
 
 *storybook.log
 storybook-static
+
+functions/lib/*

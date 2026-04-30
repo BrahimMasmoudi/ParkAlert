@@ -1,33 +1,38 @@
 <script setup lang="ts">
 import type { CarStatus } from '~/stores/cars'
+import { useCarsStore } from '~/stores/cars'
+
+const carsStore = useCarsStore()
 
 defineProps<{
   car: {
     id: string
     plateNumber: string
-    status: CarStatus | 'delete_pending'
+    status: CarStatus | 'deletion_requested'
     brand: string
     model: string
     color: string
     carteGriseUrl: string
+    rejectionReason?: string
   }
 }>()
 
 defineEmits<{
   (e: 'delete', id: string): void
+  (e: 'retry', id: string): void
 }>()
 </script>
 
 <template>
   <UCard
     class="group transition-all duration-300 relative overflow-hidden border shadow-lg hover:shadow-xl"
-    :class="car.status === 'delete_pending' 
+    :class="car.status === 'deletion_requested' 
       ? 'bg-slate-900/40 border-slate-800 opacity-75 grayscale-[0.5]' 
       : 'bg-slate-900 border-slate-700 hover:border-slate-500'"
     :ui="{ body: { padding: 'p-0 sm:p-0' } }"
   >
     <!-- Card Header (Plate & Status) -->
-    <div class="p-5 border-b border-slate-800/50 flex justify-between items-start" :class="car.status === 'delete_pending' ? 'bg-amber-950/20' : 'bg-slate-800/20'">
+    <div class="p-5 border-b border-slate-800/50 flex justify-between items-start" :class="car.status === 'deletion_requested' ? 'bg-amber-950/20' : 'bg-slate-800/20'">
       <div>
         <div class="flex items-center gap-3">
           <div class="px-3 py-1.5 bg-slate-950 border border-slate-700 rounded-md text-lg font-mono font-bold text-white tracking-[0.15em] shadow-inner">
@@ -36,7 +41,7 @@ defineEmits<{
         </div>
         <div class="mt-3">
           <UBadge
-            :color="car.status === 'active' ? 'success' : (car.status === 'activation_pending' || car.status === 'delete_pending' ? 'warning' : (car.status === 'rejected' ? 'error' : 'neutral'))"
+            :color="car.status === 'active' ? 'success' : (car.status === 'activation_pending' || car.status === 'deletion_requested' ? 'warning' : (car.status === 'rejected' ? 'error' : 'neutral'))"
             variant="subtle"
             class="capitalize font-semibold text-xs px-2.5 py-1"
           >
@@ -46,13 +51,14 @@ defineEmits<{
       </div>
       
       <div class="flex items-center gap-2">
-        <UTooltip v-if="car.status === 'delete_pending'" text="Cancel Deletion Request">
+        <UTooltip v-if="car.status === 'deletion_requested'" text="Cancel Deletion Request">
           <UButton
             color="primary"
             variant="soft"
             icon="lucide:rotate-ccw"
             size="sm"
             class="opacity-0 group-hover:opacity-100 transition-opacity focus:opacity-100"
+            :loading="carsStore.isLoading(car.id)"
             @click="$emit('delete', car.id)" 
           />
           <!-- The parent can handle the cancel deletion by detecting the status -->
@@ -79,6 +85,24 @@ defineEmits<{
       <div>
         <p class="text-[10px] text-slate-500 font-bold uppercase tracking-widest mb-1">Color</p>
         <p class="text-sm text-slate-200 font-medium capitalize">{{ car.color }}</p>
+      </div>
+    </div>
+
+    <!-- Rejection Reason -->
+    <div v-if="car.status === 'rejected' && car.rejectionReason" class="px-5 pb-5 bg-slate-900">
+      <div class="bg-red-950/30 border border-red-900/50 rounded-lg p-4">
+        <div class="flex items-start justify-between gap-4">
+          <div>
+            <p class="text-[10px] text-red-400 font-bold uppercase tracking-widest mb-1 flex items-center gap-1.5">
+              <UIcon name="lucide:alert-circle" class="w-3.5 h-3.5" />
+              Rejection Reason
+            </p>
+            <p class="text-sm text-red-200 leading-snug">{{ car.rejectionReason }}</p>
+          </div>
+          <UButton color="white" variant="solid" size="sm" icon="lucide:refresh-cw" @click="$emit('retry', car.id)">
+            Retry
+          </UButton>
+        </div>
       </div>
     </div>
 

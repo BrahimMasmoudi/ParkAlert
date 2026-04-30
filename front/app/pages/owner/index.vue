@@ -12,6 +12,13 @@ const isAddModalOpen = ref(false)
 const isEditModalOpen = ref(false)
 const confirmDeleteModalOpen = ref(false)
 const carToDelete = ref<string | null>(null)
+const carToEdit = ref<any | null>(null)
+
+watch(isAddModalOpen, (newVal) => {
+  if (!newVal) {
+    setTimeout(() => { carToEdit.value = null }, 300)
+  }
+})
 
 const openDeleteConfirm = (carId: string) => {
   carToDelete.value = carId
@@ -20,10 +27,18 @@ const openDeleteConfirm = (carId: string) => {
 
 const handleCarDeleteAction = (carId: string) => {
   const car = myCars.value.find(c => c.id === carId)
-  if (car?.status === 'delete_pending') {
+  if (car?.status === 'deletion_requested') {
     carsStore.cancelCarDeletion(carId)
   } else {
     openDeleteConfirm(carId)
+  }
+}
+
+const handleCarRetryAction = (carId: string) => {
+  const car = myCars.value.find(c => c.id === carId)
+  if (car) {
+    carToEdit.value = car
+    isAddModalOpen.value = true
   }
 }
 </script>
@@ -98,6 +113,7 @@ const handleCarDeleteAction = (carId: string) => {
                 :key="car.id"
                 :car="car"
                 @delete="handleCarDeleteAction"
+                @retry="handleCarRetryAction"
               />
             </div>
           </section>
@@ -117,8 +133,8 @@ const handleCarDeleteAction = (carId: string) => {
     <!-- Edit Profile Modal -->
     <OrganismsOwnerEditProfileModal v-model:open="isEditModalOpen" />
 
-    <!-- Add Car Modal -->
-    <OrganismsOwnerAddCarModal v-model:open="isAddModalOpen" />
+    <!-- Add/Edit Car Modal -->
+    <OrganismsOwnerAddCarModal v-model:open="isAddModalOpen" :car-to-edit="carToEdit" />
 
     <!-- Delete Confirmation Modal -->
     <OrganismsOwnerDeleteCarModal v-model:open="confirmDeleteModalOpen" :car-id="carToDelete" />

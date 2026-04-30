@@ -12,14 +12,14 @@ import { computed, ref } from 'vue'
 
 export type CarStatus =
   | 'activation_pending'
-  | 'delete_pending'
+  | 'deletion_requested'
   | 'active'
   | 'deleted'
   | 'rejected'
 
 export const carStatusMapper: Record<CarStatus, string> = {
   activation_pending: 'Activation Pending',
-  delete_pending: 'Deletion Pending',
+  deletion_requested: 'Deletion Pending',
   active: 'Active',
   deleted: 'Deleted',
   rejected: 'Rejected'
@@ -35,6 +35,7 @@ export interface Car {
   carteGriseUrl?: string
   status: CarStatus
   createdAt: number
+  rejectionReason?: string
 }
 
 function getTimestampMillis(ts: any): number {
@@ -65,7 +66,8 @@ const carConverter = {
       color: data.color || '',
       carteGriseUrl: data.carteGriseUrl || '',
       status: data.status || 'activation_pending',
-      createdAt: getTimestampMillis(data.createdAt)
+      createdAt: getTimestampMillis(data.createdAt),
+      rejectionReason: data.rejectionReason
     }
   }
 }
@@ -115,7 +117,7 @@ export const useCarsStore = defineStore('cars', () => {
   const pendingCarsRef = computed(() =>
     query(
       collection(db, 'cars').withConverter(carConverter),
-      where('status', 'in', ['activation_pending', 'delete_pending'])
+      where('status', 'in', ['activation_pending', 'deletion_requested'])
     )
   )
 
@@ -134,7 +136,7 @@ export const useCarsStore = defineStore('cars', () => {
 
   const deletionPendingCars = computed(() =>
     (pendingCars.value || []).filter(
-      car => car.status === 'delete_pending'
+      car => car.status === 'deletion_requested'
     )
   )
 
@@ -161,8 +163,26 @@ export const useCarsStore = defineStore('cars', () => {
     })
   }
 
+  async function retryCar(payload: {
+    carId: string
+    plateNumber: string
+    brand: string
+    model: string
+    color: string
+    carteGriseUrl: string
+  }) {
+    return withLoading('newCar', async () => {
+      await callFn('retryCar', payload)
+
+      toast.add({
+        title: 'Registration resubmitted',
+        color: 'success'
+      })
+    })
+  }
+
   async function approveCar(carId: string) {
-    return withLoading(carId, async () => {
+    return withLoading(`${carId}-approve`, async () => {
       await callFn('approveCar', { carId })
 
       toast.add({
@@ -172,9 +192,9 @@ export const useCarsStore = defineStore('cars', () => {
     })
   }
 
-  async function rejectCar(carId: string) {
-    return withLoading(carId, async () => {
-      await callFn('rejectCar', { carId })
+  async function rejectCar(carId: string, reason: string) {
+    return withLoading(`${carId}-reject`, async () => {
+      await callFn('rejectCar', { carId, reason })
 
       toast.add({
         title: 'Car rejected',
@@ -225,6 +245,7 @@ export const useCarsStore = defineStore('cars', () => {
     deletionPendingCars,
     isLoading,
     addCar,
+    retryCar,
     approveCar,
     rejectCar,
     approveDeletion,

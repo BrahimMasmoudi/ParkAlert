@@ -262,6 +262,74 @@ export const addCar = onCall(
 )
 
 // ─────────────────────────────────────────────────────────────────
+// retryCar — owner only (resubmit rejected car)
+// ─────────────────────────────────────────────────────────────────
+export const retryCar = onCall(
+  { region: 'europe-west3', enforceAppCheck: true },
+  async (request) => {
+    const uid = requireAuth(request.auth)
+
+    const callerSnap = await db.collection('users').doc(uid).get()
+    if (callerSnap.data()?.role !== 'owner') {
+      throw new HttpsError('permission-denied', 'Only owners can modify cars')
+    }
+
+    const { carId, plateNumber, brand, model, color, carteGriseUrl } = request.data as {
+      carId: string
+      plateNumber: string
+      brand: string
+      model: string
+      color: string
+      carteGriseUrl: string
+    }
+
+    if (!carId || !plateNumber || !brand || !model || !color || !carteGriseUrl) {
+      throw new HttpsError(
+        'invalid-argument',
+        'carId, plateNumber, brand, model, color, and carteGriseUrl are required',
+      )
+    }
+
+    const carRef = db.collection('cars').doc(carId)
+    const carSnap = await carRef.get()
+
+    if (!carSnap.exists) {
+      throw new HttpsError('not-found', 'Car not found')
+    }
+
+    const car = carSnap.data()!
+
+    if (car.ownerId !== uid) {
+      throw new HttpsError('permission-denied', 'You can only modify your own cars')
+    }
+
+    if (car.status !== 'rejected') {
+      throw new HttpsError('failed-precondition', 'You can only retry rejected cars')
+    }
+
+    await carRef.update({
+      plateNumber: String(plateNumber).toUpperCase(),
+      brand,
+      model,
+      color,
+      carteGriseUrl,
+      status: 'activation_pending',
+      updatedAt: FieldValue.serverTimestamp(),
+      rejectionReason: FieldValue.delete()
+    })
+
+    await db.collection('car_audit_logs').add({
+      carId,
+      actorId: uid,
+      action: 'RETRY_ACTIVATION',
+      timestamp: FieldValue.serverTimestamp(),
+    })
+
+    return { ok: true }
+  },
+)
+
+// ─────────────────────────────────────────────────────────────────
 // requestCarDeletion — owner only
 // ─────────────────────────────────────────────────────────────────
 export const requestCarDeletion = onCall(
@@ -324,7 +392,7 @@ export const cancelCarDeletion = onCall(
     }
 
     await carRef.update({
-      status: 'active',
+      status: 'activation_pending',
       deletionRequestedAt: null,
       updatedAt: FieldValue.serverTimestamp(),
     })
@@ -389,10 +457,14 @@ export const rejectCar = onCall(
   async (request) => {
     requireAuth(request.auth)
 
-    const { carId } = request.data as { carId: string }
+    const { carId, reason } = request.data as { carId: string; reason: string }
 
     if (!carId) {
       throw new HttpsError('invalid-argument', 'carId is required')
+    }
+
+    if (!reason || typeof reason !== 'string' || reason.trim() === '') {
+      throw new HttpsError('invalid-argument', 'reason is required and must not be empty')
     }
 
     const carRef = db.collection('cars').doc(carId)
@@ -413,6 +485,7 @@ export const rejectCar = onCall(
 
     await carRef.update({
       status: 'rejected',
+      rejectionReason: reason.trim(),
       updatedAt: FieldValue.serverTimestamp(),
     })
 
@@ -422,6 +495,7 @@ export const rejectCar = onCall(
       carId,
       actorId: uid,
       action: 'REJECTED',
+      reason: reason.trim(),
       timestamp: FieldValue.serverTimestamp(),
     })
 
