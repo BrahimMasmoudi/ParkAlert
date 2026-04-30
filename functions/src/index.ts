@@ -23,7 +23,7 @@ export const createReport = onCall(
     const uid = requireAuth(request.auth)
 
     const userSnap = await db.collection('users').doc(uid).get()
-    if (userSnap.data()?.role !== 'police') {
+    if (userSnap.data()?.role !== 'agent') {
       throw new HttpsError('permission-denied', 'Only agents can file reports')
     }
 
