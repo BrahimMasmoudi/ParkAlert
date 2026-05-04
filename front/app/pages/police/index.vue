@@ -52,11 +52,14 @@
 
               <template #actions-cell="{ row }">
                 <div class="flex gap-2">
+                  <UButton size="xs" color="neutral" variant="soft" icon="lucide:eye"
+                    @click="openReview(row.original, 'activation')">
+                    Details
+                  </UButton>
                   <UButton size="xs" color="success" :loading="carsStore.isLoading(`${row.original.id}-approve`)"
                     @click="carsStore.approveCar(row.original.id)">
                     Approve
                   </UButton>
-
                   <UButton size="xs" color="error" variant="soft"
                     :loading="carsStore.isLoading(`${row.original.id}-reject`)"
                     @click="openRejectModal(row.original.id)">
@@ -107,10 +110,16 @@
               </template>
 
               <template #actions-cell="{ row }">
-                <UButton size="xs" color="error" :loading="carsStore.isLoading(row.original.id)"
-                  @click="carsStore.approveDeletion(row.original.id)">
-                  Approve Deletion
-                </UButton>
+                <div class="flex gap-2">
+                  <UButton size="xs" color="neutral" variant="soft" icon="lucide:eye"
+                    @click="openReview(row.original, 'deletion')">
+                    Details
+                  </UButton>
+                  <UButton size="xs" color="error" :loading="carsStore.isLoading(row.original.id)"
+                    @click="carsStore.approveDeletion(row.original.id)">
+                    Approve Deletion
+                  </UButton>
+                </div>
               </template>
             </UTable>
           </section>
@@ -172,11 +181,14 @@
 
               <template #actions-cell="{ row }">
                 <div class="flex gap-2">
+                  <UButton size="xs" color="neutral" variant="soft" icon="lucide:eye"
+                    @click="openReview(row.original, 'transfer')">
+                    Details
+                  </UButton>
                   <UButton size="xs" color="success" :loading="carsStore.isLoading(row.original.id + '-approve')"
                     @click="carsStore.approveTransfer(row.original.id)">
                     Approve
                   </UButton>
-
                   <UButton size="xs" color="error" variant="soft" :loading="carsStore.isLoading(row.original.id + '-reject')"
                     @click="openRejectModal(row.original.id, true)">
                     Reject
@@ -286,6 +298,15 @@
         </div>
       </template>
     </UModal>
+
+    <!-- REVIEW MODAL -->
+    <OrganismsPoliceCarReviewModal
+      v-model:open="isReviewModalOpen"
+      :car="reviewCar"
+      :mode="reviewMode"
+      @approve="handleReviewApprove"
+      @reject="handleReviewReject"
+    />
   </div>
 </template>
 
@@ -319,6 +340,34 @@ const isRejectModalOpen = ref(false)
 const selectedCarIdForRejection = ref<string | null>(null)
 const rejectionReason = ref('')
 const isRejectingTransfer = ref(false)
+
+// Review modal
+const isReviewModalOpen = ref(false)
+const reviewCar = ref<any | null>(null)
+const reviewMode = ref<'activation' | 'deletion' | 'transfer'>('activation')
+
+function openReview(car: any, mode: 'activation' | 'deletion' | 'transfer') {
+  // Ensure owner(s) are pre-fetched for the modal
+  userStore.fetchUser(car.ownerId)
+  if (car.transferToOwnerId) userStore.fetchUser(car.transferToOwnerId)
+  reviewCar.value = car
+  reviewMode.value = mode
+  isReviewModalOpen.value = true
+}
+
+function handleReviewApprove() {
+  if (!reviewCar.value) return
+  if (reviewMode.value === 'activation') carsStore.approveCar(reviewCar.value.id)
+  else if (reviewMode.value === 'deletion') carsStore.approveDeletion(reviewCar.value.id)
+  else if (reviewMode.value === 'transfer') carsStore.approveTransfer(reviewCar.value.id)
+  isReviewModalOpen.value = false
+}
+
+function handleReviewReject() {
+  if (!reviewCar.value) return
+  isReviewModalOpen.value = false
+  openRejectModal(reviewCar.value.id, reviewMode.value === 'transfer')
+}
 
 const fineForm = reactive({
   ownerId: '',
