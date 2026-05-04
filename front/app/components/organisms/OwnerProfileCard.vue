@@ -17,7 +17,13 @@
 
     <div class="p-6 bg-slate-800/30 border-b border-slate-800 flex flex-col items-center text-center">
       <div class="w-16 h-16 rounded-full bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center mb-3 overflow-hidden shadow-sm">
-        <img v-if="photoUrl" :src="photoUrl" alt="Profile" class="w-full h-full object-cover" referrerpolicy="no-referrer" />
+        <img
+          v-if="photoUrl"
+          :src="photoUrl"
+          alt="Profile"
+          class="w-full h-full object-cover"
+          referrerpolicy="no-referrer"
+        >
         <UIcon v-else name="lucide:user-circle" class="w-8 h-8 text-indigo-400" />
       </div>
       <h3 class="text-lg font-bold text-white">{{ userProfile.fullName || userProfile.name || '—' }}</h3>

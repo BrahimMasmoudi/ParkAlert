@@ -6,7 +6,10 @@
         <UBadge v-if="!loading" color="warning" variant="soft">{{ activations.length }}</UBadge>
       </div>
       <LoadingSkeleton v-if="loading" :count="4" />
-      <div v-else-if="!activations.length" class="text-center py-12 text-slate-500 bg-slate-900/50 rounded-xl border border-slate-800">
+      <div
+        v-else-if="!activations.length"
+        class="text-center py-12 text-slate-500 bg-slate-900/50 rounded-xl border border-slate-800"
+      >
         <UIcon name="lucide:check-circle-2" class="w-8 h-8 text-slate-600 mb-2 mx-auto" />
         <p>{{ $t('police.cars.no_activations') }}</p>
       </div>
@@ -28,9 +31,26 @@
         </template>
         <template #actions-cell="{ row }">
           <div class="flex gap-2">
-            <UButton size="xs" color="neutral" variant="soft" icon="lucide:eye" @click="$emit('review', row.original, 'activation')">{{ $t('common.details') }}</UButton>
-            <UButton size="xs" color="success" :loading="carsStore.isLoading(`${row.original.id}-approve`)" @click="carsStore.approveCar(row.original.id)">{{ $t('police.actions.approve') }}</UButton>
-            <UButton size="xs" color="error" variant="soft" :loading="carsStore.isLoading(`${row.original.id}-reject`)" @click="$emit('reject', row.original.id, false)">{{ $t('common.reject') }}</UButton>
+            <UButton
+              size="xs"
+              color="neutral"
+              variant="soft"
+              icon="lucide:eye"
+              @click="$emit('review', row.original, 'activation')"
+            >{{ $t('common.details') }}</UButton>
+            <UButton
+              size="xs"
+              color="success"
+              :loading="carsStore.isLoading(`${row.original.id}-approve`)"
+              @click="carsStore.approveCar(row.original.id)"
+            >{{ $t('police.actions.approve') }}</UButton>
+            <UButton
+              size="xs"
+              color="error"
+              variant="soft"
+              :loading="carsStore.isLoading(`${row.original.id}-reject`)"
+              @click="$emit('reject', row.original.id, false)"
+            >{{ $t('common.reject') }}</UButton>
           </div>
         </template>
       </UTable>
@@ -42,7 +62,10 @@
         <UBadge v-if="!loading" color="error" variant="soft">{{ deletions.length }}</UBadge>
       </div>
       <LoadingSkeleton v-if="loading" :count="4" />
-      <div v-else-if="!deletions.length" class="text-center py-12 text-slate-500 bg-slate-900/50 rounded-xl border border-slate-800">
+      <div
+        v-else-if="!deletions.length"
+        class="text-center py-12 text-slate-500 bg-slate-900/50 rounded-xl border border-slate-800"
+      >
         <UIcon name="lucide:check-circle-2" class="w-8 h-8 text-slate-600 mb-2 mx-auto" />
         <p>{{ $t('police.cars.no_deletions') }}</p>
       </div>
@@ -56,7 +79,7 @@
         <template #ownerId-cell="{ row }">
           <AtomsUserName :user="userStore.usersCache[row.original.ownerId]" />
         </template>
-        <template #status-cell="{ row }">
+        <template #status-cell>
           <UBadge color="error" variant="soft">{{ $t('police.cars.status.deletion_requested') }}</UBadge>
         </template>
         <template #createdAt-cell="{ row }">
@@ -64,9 +87,26 @@
         </template>
         <template #actions-cell="{ row }">
           <div class="flex gap-2">
-            <UButton size="xs" color="neutral" variant="soft" icon="lucide:eye" @click="$emit('review', row.original, 'deletion')">{{ $t('common.details') }}</UButton>
-            <UButton size="xs" color="error" :loading="carsStore.isLoading(`${row.original.id}-approve`)" @click="carsStore.approveDeletion(row.original.id)">{{ $t('police.actions.approve_deletion') }}</UButton>
-            <UButton size="xs" color="neutral" variant="soft" :loading="carsStore.isLoading(`${row.original.id}-reject`)" @click="carsStore.approveCar(row.original.id)">{{ $t('police.actions.cancel_deletion') }}</UButton>
+            <UButton
+              size="xs"
+              color="neutral"
+              variant="soft"
+              icon="lucide:eye"
+              @click="$emit('review', row.original, 'deletion')"
+            >{{ $t('common.details') }}</UButton>
+            <UButton
+              size="xs"
+              color="error"
+              :loading="carsStore.isLoading(`${row.original.id}-approve`)"
+              @click="carsStore.approveDeletion(row.original.id)"
+            >{{ $t('police.actions.approve_deletion') }}</UButton>
+            <UButton
+              size="xs"
+              color="neutral"
+              variant="soft"
+              :loading="carsStore.isLoading(`${row.original.id}-reject`)"
+              @click="carsStore.approveCar(row.original.id)"
+            >{{ $t('police.actions.cancel_deletion') }}</UButton>
           </div>
         </template>
       </UTable>
@@ -78,7 +118,10 @@
         <UBadge v-if="!loading" color="primary" variant="soft">{{ transfers.length }}</UBadge>
       </div>
       <LoadingSkeleton v-if="loading" :count="4" />
-      <div v-else-if="!transfers.length" class="text-center py-12 text-slate-500 bg-slate-900/50 rounded-xl border border-slate-800">
+      <div
+        v-else-if="!transfers.length"
+        class="text-center py-12 text-slate-500 bg-slate-900/50 rounded-xl border border-slate-800"
+      >
         <UIcon name="lucide:check-circle-2" class="w-8 h-8 text-slate-600 mb-2 mx-auto" />
         <p>{{ $t('police.cars.no_transfers') }}</p>
       </div>
@@ -92,21 +135,46 @@
         <template #ownerId-cell="{ row }">
           <AtomsUserName :user="userStore.usersCache[row.original.ownerId]" />
         </template>
-        <template #status-cell="{ row }">
+        <template #status-cell>
           <UBadge color="primary" variant="soft">{{ $t('police.cars.status.transfer_requested') }}</UBadge>
         </template>
         <template #createdAt-cell="{ row }">
           <span class="text-sm text-slate-400">{{ new Date(row.original.createdAt).toLocaleString() }}</span>
         </template>
         <template #carteGriseUrl-cell="{ row }">
-          <UButton v-if="row.original.transferCarteGriseUrl || row.original.carteGriseUrl" :to="row.original.transferCarteGriseUrl || row.original.carteGriseUrl" target="_blank" size="xs" color="neutral" variant="soft" icon="lucide:external-link">{{ $t('common.view_document') }}</UButton>
+          <UButton
+            v-if="row.original.transferCarteGriseUrl || row.original.carteGriseUrl"
+            :to="row.original.transferCarteGriseUrl || row.original.carteGriseUrl"
+            target="_blank"
+            size="xs"
+            color="neutral"
+            variant="soft"
+            icon="lucide:external-link"
+          >{{ $t('common.view_document') }}</UButton>
           <span v-else class="text-slate-500 italic text-sm">No doc</span>
         </template>
         <template #actions-cell="{ row }">
           <div class="flex gap-2">
-            <UButton size="xs" color="neutral" variant="soft" icon="lucide:eye" @click="$emit('review', row.original, 'transfer')">{{ $t('common.details') }}</UButton>
-            <UButton size="xs" color="success" :loading="carsStore.isLoading(row.original.id + '-approve')" @click="carsStore.approveTransfer(row.original.id)">{{ $t('police.actions.approve') }}</UButton>
-            <UButton size="xs" color="error" variant="soft" :loading="carsStore.isLoading(row.original.id + '-reject')" @click="$emit('reject', row.original.id, true)">{{ $t('police.actions.reject') }}</UButton>
+            <UButton
+              size="xs"
+              color="neutral"
+              variant="soft"
+              icon="lucide:eye"
+              @click="$emit('review', row.original, 'transfer')"
+            >{{ $t('common.details') }}</UButton>
+            <UButton
+              size="xs"
+              color="success"
+              :loading="carsStore.isLoading(row.original.id + '-approve')"
+              @click="carsStore.approveTransfer(row.original.id)"
+            >{{ $t('police.actions.approve') }}</UButton>
+            <UButton
+              size="xs"
+              color="error"
+              variant="soft"
+              :loading="carsStore.isLoading(row.original.id + '-reject')"
+              @click="$emit('reject', row.original.id, true)"
+            >{{ $t('police.actions.reject') }}</UButton>
           </div>
         </template>
       </UTable>

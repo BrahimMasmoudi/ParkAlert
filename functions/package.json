@@ -6,7 +6,9 @@
     "build:watch": "tsc --watch",
     "serve": "npm run build && firebase emulators:start --only functions",
     "deploy": "firebase deploy --only functions",
-    "migrate": "fireway --require=\"ts-node/register\" migrate"
+    "migrate": "fireway --require=\"ts-node/register\" migrate",
+    "lint": "eslint .",
+    "lint:fix": "eslint --fix ."
   },
   "engines": {
     "node": "24"
@@ -19,8 +21,15 @@
     "fireway": "^1.1.0"
   },
   "devDependencies": {
+    "@eslint/js": "^10.0.1",
     "@types/node": "^20.0.0",
+    "@typescript-eslint/eslint-plugin": "^8.25.0",
+    "@typescript-eslint/parser": "^8.25.0",
+    "eslint": "^9.21.0",
+    "husky": "^9.1.7",
+    "lint-staged": "^15.4.3",
     "ts-node": "^10.9.2",
-    "typescript": "^5.9.2"
+    "typescript": "^5.9.2",
+    "typescript-eslint": "^8.59.1"
   }
 }

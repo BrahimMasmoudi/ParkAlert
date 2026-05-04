@@ -24,11 +24,22 @@
 
     <template #option="{ option }">
       <div class="flex items-center gap-3 py-1.5 w-full">
-        <UAvatar :src="option.photoURL" :alt="option.fullName || option.name" size="sm" class="ring-1 ring-slate-800" />
+        <UAvatar
+          :src="option.photoURL"
+          :alt="option.fullName || option.name"
+          size="sm"
+          class="ring-1 ring-slate-800"
+        />
         <div class="flex flex-col min-w-0">
           <div class="flex items-center gap-2">
             <span class="text-sm font-semibold text-white truncate">{{ option.fullName || option.name }}</span>
-            <UBadge v-if="option.role === 'police'" color="indigo" variant="subtle" size="2xs" class="text-[8px] uppercase">Police</UBadge>
+            <UBadge
+              v-if="option.role === 'police'"
+              color="indigo"
+              variant="subtle"
+              size="2xs"
+              class="text-[8px] uppercase"
+            >Police</UBadge>
           </div>
           <div class="flex items-center gap-2 mt-0.5">
             <span v-if="option.identityNumber" class="text-[10px] text-indigo-400 font-mono tracking-tighter">{{ option.identityNumber }}</span>

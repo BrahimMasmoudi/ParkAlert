@@ -17,15 +17,22 @@
 
       <div class="flex items-center gap-2">
         <div
-          :class="`flex items-center gap-1.5 px-2.5 py-1 rounded-full border text-xs font-medium ${cfg.color} ${cfg.bg}`">
+          :class="`flex items-center gap-1.5 px-2.5 py-1 rounded-full border text-xs font-medium ${cfg.color} ${cfg.bg}`"
+        >
           <UIcon :name="cfg.icon" class="w-3.5 h-3.5" />
           <span class="capitalize">{{ $t(`roles.${role}`) }}</span>
         </div>
 
         <MoleculesLanguageMenu />
 
-        <UButton id="signout-header-btn" size="sm" variant="ghost" icon="lucide:log-out"
-          class="text-slate-400 hover:text-white" @click="authStore.logout" />
+        <UButton
+          id="signout-header-btn"
+          size="sm"
+          variant="ghost"
+          icon="lucide:log-out"
+          class="text-slate-400 hover:text-white"
+          @click="authStore.logout"
+        />
       </div>
     </UContainer>
   </header>

@@ -23,7 +23,7 @@
     <div v-else class="space-y-4">
       <div v-if="unpaidFines.length" class="flex items-center gap-2 mb-2">
         <span class="text-[10px] font-black uppercase tracking-[0.2em] text-red-500">{{ $t('owner.fines.unpaid_title') }}</span>
-        <div class="h-px flex-1 bg-red-950"></div>
+        <div class="h-px flex-1 bg-red-950"/>
       </div>
 
       <MoleculesOwnerFineCard
@@ -34,7 +34,7 @@
 
       <div v-if="paidFines.length" class="flex items-center gap-2 mt-8 mb-2">
         <span class="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">{{ $t('owner.fines.settled_title') }}</span>
-        <div class="h-px flex-1 bg-slate-800"></div>
+        <div class="h-px flex-1 bg-slate-800"/>
       </div>
 
       <MoleculesOwnerFineCard

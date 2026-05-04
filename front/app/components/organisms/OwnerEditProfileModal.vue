@@ -10,7 +10,7 @@
     }"
   >
     <template #body>
-      <form @submit.prevent="submitUpdate" class="space-y-5">
+      <form class="space-y-5" @submit.prevent="submitUpdate">
         <UFormField
           :label="$t('owner.modals.edit_profile.full_name')"
           required

@@ -20,7 +20,8 @@
               <p class="font-mono text-lg font-bold text-amber-400 tracking-widest">{{ car.plateNumber }}</p>
             </div>
             <div>
-              <p class="text-[10px] text-slate-500 uppercase tracking-wider mb-1">{{ $t('police.review.brand_model') }}</p>
+              <p class="text-[10px] text-slate-500 uppercase tracking-wider mb-1">{{ $t('police.review.brand_model') }}
+              </p>
               <p class="text-sm text-slate-200 font-medium capitalize">{{ car.brand }} {{ car.model }}</p>
             </div>
             <div>
@@ -28,7 +29,8 @@
               <p class="text-sm text-slate-200 font-medium capitalize">{{ car.color }}</p>
             </div>
             <div>
-              <p class="text-[10px] text-slate-500 uppercase tracking-wider mb-1">{{ $t('police.review.requested') }}</p>
+              <p class="text-[10px] text-slate-500 uppercase tracking-wider mb-1">{{ $t('police.review.requested') }}
+              </p>
               <p class="text-sm text-slate-400">{{ new Date(car.createdAt).toLocaleString() }}</p>
             </div>
           </div>
@@ -41,7 +43,8 @@
           </p>
           <div class="flex items-center gap-4">
             <div class="flex-1 bg-slate-900 rounded-lg p-3 border border-slate-800">
-              <p class="text-[10px] text-slate-500 uppercase tracking-wider mb-1">{{ $t('police.review.current_owner') }}</p>
+              <p class="text-[10px] text-slate-500 uppercase tracking-wider mb-1">{{ $t('police.review.current_owner')
+              }}</p>
               <p class="text-sm font-semibold text-white">
                 {{ previousOwner?.fullName || previousOwner?.name || car.ownerId }}
               </p>
@@ -51,7 +54,8 @@
             <UIcon name="lucide:arrow-right" class="w-5 h-5 text-slate-500 shrink-0" />
 
             <div class="flex-1 bg-indigo-950/40 rounded-lg p-3 border border-indigo-900/50">
-              <p class="text-[10px] text-indigo-400 uppercase tracking-wider mb-1">{{ $t('police.review.new_owner') }}</p>
+              <p class="text-[10px] text-indigo-400 uppercase tracking-wider mb-1">{{ $t('police.review.new_owner') }}
+              </p>
               <p class="text-sm font-semibold text-white">
                 {{ newOwner?.fullName || newOwner?.name || car.transferToOwnerId || '—' }}
               </p>
@@ -70,8 +74,11 @@
               v-if="previousOwner.photoURL"
               :src="previousOwner.photoURL"
               class="w-9 h-9 rounded-full object-cover ring-2 ring-slate-700"
-            />
-            <div v-else class="w-9 h-9 rounded-full bg-slate-800 flex items-center justify-center ring-2 ring-slate-700">
+            >
+            <div
+              v-else
+              class="w-9 h-9 rounded-full bg-slate-800 flex items-center justify-center ring-2 ring-slate-700"
+            >
               <UIcon name="lucide:user" class="w-4 h-4 text-slate-500" />
             </div>
             <div>
@@ -93,9 +100,11 @@
               <img
                 :src="carteGriseToShow"
                 class="w-full rounded-lg border border-slate-700 object-contain max-h-64 transition-all duration-300 group-hover:brightness-75"
-                @error="($event.target as HTMLImageElement).parentElement!.style.display='none'"
-              />
-              <div class="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                @error="($event.target as HTMLImageElement).parentElement!.style.display = 'none'"
+              >
+              <div
+                class="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+              >
                 <UIcon name="i-lucide-maximize-2" class="w-8 h-8 text-white drop-shadow-lg" />
               </div>
             </a>
@@ -195,6 +204,14 @@ const modeConfig = computed(() => {
         color: 'primary',
         approvLabel: 'police.actions.approve_transfer',
         approveColor: 'success' as const,
+      }
+    default:
+      return {
+        title: '',
+        icon: '',
+        color: 'primary',
+        approvLabel: '',
+        approveColor: 'primary' as const,
       }
   }
 })

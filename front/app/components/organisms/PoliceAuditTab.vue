@@ -19,7 +19,12 @@
         <span class="font-bold text-white">TND {{ row.original.amount }}</span>
       </template>
       <template #status-cell="{ row }">
-        <UBadge :color="row.original.status === 'paid' ? 'success' : 'error'" variant="subtle" size="xs" class="uppercase font-bold">
+        <UBadge
+          :color="row.original.status === 'paid' ? 'success' : 'error'"
+          variant="subtle"
+          size="xs"
+          class="uppercase font-bold"
+        >
           {{ row.original.status }}
         </UBadge>
       </template>
