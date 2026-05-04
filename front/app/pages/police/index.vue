@@ -18,8 +18,9 @@
 
             <LoadingSkeleton v-if="carsStore.pendingCarsLoading" :count="4" />
 
-            <div v-else-if="!carsStore.activationPendingCars.length" class="text-center py-10 text-slate-500">
-              No activation requests
+            <div v-else-if="!carsStore.activationPendingCars.length" class="text-center py-12 text-slate-500 bg-slate-900/50 rounded-xl border border-slate-800">
+              <UIcon name="lucide:check-circle-2" class="w-8 h-8 text-slate-600 mb-2 mx-auto" />
+              <p>No activation requests</p>
             </div>
 
             <UTable v-else :data="carsStore.activationPendingCars" :columns="carColumns">
@@ -51,11 +52,14 @@
 
               <template #actions-cell="{ row }">
                 <div class="flex gap-2">
+                  <UButton size="xs" color="neutral" variant="soft" icon="lucide:eye"
+                    @click="openReview(row.original, 'activation')">
+                    Details
+                  </UButton>
                   <UButton size="xs" color="success" :loading="carsStore.isLoading(`${row.original.id}-approve`)"
                     @click="carsStore.approveCar(row.original.id)">
                     Approve
                   </UButton>
-
                   <UButton size="xs" color="error" variant="soft"
                     :loading="carsStore.isLoading(`${row.original.id}-reject`)"
                     @click="openRejectModal(row.original.id)">
@@ -79,8 +83,9 @@
 
             <LoadingSkeleton v-if="carsStore.pendingCarsLoading" :count="4" />
 
-            <div v-else-if="!carsStore.deletionPendingCars.length" class="text-center py-10 text-slate-500">
-              No deletion requests
+            <div v-else-if="!carsStore.deletionPendingCars.length" class="text-center py-12 text-slate-500 bg-slate-900/50 rounded-xl border border-slate-800">
+              <UIcon name="lucide:check-circle-2" class="w-8 h-8 text-slate-600 mb-2 mx-auto" />
+              <p>No deletion requests</p>
             </div>
 
             <UTable v-else :data="carsStore.deletionPendingCars" :columns="deleteColumns">
@@ -105,10 +110,90 @@
               </template>
 
               <template #actions-cell="{ row }">
-                <UButton size="xs" color="error" :loading="carsStore.isLoading(row.original.id)"
-                  @click="carsStore.approveDeletion(row.original.id)">
-                  Approve Deletion
+                <div class="flex gap-2">
+                  <UButton size="xs" color="neutral" variant="soft" icon="lucide:eye"
+                    @click="openReview(row.original, 'deletion')">
+                    Details
+                  </UButton>
+                  <UButton size="xs" color="error" :loading="carsStore.isLoading(row.original.id)"
+                    @click="carsStore.approveDeletion(row.original.id)">
+                    Approve Deletion
+                  </UButton>
+                </div>
+              </template>
+            </UTable>
+          </section>
+
+          <UDivider class="my-10" />
+
+          <section>
+            <div class="flex items-center justify-between mb-4">
+              <h2 class="text-xl font-bold flex items-center gap-2">
+                <UIcon name="lucide:arrow-right-left" class="w-6 h-6 text-primary" />
+                Transfer Requests
+              </h2>
+              <UBadge v-if="!carsStore.pendingCarsLoading" color="primary" variant="soft">
+                {{ carsStore.transferRequestedCars?.length ?? 0 }}
+              </UBadge>
+            </div>
+
+            <LoadingSkeleton v-if="carsStore.pendingCarsLoading" :count="3" />
+
+            <div v-else-if="!carsStore.transferRequestedCars?.length" class="text-center py-12 text-slate-500 bg-slate-900/50 rounded-xl border border-slate-800">
+              <UIcon name="lucide:check-circle-2" class="w-8 h-8 text-slate-600 mb-2 mx-auto" />
+              <p>No pending transfer requests</p>
+            </div>
+
+            <UTable v-else :data="carsStore.transferRequestedCars" :columns="carColumns">
+              <template #plateNumber-cell="{ row }">
+                <span class="font-mono font-bold text-amber-400">
+                  {{ row.original.plateNumber }}
+                </span>
+              </template>
+
+              <template #vehicle-cell="{ row }">
+                {{ row.original.brand }} {{ row.original.model }}
+              </template>
+
+              <template #ownerId-cell="{ row }">
+                <AtomsUserName :user="userStore.usersCache[row.original.ownerId]" />
+              </template>
+
+              <template #status-cell="{ row }">
+                <UBadge color="primary" variant="soft">
+                  Transfer Requested
+                </UBadge>
+              </template>
+
+              <template #createdAt-cell="{ row }">
+                <span class="text-sm text-slate-400">
+                  {{ new Date(row.original.createdAt).toLocaleString() }}
+                </span>
+              </template>
+
+              <template #carteGriseUrl-cell="{ row }">
+                <UButton v-if="row.original.transferCarteGriseUrl || row.original.carteGriseUrl" :to="row.original.transferCarteGriseUrl || row.original.carteGriseUrl" target="_blank" size="xs"
+                  color="neutral" variant="soft" icon="lucide:external-link">
+                  View Document
                 </UButton>
+                <span v-else class="text-slate-500 italic text-sm">No doc</span>
+              </template>
+
+              <template #actions-cell="{ row }">
+                <div class="flex gap-2">
+                  <UButton size="xs" color="neutral" variant="soft" icon="lucide:eye"
+                    @click="openReview(row.original, 'transfer')">
+                    Details
+                  </UButton>
+                  <UButton size="xs" color="success" :loading="carsStore.isLoading(row.original.id + '-approve')"
+                    @click="carsStore.approveTransfer(row.original.id)">
+                    Approve
+                  </UButton>
+                  <UButton size="xs" color="error" variant="soft" :loading="carsStore.isLoading(row.original.id + '-reject')"
+                    @click="openRejectModal(row.original.id, true)">
+                    Reject
+                  </UButton>
+                </div>
               </template>
             </UTable>
           </section>
@@ -129,8 +214,9 @@
 
           <LoadingSkeleton v-if="reportsStore.reportsLoading" :count="5" />
 
-          <div v-else-if="!reportsStore.pendingReports?.length" class="text-center py-16 text-slate-500">
-            No pending reports
+          <div v-else-if="!reportsStore.pendingReports?.length" class="text-center py-12 text-slate-500 bg-slate-900/50 rounded-xl border border-slate-800">
+            <UIcon name="lucide:check-circle-2" class="w-8 h-8 text-slate-600 mb-2 mx-auto" />
+            <p>No pending reports</p>
           </div>
 
           <UTable v-else :data="reportsStore.pendingReports" :columns="columns">
@@ -212,6 +298,15 @@
         </div>
       </template>
     </UModal>
+
+    <!-- REVIEW MODAL -->
+    <OrganismsPoliceCarReviewModal
+      v-model:open="isReviewModalOpen"
+      :car="reviewCar"
+      :mode="reviewMode"
+      @approve="handleReviewApprove"
+      @reject="handleReviewReject"
+    />
   </div>
 </template>
 
@@ -232,6 +327,10 @@ watch(() => carsStore.deletionPendingCars, (cars) => {
   cars.forEach(car => userStore.fetchUser(car.ownerId))
 }, { immediate: true })
 
+watch(() => carsStore.transferRequestedCars, (cars) => {
+  cars.forEach(car => userStore.fetchUser(car.ownerId))
+}, { immediate: true })
+
 const selected = ref<(Report & { id: string }) | null>(null)
 
 const isDetailOpen = ref(false)
@@ -240,6 +339,35 @@ const isFineOpen = ref(false)
 const isRejectModalOpen = ref(false)
 const selectedCarIdForRejection = ref<string | null>(null)
 const rejectionReason = ref('')
+const isRejectingTransfer = ref(false)
+
+// Review modal
+const isReviewModalOpen = ref(false)
+const reviewCar = ref<any | null>(null)
+const reviewMode = ref<'activation' | 'deletion' | 'transfer'>('activation')
+
+function openReview(car: any, mode: 'activation' | 'deletion' | 'transfer') {
+  // Ensure owner(s) are pre-fetched for the modal
+  userStore.fetchUser(car.ownerId)
+  if (car.transferToOwnerId) userStore.fetchUser(car.transferToOwnerId)
+  reviewCar.value = car
+  reviewMode.value = mode
+  isReviewModalOpen.value = true
+}
+
+function handleReviewApprove() {
+  if (!reviewCar.value) return
+  if (reviewMode.value === 'activation') carsStore.approveCar(reviewCar.value.id)
+  else if (reviewMode.value === 'deletion') carsStore.approveDeletion(reviewCar.value.id)
+  else if (reviewMode.value === 'transfer') carsStore.approveTransfer(reviewCar.value.id)
+  isReviewModalOpen.value = false
+}
+
+function handleReviewReject() {
+  if (!reviewCar.value) return
+  isReviewModalOpen.value = false
+  openRejectModal(reviewCar.value.id, reviewMode.value === 'transfer')
+}
 
 const fineForm = reactive({
   ownerId: '',
@@ -272,8 +400,9 @@ function openIssuePane() {
   isFineOpen.value = true
 }
 
-function openRejectModal(carId: string) {
+function openRejectModal(carId: string, isTransfer = false) {
   selectedCarIdForRejection.value = carId
+  isRejectingTransfer.value = isTransfer
   rejectionReason.value = ''
   isRejectModalOpen.value = true
 }
@@ -281,7 +410,12 @@ function openRejectModal(carId: string) {
 async function submitReject() {
   if (!selectedCarIdForRejection.value || !rejectionReason.value.trim()) return
 
-  await carsStore.rejectCar(selectedCarIdForRejection.value, rejectionReason.value)
+  if (isRejectingTransfer.value) {
+    await carsStore.rejectTransfer(selectedCarIdForRejection.value, rejectionReason.value)
+  } else {
+    await carsStore.rejectCar(selectedCarIdForRejection.value, rejectionReason.value)
+  }
+  
   isRejectModalOpen.value = false
 }
 

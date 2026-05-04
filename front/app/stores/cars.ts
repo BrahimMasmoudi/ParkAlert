@@ -16,13 +16,15 @@ export type CarStatus =
   | 'active'
   | 'deleted'
   | 'rejected'
+  | 'transfer_requested'
 
 export const carStatusMapper: Record<CarStatus, string> = {
   activation_pending: 'Activation Pending',
   deletion_requested: 'Deletion Pending',
   active: 'Active',
   deleted: 'Deleted',
-  rejected: 'Rejected'
+  rejected: 'Rejected',
+  transfer_requested: 'Transfer Requested'
 }
 
 export interface Car {
@@ -36,6 +38,9 @@ export interface Car {
   status: CarStatus
   createdAt: number
   rejectionReason?: string
+  transferRejectionReason?: string
+  transferToOwnerId?: string
+  transferCarteGriseUrl?: string
 }
 
 function getTimestampMillis(ts: any): number {
@@ -67,7 +72,10 @@ const carConverter = {
       carteGriseUrl: data.carteGriseUrl || '',
       status: data.status || 'activation_pending',
       createdAt: getTimestampMillis(data.createdAt),
-      rejectionReason: data.rejectionReason
+      rejectionReason: data.rejectionReason,
+      transferRejectionReason: data.transferRejectionReason,
+      transferToOwnerId: data.transferToOwnerId,
+      transferCarteGriseUrl: data.transferCarteGriseUrl
     }
   }
 }
@@ -112,12 +120,31 @@ export const useCarsStore = defineStore('cars', () => {
   })
 
   /**
+   * HISTORICAL CARS
+   */
+  const historicalCarsRef = computed(() => {
+    if (!authStore.currentUser?.uid) return null
+
+    return query(
+      collection(db, 'cars').withConverter(carConverter),
+      where('ownershipHistory', 'array-contains', authStore.currentUser.uid)
+    )
+  })
+
+  const {
+    data: historicalCars,
+    pending: historicalCarsLoading
+  } = useCollection(historicalCarsRef, {
+    ssrKey: 'historicalCars'
+  })
+
+  /**
    * POLICE PENDING ACTIONS
    */
   const pendingCarsRef = computed(() =>
     query(
       collection(db, 'cars').withConverter(carConverter),
-      where('status', 'in', ['activation_pending', 'deletion_requested'])
+      where('status', 'in', ['activation_pending', 'deletion_requested', 'transfer_requested'])
     )
   )
 
@@ -137,6 +164,12 @@ export const useCarsStore = defineStore('cars', () => {
   const deletionPendingCars = computed(() =>
     (pendingCars.value || []).filter(
       car => car.status === 'deletion_requested'
+    )
+  )
+
+  const transferRequestedCars = computed(() =>
+    (pendingCars.value || []).filter(
+      car => car.status === 'transfer_requested'
     )
   )
 
@@ -181,6 +214,22 @@ export const useCarsStore = defineStore('cars', () => {
     })
   }
 
+  async function requestOwnershipTransfer(payload: {
+    carId: string
+    newOwnerId: string
+    carteGriseUrl: string
+  }) {
+    return withLoading(`${payload.carId}-transfer`, async () => {
+      await callFn('requestOwnershipTransfer', payload)
+
+      toast.add({
+        title: 'Ownership transfer requested',
+        description: 'Car moved to new owner pending activation.',
+        color: 'success'
+      })
+    })
+  }
+
   async function approveCar(carId: string) {
     return withLoading(`${carId}-approve`, async () => {
       await callFn('approveCar', { carId })
@@ -199,6 +248,28 @@ export const useCarsStore = defineStore('cars', () => {
       toast.add({
         title: 'Car rejected',
         color: 'error'
+      })
+    })
+  }
+
+  async function approveTransfer(carId: string) {
+    return withLoading(`${carId}-approve`, async () => {
+      await callFn('approveTransfer', { carId })
+
+      toast.add({
+        title: 'Transfer approved',
+        color: 'success'
+      })
+    })
+  }
+
+  async function rejectTransfer(carId: string, reason: string) {
+    return withLoading(`${carId}-reject`, async () => {
+      await callFn('rejectTransfer', { carId, reason })
+
+      toast.add({
+        title: 'Transfer rejected',
+        color: 'success'
       })
     })
   }
@@ -243,11 +314,17 @@ export const useCarsStore = defineStore('cars', () => {
     pendingCarsLoading,
     activationPendingCars,
     deletionPendingCars,
+    transferRequestedCars,
+    historicalCars,
+    historicalCarsLoading,
     isLoading,
     addCar,
     retryCar,
+    requestOwnershipTransfer,
     approveCar,
     rejectCar,
+    approveTransfer,
+    rejectTransfer,
     approveDeletion,
     requestDeletion,
     cancelCarDeletion

@@ -29,3 +29,6 @@ logs
 storybook-static
 
 functions/lib/*
+
+# Firebase emulator export (local dev data)
+emulator-data/

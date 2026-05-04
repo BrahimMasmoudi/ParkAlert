@@ -4,7 +4,7 @@
   "type": "module",
   "scripts": {
     "build": "nuxt build",
-    "dev": "pnpm -C ../functions build & pnpm firebase emulators:exec --ui --import=../emulator-data --export-on-exit=../emulator-data --only firestore,auth,functions,storage 'pnpm nuxi dev'",
+    "dev": "sh ./dev.sh",
     "generate": "nuxt generate",
     "preview": "nuxt preview",
     "postinstall": "nuxt prepare",

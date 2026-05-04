@@ -6,13 +6,16 @@ const userStore = useUserStore()
 const carsStore = useCarsStore()
 
 const { userProfile, profileLoading } = storeToRefs(userStore)
-const { myCars, carsLoading } = storeToRefs(carsStore)
+const { myCars, carsLoading, historicalCars, historicalCarsLoading } = storeToRefs(carsStore)
 
 const isAddModalOpen = ref(false)
 const isEditModalOpen = ref(false)
 const confirmDeleteModalOpen = ref(false)
 const carToDelete = ref<string | null>(null)
 const carToEdit = ref<any | null>(null)
+
+const isTransferModalOpen = ref(false)
+const carToTransfer = ref<any | null>(null)
 
 watch(isAddModalOpen, (newVal) => {
   if (!newVal) {
@@ -41,6 +44,14 @@ const handleCarRetryAction = (carId: string) => {
     isAddModalOpen.value = true
   }
 }
+
+const handleCarTransferAction = (carId: string) => {
+  const car = myCars.value.find(c => c.id === carId)
+  if (car) {
+    carToTransfer.value = car
+    isTransferModalOpen.value = true
+  }
+}
 </script>
 
 <template>
@@ -51,7 +62,7 @@ const handleCarRetryAction = (carId: string) => {
       <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
         
         <!-- Left Column: User Profile -->
-        <div class="lg:col-span-4 space-y-6 sticky top-8">
+        <div class="lg:col-span-4 space-y-6 lg:sticky lg:top-8">
           <section>
             <h2 class="text-lg font-bold text-white mb-4 tracking-tight flex items-center gap-2">
               <UIcon name="lucide:user" class="w-5 h-5 text-indigo-400" />
@@ -114,7 +125,27 @@ const handleCarRetryAction = (carId: string) => {
                 :car="car"
                 @delete="handleCarDeleteAction"
                 @retry="handleCarRetryAction"
+                @transfer="handleCarTransferAction"
               />
+            </div>
+
+            <!-- Ownership History Section -->
+            <div v-if="historicalCars?.length" class="mt-12">
+              <div class="flex items-center gap-3 mb-6">
+                <div class="p-2 bg-slate-800 rounded-lg">
+                  <UIcon name="lucide:history" class="w-5 h-5 text-slate-400" />
+                </div>
+                <h2 class="text-xl font-bold tracking-tight text-white">Ownership History</h2>
+              </div>
+              
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                <MoleculesOwnerCarCard
+                  v-for="car in historicalCars"
+                  :key="car.id"
+                  :car="car"
+                  :readonly="true"
+                />
+              </div>
             </div>
           </section>
         </div>
@@ -138,5 +169,8 @@ const handleCarRetryAction = (carId: string) => {
 
     <!-- Delete Confirmation Modal -->
     <OrganismsOwnerDeleteCarModal v-model:open="confirmDeleteModalOpen" :car-id="carToDelete" />
+
+    <!-- Transfer Car Modal -->
+    <OrganismsOwnerTransferCarModal v-model:open="isTransferModalOpen" :car="carToTransfer" :owners="userStore.availableOwners" />
   </div>
 </template>

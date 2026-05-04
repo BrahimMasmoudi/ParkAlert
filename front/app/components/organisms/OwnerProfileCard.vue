@@ -31,7 +31,7 @@ defineEmits<{
           icon="lucide:edit-2"
           color="neutral"
           variant="ghost"
-          class="opacity-0 group-hover:opacity-100 transition-opacity bg-slate-900/50 backdrop-blur-md"
+          class="bg-slate-900/50 backdrop-blur-md hover:bg-slate-800 transition-colors"
           @click="$emit('edit')"
         />
       </UTooltip>

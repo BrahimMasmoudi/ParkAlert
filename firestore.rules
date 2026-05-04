@@ -20,8 +20,8 @@ service cloud.firestore {
     }
 
     match /users/{userId} {
-      // Users can read their own profile. Police can read all users.
-      allow read: if isSecureRequest() && (request.auth.uid == userId || getUserData().role == 'police');
+      // Allow authenticated users to read profiles (needed for local VueFire search)
+      allow read: if isSecureRequest();
       // All writes are done via Cloud Functions (setUserRole)
       allow write: if false; 
     }
@@ -40,8 +40,14 @@ service cloud.firestore {
     }
 
     match /cars/{carId} {
-      // Owners can read their own cars; Police can read all cars
-      allow read: if isSecureRequest() && (getUserData().role == 'police' || (getUserData().role == 'owner' && resource.data.ownerId == request.auth.uid));
+      // Owners can read their own cars OR cars they previously owned (ownershipHistory); Police can read all
+      allow read: if isSecureRequest() && (
+        getUserData().role == 'police' ||
+        (getUserData().role == 'owner' && (
+          resource.data.ownerId == request.auth.uid ||
+          request.auth.uid in resource.data.ownershipHistory
+        ))
+      );
       allow write: if false;
     }
   }

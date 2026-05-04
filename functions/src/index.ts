@@ -408,6 +408,187 @@ export const cancelCarDeletion = onCall(
   },
 )
 
+// ─────────────────────────────────────────────────────────────────
+// requestOwnershipTransfer — owner only
+// ─────────────────────────────────────────────────────────────────
+export const requestOwnershipTransfer = onCall(
+  { region: 'europe-west3', enforceAppCheck: true },
+  async (request) => {
+    const uid = requireAuth(request.auth)
+
+    const { carId, newOwnerId, carteGriseUrl } = request.data as {
+      carId: string
+      newOwnerId: string
+      carteGriseUrl: string
+    }
+
+    if (!carId || !newOwnerId || !carteGriseUrl) {
+      throw new HttpsError('invalid-argument', 'Missing required fields')
+    }
+
+    const carRef = db.collection('cars').doc(carId)
+    const carSnap = await carRef.get()
+
+    if (!carSnap.exists) {
+      throw new HttpsError('not-found', 'Car not found')
+    }
+
+    const car = carSnap.data()!
+
+    if (car.ownerId !== uid) {
+      throw new HttpsError('permission-denied', 'Not your car')
+    }
+
+    const newOwnerSnap = await db.collection('users').doc(newOwnerId).get()
+    if (!newOwnerSnap.exists || newOwnerSnap.data()?.role !== 'owner') {
+      throw new HttpsError('not-found', 'New owner not found')
+    }
+
+    // Keep ownerId as is (old owner), set transferToOwnerId for the new one
+    await carRef.update({
+      status: 'transfer_requested',
+      transferToOwnerId: newOwnerId,
+      transferCarteGriseUrl: carteGriseUrl,
+      updatedAt: FieldValue.serverTimestamp(),
+      transferRequestedAt: FieldValue.serverTimestamp(),
+      transferRejectionReason: FieldValue.delete(),
+    })
+
+    await db.collection('car_audit_logs').add({
+      carId,
+      actorId: uid,
+      action: 'TRANSFER_REQUESTED',
+      details: `Transfer requested to ${newOwnerId}`,
+      timestamp: FieldValue.serverTimestamp(),
+    })
+
+    return { ok: true }
+  }
+)
+
+// ─────────────────────────────────────────────────────────────────
+// approveTransfer — police only
+// ─────────────────────────────────────────────────────────────────
+export const approveTransfer = onCall(
+  { region: 'europe-west3', enforceAppCheck: true },
+  async (request) => {
+    requireAuth(request.auth)
+
+    const { carId } = request.data as { carId: string }
+
+    if (!carId) {
+      throw new HttpsError('invalid-argument', 'carId is required')
+    }
+
+    const carRef = db.collection('cars').doc(carId)
+    const carSnap = await carRef.get()
+
+    if (!carSnap.exists) {
+      throw new HttpsError('not-found', 'Car not found')
+    }
+
+    const car = carSnap.data()!
+
+    if (car.status !== 'transfer_requested') {
+      throw new HttpsError('failed-precondition', 'Car is not pending transfer')
+    }
+
+    // If this transfer targets a new owner, verify the previous owner (current ownerId) has no fines
+    if (car.ownerId) {
+      const finesSnap = await db.collection('fines')
+        .where('ownerId', '==', car.ownerId)
+        .where('plateNumber', '==', car.plateNumber)
+        .where('status', '==', 'unpaid')
+        .get()
+
+      if (!finesSnap.empty) {
+        throw new HttpsError('failed-precondition', 'Cannot approve transfer: unpaid fines exist for this vehicle.')
+      }
+    }
+
+    const updates: any = {
+      status: 'active',
+      updatedAt: FieldValue.serverTimestamp(),
+    }
+
+    if (car.transferToOwnerId) {
+      updates.ownerId = car.transferToOwnerId
+      updates.ownershipHistory = FieldValue.arrayUnion(car.ownerId)
+      updates.transferToOwnerId = FieldValue.delete()
+      
+      if (car.transferCarteGriseUrl) {
+        updates.carteGriseUrl = car.transferCarteGriseUrl
+        updates.transferCarteGriseUrl = FieldValue.delete()
+      }
+    }
+
+    await carRef.update(updates)
+    const uid = requireAuth(request.auth)
+
+    await db.collection('car_audit_logs').add({
+      carId,
+      actorId: uid,
+      action: 'TRANSFER_APPROVED',
+      timestamp: FieldValue.serverTimestamp(),
+    })
+
+    return { ok: true }
+  }
+)
+
+// ─────────────────────────────────────────────────────────────────
+// rejectTransfer — police only
+// ─────────────────────────────────────────────────────────────────
+export const rejectTransfer = onCall(
+  { region: 'europe-west3', enforceAppCheck: true },
+  async (request) => {
+    requireAuth(request.auth)
+
+    const { carId, reason } = request.data as { carId: string; reason: string }
+
+    if (!carId) {
+      throw new HttpsError('invalid-argument', 'carId is required')
+    }
+    if (!reason || reason.trim() === '') {
+      throw new HttpsError('invalid-argument', 'reason is required')
+    }
+
+    const carRef = db.collection('cars').doc(carId)
+    const carSnap = await carRef.get()
+
+    if (!carSnap.exists) {
+      throw new HttpsError('not-found', 'Car not found')
+    }
+
+    const car = carSnap.data()!
+
+    if (car.status !== 'transfer_requested') {
+      throw new HttpsError('failed-precondition', 'Car is not pending transfer')
+    }
+
+    // Revert status to active so the old owner regains control
+    await carRef.update({
+      status: 'active',
+      transferRejectionReason: reason,
+      transferToOwnerId: FieldValue.delete(),
+      transferCarteGriseUrl: FieldValue.delete(),
+      updatedAt: FieldValue.serverTimestamp(),
+    })
+
+    const uid = requireAuth(request.auth)
+
+    await db.collection('car_audit_logs').add({
+      carId,
+      actorId: uid,
+      action: 'TRANSFER_REJECTED',
+      details: reason,
+      timestamp: FieldValue.serverTimestamp(),
+    })
+
+    return { ok: true }
+  }
+)
+
 export const approveCar = onCall(
   { region: 'europe-west3', enforceAppCheck: true },
   async (request) => {

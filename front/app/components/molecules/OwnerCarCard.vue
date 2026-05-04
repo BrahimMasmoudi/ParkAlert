@@ -14,12 +14,15 @@ defineProps<{
     color: string
     carteGriseUrl: string
     rejectionReason?: string
+    transferRejectionReason?: string
   }
+  readonly?: boolean
 }>()
 
 defineEmits<{
   (e: 'delete', id: string): void
   (e: 'retry', id: string): void
+  (e: 'transfer', id: string): void
 }>()
 </script>
 
@@ -40,17 +43,22 @@ defineEmits<{
           </div>
         </div>
         <div class="mt-3">
+          <UBadge v-if="readonly" color="neutral" variant="subtle" class="font-semibold text-xs px-2.5 py-1">
+            <UIcon name="lucide:arrow-right-left" class="w-3 h-3 mr-1" />
+            Transferred
+          </UBadge>
           <UBadge
-            :color="car.status === 'active' ? 'success' : (car.status === 'activation_pending' || car.status === 'deletion_requested' ? 'warning' : (car.status === 'rejected' ? 'error' : 'neutral'))"
+            v-else
+            :color="car.status === 'active' ? 'success' : (car.status === 'activation_pending' || car.status === 'deletion_requested' || car.status === 'transfer_requested' ? 'warning' : (car.status === 'rejected' ? 'error' : 'neutral'))"
             variant="subtle"
             class="capitalize font-semibold text-xs px-2.5 py-1"
           >
-            {{ car.status.replace('_', ' ') }}
+            {{ car.status.replace(/_/g, ' ') }}
           </UBadge>
         </div>
       </div>
       
-      <div class="flex items-center gap-2">
+      <div v-if="!readonly" class="flex items-center gap-2">
         <UTooltip v-if="car.status === 'deletion_requested'" text="Cancel Deletion Request">
           <UButton
             color="primary"
@@ -61,10 +69,19 @@ defineEmits<{
             :loading="carsStore.isLoading(car.id)"
             @click="$emit('delete', car.id)" 
           />
-          <!-- The parent can handle the cancel deletion by detecting the status -->
         </UTooltip>
         
-        <UTooltip v-else-if="car.status !== 'deleted'" text="Request Deletion">
+        <UTooltip v-if="car.status === 'active'" text="Transfer Ownership">
+          <UButton
+            color="primary"
+            variant="ghost"
+            icon="lucide:arrow-right-left"
+            class="transition-opacity p-2 -m-2 mr-1"
+            @click="$emit('transfer', car.id)"
+          />
+        </UTooltip>
+        
+        <UTooltip v-else-if="car.status !== 'deleted' && car.status !== 'deletion_requested'" text="Request Deletion">
           <UButton
             color="error"
             variant="ghost"
@@ -76,7 +93,6 @@ defineEmits<{
       </div>
     </div>
 
-    <!-- Card Body (Details) -->
     <div class="p-5 grid grid-cols-2 gap-6 bg-slate-900">
       <div>
         <p class="text-[10px] text-slate-500 font-bold uppercase tracking-widest mb-1">Brand & Model</p>
@@ -88,7 +104,6 @@ defineEmits<{
       </div>
     </div>
 
-    <!-- Rejection Reason -->
     <div v-if="car.status === 'rejected' && car.rejectionReason" class="px-5 pb-5 bg-slate-900">
       <div class="bg-red-950/30 border border-red-900/50 rounded-lg p-4">
         <div class="flex items-start justify-between gap-4">
@@ -106,7 +121,20 @@ defineEmits<{
       </div>
     </div>
 
-    <!-- Card Footer (Action) -->
+    <div v-if="!readonly && car.status === 'active' && car.transferRejectionReason" class="px-5 pb-5 bg-slate-900">
+      <div class="bg-red-950/30 border border-red-900/50 rounded-lg p-4">
+        <div class="flex items-start gap-4">
+          <div>
+            <p class="text-[10px] text-red-400 font-bold uppercase tracking-widest mb-1 flex items-center gap-1.5">
+              <UIcon name="lucide:alert-circle" class="w-3.5 h-3.5" />
+              Transfer Rejected
+            </p>
+            <p class="text-sm text-red-200 leading-snug">{{ car.transferRejectionReason }}</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <div class="px-5 py-3 bg-slate-950 border-t border-slate-800 flex items-center justify-between">
       <div class="flex items-center gap-2">
         <UIcon name="lucide:file-text" class="w-4 h-4 text-slate-500" />

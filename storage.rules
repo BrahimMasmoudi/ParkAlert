@@ -21,7 +21,7 @@ service firebase.storage {
       allow write: if isSecureRequest()
                    && request.auth.uid == ownerId
                    && request.resource.size < 10 * 1024 * 1024  // 10 MB max
-                   && request.resource.contentType.matches('image/.*');
+                   && (request.resource.contentType.matches('image/.*') || request.resource.contentType == 'application/pdf');
     }
   }
 }
