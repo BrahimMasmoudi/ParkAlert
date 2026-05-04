@@ -1,13 +1,13 @@
 <template>
   <UContainer class="py-6">
     <div class="flex items-center justify-between mb-4">
-      <h2 class="text-xl font-bold">Pending Reports</h2>
+      <h2 class="text-xl font-bold">{{ $t('police.pending_reports') }}</h2>
       <UBadge v-if="!loading" color="warning" variant="soft">{{ reports.length }}</UBadge>
     </div>
     <LoadingSkeleton v-if="loading" :count="5" />
     <div v-else-if="!reports.length" class="text-center py-12 text-slate-500 bg-slate-900/50 rounded-xl border border-slate-800">
       <UIcon name="lucide:check-circle-2" class="w-8 h-8 text-slate-600 mb-2 mx-auto" />
-      <p>No pending reports</p>
+      <p>{{ $t('police.no_reports') }}</p>
     </div>
     <UTable v-else :data="reports" :columns="columns">
       <template #plateNumber-cell="{ row }">
@@ -21,7 +21,7 @@
       </template>
       <template #actions-cell="{ row }">
         <div class="flex gap-2">
-          <UButton size="xs" color="neutral" variant="soft" icon="lucide:eye" @click="$emit('open', row.original)">View Details</UButton>
+          <UButton size="xs" color="neutral" variant="soft" icon="lucide:eye" @click="$emit('open', row.original)">{{ $t('common.view_details') }}</UButton>
         </div>
       </template>
     </UTable>

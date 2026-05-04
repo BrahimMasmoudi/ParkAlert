@@ -13,10 +13,10 @@
           <UIcon name="lucide:shield-check" class="w-10 h-10 text-white" />
         </div>
         <h1 class="text-4xl font-bold text-white tracking-tight">
-          ParkAlert
+          {{ $t('login.title') }}
         </h1>
         <p class="text-slate-400 mt-2 text-sm">
-          Government Parking Enforcement System
+          {{ $t('login.subtitle') }}
         </p>
       </div>
 
@@ -24,10 +24,10 @@
         <div class="flex flex-col items-center gap-6 py-2">
           <div class="text-center">
             <p class="text-white font-semibold text-lg">
-              Sign in to continue
+              {{ $t('login.signin_title') }}
             </p>
             <p class="text-slate-400 text-sm mt-1">
-              Use your Google account to access the system
+              {{ $t('login.signin_subtitle') }}
             </p>
           </div>
 
@@ -46,11 +46,11 @@
                   d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z" />
               </svg>
             </template>
-            Continue with Google
+            {{ $t('login.continue_google') }}
           </UButton>
 
           <p class="text-slate-500 text-xs text-center px-4">
-            Access is restricted to authorised government personnel and registered vehicle owners.
+            {{ $t('login.access_restricted') }}
           </p>
         </div>
       </UCard>

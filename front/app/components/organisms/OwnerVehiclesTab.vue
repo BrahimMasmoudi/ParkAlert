@@ -5,13 +5,13 @@
         <div>
           <h2 class="text-xl font-bold text-white tracking-tight flex items-center gap-2">
             <UIcon name="lucide:car" class="w-5 h-5 text-indigo-400" />
-            Registered Vehicles
+            {{ $t('owner.vehicles.title') }}
           </h2>
-          <p class="text-sm text-slate-400 mt-1">Active and pending vehicle registrations</p>
+          <p class="text-sm text-slate-400 mt-1">{{ $t('owner.vehicles.subtitle') }}</p>
         </div>
         <UButton
           icon="lucide:plus"
-          label="Register Vehicle"
+          :label="$t('owner.vehicles.add_button')"
           color="primary"
           size="md"
           class="hidden sm:flex shadow-md shadow-indigo-500/20"
@@ -25,11 +25,11 @@
         <div class="p-4 bg-slate-800 rounded-full mb-4">
           <UIcon name="lucide:car-front" class="w-8 h-8 text-slate-400" />
         </div>
-        <p class="text-lg text-white font-bold tracking-tight">No vehicles found</p>
-        <p class="text-slate-400 text-sm mt-2 max-w-sm text-center">You haven't registered any vehicles yet. Add a vehicle to manage its parking status.</p>
+        <p class="text-lg text-white font-bold tracking-tight">{{ $t('owner.vehicles.no_vehicles') }}</p>
+        <p class="text-slate-400 text-sm mt-2 max-w-sm text-center">{{ $t('owner.vehicles.empty_state_desc') }}</p>
         <UButton
           icon="lucide:plus"
-          label="Register a Vehicle"
+          :label="$t('owner.vehicles.register_button')"
           color="primary"
           size="lg"
           class="mt-6 sm:hidden"
@@ -55,8 +55,8 @@
           <UIcon name="lucide:history" class="w-5 h-5 text-slate-400" />
         </div>
         <div>
-          <h2 class="text-xl font-bold tracking-tight text-white">Ownership History</h2>
-          <p class="text-xs text-slate-500 mt-0.5">Archive of vehicles you previously owned</p>
+          <h2 class="text-xl font-bold tracking-tight text-white">{{ $t('owner.history.title') }}</h2>
+          <p class="text-xs text-slate-500 mt-0.5">{{ $t('owner.history.subtitle') }}</p>
         </div>
       </div>
       

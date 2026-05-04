@@ -4,9 +4,9 @@
       <div>
         <h2 class="text-xl font-bold text-white tracking-tight flex items-center gap-2">
           <UIcon name="lucide:circle-dollar-sign" class="w-5 h-5 text-red-500" />
-          Parking Fines
+          {{ $t('owner.fines.title') }}
         </h2>
-        <p class="text-sm text-slate-400 mt-1">View and settle your vehicle violations</p>
+        <p class="text-sm text-slate-400 mt-1">{{ $t('owner.fines.subtitle') }}</p>
       </div>
     </div>
 
@@ -16,13 +16,13 @@
       <div class="p-4 bg-slate-800 rounded-full mb-4">
         <UIcon name="lucide:smile" class="w-8 h-8 text-green-500" />
       </div>
-      <p class="text-lg text-white font-bold tracking-tight">No fines found</p>
-      <p class="text-slate-400 text-sm mt-2 max-w-sm text-center">You have no pending or past fines. Good job on following parking regulations!</p>
+      <p class="text-lg text-white font-bold tracking-tight">{{ $t('owner.fines.no_fines') }}</p>
+      <p class="text-slate-400 text-sm mt-2 max-w-sm text-center">{{ $t('owner.fines.empty_state_desc') }}</p>
     </div>
 
     <div v-else class="space-y-4">
       <div v-if="unpaidFines.length" class="flex items-center gap-2 mb-2">
-        <span class="text-[10px] font-black uppercase tracking-[0.2em] text-red-500">Unpaid Violations</span>
+        <span class="text-[10px] font-black uppercase tracking-[0.2em] text-red-500">{{ $t('owner.fines.unpaid_title') }}</span>
         <div class="h-px flex-1 bg-red-950"></div>
       </div>
 
@@ -33,7 +33,7 @@
       />
 
       <div v-if="paidFines.length" class="flex items-center gap-2 mt-8 mb-2">
-        <span class="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">Settled Records</span>
+        <span class="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">{{ $t('owner.fines.settled_title') }}</span>
         <div class="h-px flex-1 bg-slate-800"></div>
       </div>
 

@@ -4,7 +4,7 @@
     :ui="{ body: { padding: 'p-0 sm:p-0' } }"
   >
     <div class="absolute top-4 right-4 z-10">
-      <UTooltip text="Edit Profile">
+      <UTooltip :text="$t('owner.profile.edit_tooltip')">
         <UButton
           icon="lucide:edit-2"
           color="neutral"
@@ -25,15 +25,15 @@
     </div>
     <dl class="divide-y divide-slate-800/50 text-sm">
       <div class="flex flex-col p-4 sm:px-6">
-        <dt class="text-[10px] uppercase font-bold tracking-widest text-slate-500 mb-1">Birth Date</dt>
+        <dt class="text-[10px] uppercase font-bold tracking-widest text-slate-500 mb-1">{{ $t('owner.profile.birth_date') }}</dt>
         <dd class="text-slate-200 font-medium">{{ userProfile.birthDate || '—' }}</dd>
       </div>
       <div class="flex flex-col p-4 sm:px-6">
-        <dt class="text-[10px] uppercase font-bold tracking-widest text-slate-500 mb-1">Email Address</dt>
+        <dt class="text-[10px] uppercase font-bold tracking-widest text-slate-500 mb-1">{{ $t('owner.profile.email') }}</dt>
         <dd class="text-slate-200 font-medium break-all">{{ userProfile.email || '—' }}</dd>
       </div>
       <div class="flex flex-col p-4 sm:px-6">
-        <dt class="text-[10px] uppercase font-bold tracking-widest text-slate-500 mb-1">Phone Number</dt>
+        <dt class="text-[10px] uppercase font-bold tracking-widest text-slate-500 mb-1">{{ $t('owner.profile.phone') }}</dt>
         <dd class="text-slate-200 font-medium">{{ userProfile.phone || '—' }}</dd>
       </div>
     </dl>

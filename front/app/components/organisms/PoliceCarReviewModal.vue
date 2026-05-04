@@ -12,23 +12,23 @@
         <div class="bg-slate-950 rounded-xl border border-slate-800 p-5">
           <p class="text-[10px] text-slate-500 font-bold uppercase tracking-widest mb-3 flex items-center gap-1.5">
             <UIcon name="lucide:car-front" class="w-3.5 h-3.5" />
-            Vehicle Details
+            {{ $t('police.review.vehicle_details') }}
           </p>
           <div class="grid grid-cols-2 sm:grid-cols-3 gap-4">
             <div>
-              <p class="text-[10px] text-slate-500 uppercase tracking-wider mb-1">Plate</p>
+              <p class="text-[10px] text-slate-500 uppercase tracking-wider mb-1">{{ $t('police.review.plate') }}</p>
               <p class="font-mono text-lg font-bold text-amber-400 tracking-widest">{{ car.plateNumber }}</p>
             </div>
             <div>
-              <p class="text-[10px] text-slate-500 uppercase tracking-wider mb-1">Brand & Model</p>
+              <p class="text-[10px] text-slate-500 uppercase tracking-wider mb-1">{{ $t('police.review.brand_model') }}</p>
               <p class="text-sm text-slate-200 font-medium capitalize">{{ car.brand }} {{ car.model }}</p>
             </div>
             <div>
-              <p class="text-[10px] text-slate-500 uppercase tracking-wider mb-1">Color</p>
+              <p class="text-[10px] text-slate-500 uppercase tracking-wider mb-1">{{ $t('police.review.color') }}</p>
               <p class="text-sm text-slate-200 font-medium capitalize">{{ car.color }}</p>
             </div>
             <div>
-              <p class="text-[10px] text-slate-500 uppercase tracking-wider mb-1">Requested</p>
+              <p class="text-[10px] text-slate-500 uppercase tracking-wider mb-1">{{ $t('police.review.requested') }}</p>
               <p class="text-sm text-slate-400">{{ new Date(car.createdAt).toLocaleString() }}</p>
             </div>
           </div>
@@ -37,11 +37,11 @@
         <div v-if="mode === 'transfer'" class="bg-slate-950 rounded-xl border border-slate-800 p-5">
           <p class="text-[10px] text-slate-500 font-bold uppercase tracking-widest mb-3 flex items-center gap-1.5">
             <UIcon name="lucide:arrow-right-left" class="w-3.5 h-3.5" />
-            Ownership Transfer
+            {{ $t('police.review.ownership_transfer') }}
           </p>
           <div class="flex items-center gap-4">
             <div class="flex-1 bg-slate-900 rounded-lg p-3 border border-slate-800">
-              <p class="text-[10px] text-slate-500 uppercase tracking-wider mb-1">Current Owner</p>
+              <p class="text-[10px] text-slate-500 uppercase tracking-wider mb-1">{{ $t('police.review.current_owner') }}</p>
               <p class="text-sm font-semibold text-white">
                 {{ previousOwner?.fullName || previousOwner?.name || car.ownerId }}
               </p>
@@ -51,7 +51,7 @@
             <UIcon name="lucide:arrow-right" class="w-5 h-5 text-slate-500 shrink-0" />
 
             <div class="flex-1 bg-indigo-950/40 rounded-lg p-3 border border-indigo-900/50">
-              <p class="text-[10px] text-indigo-400 uppercase tracking-wider mb-1">New Owner</p>
+              <p class="text-[10px] text-indigo-400 uppercase tracking-wider mb-1">{{ $t('police.review.new_owner') }}</p>
               <p class="text-sm font-semibold text-white">
                 {{ newOwner?.fullName || newOwner?.name || car.transferToOwnerId || '—' }}
               </p>
@@ -63,7 +63,7 @@
         <div v-else class="bg-slate-950 rounded-xl border border-slate-800 p-5">
           <p class="text-[10px] text-slate-500 font-bold uppercase tracking-widest mb-3 flex items-center gap-1.5">
             <UIcon name="lucide:user" class="w-3.5 h-3.5" />
-            Owner
+            {{ $t('police.review.owner') }}
           </p>
           <div v-if="previousOwner" class="flex items-center gap-3">
             <img
@@ -85,7 +85,7 @@
         <div class="bg-slate-950 rounded-xl border border-slate-800 p-5">
           <p class="text-[10px] text-slate-500 font-bold uppercase tracking-widest mb-3 flex items-center gap-1.5">
             <UIcon name="lucide:file-text" class="w-3.5 h-3.5" />
-            {{ mode === 'transfer' ? 'New Carte Grise' : 'Carte Grise' }}
+            {{ mode === 'transfer' ? $t('police.review.new_carte_grise') : $t('police.review.carte_grise') }}
           </p>
 
           <div v-if="carteGriseToShow" class="space-y-3">
@@ -107,13 +107,13 @@
               icon="lucide:external-link"
               class="w-full justify-center"
             >
-              Open Document in New Tab
+              {{ $t('police.review.open_document') }}
             </UButton>
           </div>
 
           <div v-else class="flex items-center gap-2 text-slate-500 text-sm">
             <UIcon name="lucide:file-x" class="w-4 h-4" />
-            No document uploaded
+            {{ $t('police.review.no_document') }}
           </div>
         </div>
       </div>
@@ -122,7 +122,7 @@
     <template #footer>
       <div class="flex flex-col sm:flex-row justify-end w-full gap-3 pt-2">
         <UButton
-          label="Close"
+          :label="$t('common.close')"
           color="neutral"
           variant="soft"
           size="lg"
@@ -130,7 +130,7 @@
           @click="isOpen = false"
         />
         <UButton
-          label="Reject"
+          :label="$t('common.reject')"
           color="error"
           variant="soft"
           size="lg"
@@ -138,7 +138,7 @@
           @click="emit('reject')"
         />
         <UButton
-          :label="modeConfig.approvLabel"
+          :label="$t(modeConfig.approvLabel)"
           :color="modeConfig.approveColor"
           size="lg"
           class="sm:flex-none justify-center font-bold"
@@ -154,6 +154,7 @@
 import { useUserStore } from '~/stores/user'
 import { useCarsStore } from '~/stores/cars'
 
+const { t } = useI18n()
 const props = defineProps<{
   car: any | null
   mode: 'activation' | 'deletion' | 'transfer'
@@ -173,26 +174,26 @@ const modeConfig = computed(() => {
   switch (props.mode) {
     case 'activation':
       return {
-        title: 'Activation Request',
+        title: t('police.review.activation_request'),
         icon: 'lucide:car',
         color: 'warning',
-        approvLabel: 'Approve Registration',
+        approvLabel: 'police.actions.approve_registration',
         approveColor: 'success' as const,
       }
     case 'deletion':
       return {
-        title: 'Deletion Request',
+        title: t('police.review.deletion_request'),
         icon: 'lucide:trash-2',
         color: 'error',
-        approvLabel: 'Approve Deletion',
+        approvLabel: 'police.actions.approve_deletion',
         approveColor: 'error' as const,
       }
     case 'transfer':
       return {
-        title: 'Ownership Transfer Request',
+        title: t('police.review.transfer_request'),
         icon: 'lucide:arrow-right-left',
         color: 'primary',
-        approvLabel: 'Approve Transfer',
+        approvLabel: 'police.actions.approve_transfer',
         approveColor: 'success' as const,
       }
   }

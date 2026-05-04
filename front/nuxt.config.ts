@@ -8,8 +8,25 @@ export default defineNuxtConfig({
     '@nuxt/eslint',
     'nuxt-vuefire',
     '@pinia/nuxt',
-    '@nuxtjs/color-mode'
+    '@nuxtjs/color-mode',
+    '@nuxtjs/i18n'
   ],
+  i18n: {
+    locales: [
+      { code: 'en', file: 'en.json', name: 'English' },
+      { code: 'fr', file: 'fr.json', name: 'Français' },
+      { code: 'ar', file: 'ar.json', name: 'العربية', dir: 'rtl' }
+    ],
+    lazy: true,
+    langDir: 'locales',
+    defaultLocale: 'fr',
+    strategy: 'no_prefix',
+    detectBrowserLanguage: {
+      useCookie: true,
+      cookieKey: 'i18n_redirected',
+      redirectOn: 'root',
+    }
+  },
   colorMode: {
   preference: 'dark',
   fallback: 'dark'

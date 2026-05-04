@@ -12,35 +12,35 @@
           </div>
           <UBadge v-if="unpaidFinesCount > 0" color="error" variant="solid" size="xs"
             class="animate-pulse shadow-lg shadow-red-500/40 font-black">
-            {{ unpaidFinesCount }} VIOLATION{{ unpaidFinesCount > 1 ? 'S' : '' }}
+            {{ unpaidFinesCount }} {{ $t('owner.car.violations', unpaidFinesCount) }}
           </UBadge>
         </div>
         <div class="mt-3">
           <UBadge v-if="readonly" color="neutral" variant="subtle" class="font-semibold text-xs px-2.5 py-1">
             <UIcon name="lucide:arrow-right-left" class="w-3 h-3 mr-1" />
-            Transferred
+            {{ $t('owner.car.transferred') }}
           </UBadge>
           <UBadge v-else
             :color="car.status === 'active' ? 'success' : (car.status === 'activation_pending' || car.status === 'deletion_requested' || car.status === 'transfer_requested' ? 'warning' : (car.status === 'rejected' ? 'error' : 'neutral'))"
             variant="subtle" class="capitalize font-semibold text-xs px-2.5 py-1">
-            {{ car.status.replace(/_/g, ' ') }}
+            {{ $t(`police.cars.status.${car.status}`) || car.status.replace(/_/g, ' ') }}
           </UBadge>
         </div>
       </div>
 
       <div v-if="!readonly" class="flex items-center gap-2">
-        <UTooltip v-if="car.status === 'deletion_requested'" text="Cancel Deletion Request">
+        <UTooltip v-if="car.status === 'deletion_requested'" :text="$t('owner.car.cancel_deletion_tooltip')">
           <UButton color="primary" variant="soft" icon="lucide:rotate-ccw" size="sm"
             class="opacity-0 group-hover:opacity-100 transition-opacity focus:opacity-100"
             :loading="carsStore.isLoading(car.id)" @click="$emit('delete', car.id)" />
         </UTooltip>
 
-        <UTooltip v-if="car.status === 'active'" text="Transfer Ownership">
+        <UTooltip v-if="car.status === 'active'" :text="$t('owner.car.transfer_tooltip')">
           <UButton color="primary" variant="ghost" icon="lucide:arrow-right-left"
             class="transition-opacity p-2 -m-2 mr-1" @click="$emit('transfer', car.id)" />
         </UTooltip>
 
-        <UTooltip v-else-if="car.status !== 'deleted' && car.status !== 'deletion_requested'" text="Request Deletion">
+        <UTooltip v-else-if="car.status !== 'deleted' && car.status !== 'deletion_requested'" :text="$t('owner.car.delete_tooltip')">
           <UButton color="error" variant="ghost" icon="lucide:trash-2"
             class="opacity-0 group-hover:opacity-100 transition-opacity focus:opacity-100 p-2 -m-2"
             @click="$emit('delete', car.id)" />
@@ -50,11 +50,11 @@
 
     <div class="p-5 grid grid-cols-2 gap-6 bg-slate-900">
       <div>
-        <p class="text-[10px] text-slate-500 font-bold uppercase tracking-widest mb-1">Brand & Model</p>
+        <p class="text-[10px] text-slate-500 font-bold uppercase tracking-widest mb-1">{{ $t('owner.car.brand_model') }}</p>
         <p class="text-sm text-slate-200 font-medium capitalize">{{ car.brand }} {{ car.model }}</p>
       </div>
       <div>
-        <p class="text-[10px] text-slate-500 font-bold uppercase tracking-widest mb-1">Color</p>
+        <p class="text-[10px] text-slate-500 font-bold uppercase tracking-widest mb-1">{{ $t('owner.car.color') }}</p>
         <p class="text-sm text-slate-200 font-medium capitalize">{{ car.color }}</p>
       </div>
     </div>
@@ -65,12 +65,12 @@
           <div>
             <p class="text-[10px] text-red-400 font-bold uppercase tracking-widest mb-1 flex items-center gap-1.5">
               <UIcon name="lucide:alert-circle" class="w-3.5 h-3.5" />
-              Rejection Reason
+              {{ $t('owner.car.rejection_reason') }}
             </p>
             <p class="text-sm text-red-200 leading-snug">{{ car.rejectionReason }}</p>
           </div>
           <UButton color="white" variant="solid" size="sm" icon="lucide:refresh-cw" @click="$emit('retry', car.id)">
-            Retry
+            {{ $t('common.retry') }}
           </UButton>
         </div>
       </div>
@@ -82,7 +82,7 @@
           <div>
             <p class="text-[10px] text-red-400 font-bold uppercase tracking-widest mb-1 flex items-center gap-1.5">
               <UIcon name="lucide:alert-circle" class="w-3.5 h-3.5" />
-              Transfer Rejected
+              {{ $t('owner.car.transfer_rejected') }}
             </p>
             <p class="text-sm text-red-200 leading-snug">{{ car.transferRejectionReason }}</p>
           </div>
@@ -93,10 +93,10 @@
     <div class="px-5 py-3 bg-slate-950 border-t border-slate-800 flex items-center justify-between">
       <div class="flex items-center gap-2">
         <UIcon name="lucide:file-text" class="w-4 h-4 text-slate-500" />
-        <span class="text-xs text-slate-400 font-medium uppercase tracking-wider">Carte Grise</span>
+        <span class="text-xs text-slate-400 font-medium uppercase tracking-wider">{{ $t('owner.car.carte_grise') }}</span>
       </div>
       <UButton :to="car.carteGriseUrl" target="_blank" color="primary" variant="link" icon="lucide:external-link"
-        label="View Doc" :padded="false" class="text-indigo-400 hover:text-indigo-300 font-medium text-sm" />
+        :label="$t('owner.car.view_doc')" :padded="false" class="text-indigo-400 hover:text-indigo-300 font-medium text-sm" />
     </div>
   </UCard>
 </template>
