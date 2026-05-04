@@ -1,19 +1,18 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 import { useCarsStore } from '~/stores/cars'
-import { useUserStore } from '~/stores/user'
 import { ref as storageRef, uploadBytes, getDownloadURL } from 'firebase/storage'
 import { useFirebaseStorage } from 'vuefire'
-import { v4 as uuidv4 } from 'uuid'
 
 const props = defineProps<{
   car?: any | null
+  owners: any[]
 }>()
 
 const isOpen = defineModel<boolean>('open', { required: true })
 
 const carsStore = useCarsStore()
-const userStore = useUserStore()
+const authStore = useAuthStore()
 const storage = useFirebaseStorage()
 const toast = useToast()
 
@@ -32,29 +31,21 @@ const isFormValid = computed(() => {
   return selectedUser.value && selectedFile.value
 })
 
-const searchUsers = async (q: string) => {
-  const users = await userStore.searchOwners(q)
-  return users.map(u => ({
-    ...u,
-    label: `${u.name} (${u.identityNumber})`
-  }))
-}
-
 const submitTransfer = async () => {
   if (!isFormValid.value || !props.car) return
 
   uploadLoading.value = true
   try {
-    const fileRef = storageRef(storage, `cartes_grises/${uuidv4()}`)
+    const fileRef = storageRef(storage, `carteGrise/${authStore.currentUser?.uid}/${Date.now()}_${selectedFile.value.name}`)
     const snapshot = await uploadBytes(fileRef, selectedFile.value!)
     const url = await getDownloadURL(snapshot.ref)
-    
+
     await carsStore.requestOwnershipTransfer({
       carId: props.car.id,
       newOwnerId: selectedUser.value.id,
       carteGriseUrl: url
     })
-    
+
     isOpen.value = false
     selectedUser.value = null
     selectedFile.value = null
@@ -67,16 +58,11 @@ const submitTransfer = async () => {
 </script>
 
 <template>
-  <UModal 
-    v-model:open="isOpen" 
-    prevent-close 
-    title="Transfer Car Ownership"
-    description="Transfer your vehicle to another registered owner."
-    :ui="{ 
+  <UModal v-model:open="isOpen" prevent-close title="Transfer Car Ownership"
+    description="Transfer your vehicle to another registered owner." :ui="{
       content: 'bg-slate-900 border border-slate-700 shadow-2xl shadow-black/50 rounded-2xl overflow-hidden',
       header: 'py-4 sm:py-5 border-b border-slate-800'
-    }"
-  >
+    }">
 
     <template #body>
       <form @submit.prevent="submitTransfer" class="space-y-6">
@@ -87,30 +73,26 @@ const submitTransfer = async () => {
             <span class="text-slate-300">{{ car.brand }} {{ car.model }}</span>
           </div>
         </div>
-
-        <UFormField label="New Owner" required :ui="{ label: { base: 'text-slate-300 font-medium tracking-wide text-sm mb-2' } }">
-          <USelectMenu
-            v-model="selectedUser"
-            :searchable="searchUsers"
-            searchable-placeholder="Search by name or identity number..."
-            placeholder="Select a new owner..."
-            option-attribute="label"
-            class="w-full"
-            size="xl"
-            :ui="{ base: 'bg-slate-950 border-slate-700 focus:ring-indigo-500 shadow-inner' }"
-          />
+        <UFormField label="New Owner" required
+          :ui="{ label: { base: 'text-slate-300 font-medium tracking-wide text-sm mb-2' } }">
+          <USelectMenu v-model="selectedUser" :items="owners" searchable
+            searchable-placeholder="Search by name or identity number..." placeholder="Select a new owner..."
+            option-attribute="label" class="w-full" size="xl"
+            :ui="{ base: 'bg-slate-950 border-slate-700 focus:ring-indigo-500 shadow-inner' }" />
         </UFormField>
 
-        <UFormField label="New Carte Grise" required :ui="{ label: { base: 'text-slate-300 font-medium tracking-wide text-sm mb-2' } }">
-          <label 
+        <UFormField label="New Carte Grise" required
+          :ui="{ label: { base: 'text-slate-300 font-medium tracking-wide text-sm mb-2' } }">
+          <label
             class="w-full cursor-pointer bg-slate-950 border-2 border-dashed rounded-xl px-4 py-6 flex flex-col items-center justify-center gap-3 transition-all duration-200 group"
-            :class="selectedFile ? 'border-indigo-500 bg-indigo-500/5' : 'border-slate-700 hover:border-slate-500 hover:bg-slate-800'"
-          >
-            <div class="p-3 rounded-full transition-colors" :class="selectedFile ? 'bg-indigo-500/20 text-indigo-400' : 'bg-slate-800 text-slate-400 group-hover:text-white'">
+            :class="selectedFile ? 'border-indigo-500 bg-indigo-500/5' : 'border-slate-700 hover:border-slate-500 hover:bg-slate-800'">
+            <div class="p-3 rounded-full transition-colors"
+              :class="selectedFile ? 'bg-indigo-500/20 text-indigo-400' : 'bg-slate-800 text-slate-400 group-hover:text-white'">
               <UIcon name="lucide:upload-cloud" class="w-6 h-6" />
             </div>
             <div class="text-center">
-              <span class="text-base font-semibold transition-colors" :class="selectedFile ? 'text-indigo-300' : 'text-slate-200'">
+              <span class="text-base font-semibold transition-colors"
+                :class="selectedFile ? 'text-indigo-300' : 'text-slate-200'">
                 {{ selectedFile ? selectedFile.name : 'Tap to upload Carte Grise' }}
               </span>
               <p class="text-sm text-slate-500 mt-1">Required for police verification</p>
@@ -123,24 +105,11 @@ const submitTransfer = async () => {
 
     <template #footer>
       <div class="flex flex-col sm:flex-row justify-center w-full gap-3 pt-2">
-        <UButton 
-          label="Cancel" 
-          color="neutral" 
-          variant="soft" 
-          size="xl"
-          class="flex-1 sm:flex-none justify-center font-semibold"
-          @click="isOpen = false" 
-          :disabled="uploadLoading" 
-        />
-        <UButton 
-          label="Request Transfer" 
-          color="primary" 
-          size="xl"
-          class="flex-1 sm:flex-none justify-center font-bold shadow-lg shadow-indigo-500/25"
-          :loading="uploadLoading" 
-          :disabled="!isFormValid"
-          @click="submitTransfer"
-        />
+        <UButton label="Cancel" color="neutral" variant="soft" size="xl"
+          class="flex-1 sm:flex-none justify-center font-semibold" @click="isOpen = false" :disabled="uploadLoading" />
+        <UButton label="Request Transfer" color="primary" size="xl"
+          class="flex-1 sm:flex-none justify-center font-bold shadow-lg shadow-indigo-500/25" :loading="uploadLoading"
+          :disabled="!isFormValid" @click="submitTransfer" />
       </div>
     </template>
   </UModal>

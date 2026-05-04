@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.approveCarDeletion = exports.rejectCar = exports.approveCar = exports.rejectTransfer = exports.approveTransfer = exports.requestOwnershipTransfer = exports.searchUsers = exports.cancelCarDeletion = exports.requestCarDeletion = exports.retryCar = exports.addCar = exports.updateUserProfile = exports.setUserRole = exports.payFine = exports.issueFine = exports.createReport = void 0;
+exports.approveCarDeletion = exports.rejectCar = exports.approveCar = exports.rejectTransfer = exports.approveTransfer = exports.requestOwnershipTransfer = exports.cancelCarDeletion = exports.requestCarDeletion = exports.retryCar = exports.addCar = exports.updateUserProfile = exports.setUserRole = exports.payFine = exports.issueFine = exports.createReport = void 0;
 const app_1 = require("firebase-admin/app");
 const firestore_1 = require("firebase-admin/firestore");
 const https_1 = require("firebase-functions/v2/https");
@@ -275,33 +275,6 @@ exports.cancelCarDeletion = (0, https_1.onCall)({ region: 'europe-west3', enforc
     return { ok: true };
 });
 // ─────────────────────────────────────────────────────────────────
-// searchUsers — owner only
-// ─────────────────────────────────────────────────────────────────
-exports.searchUsers = (0, https_1.onCall)({ region: 'europe-west3', enforceAppCheck: true }, async (request) => {
-    const uid = requireAuth(request.auth);
-    const { query } = request.data;
-    if (!query || query.length < 2) {
-        return { users: [] };
-    }
-    const qLower = query.toLowerCase();
-    const usersSnap = await db.collection('users').where('role', '==', 'owner').get();
-    const results = usersSnap.docs
-        .map(doc => ({ id: doc.id, ...doc.data() }))
-        .filter(u => u.id !== uid)
-        .filter((u) => {
-        const name = (u.fullName || u.name || '').toLowerCase();
-        const ident = (u.identityNumber || '').toLowerCase();
-        return name.includes(qLower) || ident.includes(qLower);
-    })
-        .map((u) => ({
-        id: u.id,
-        name: u.fullName || u.name,
-        identityNumber: u.identityNumber
-    }))
-        .slice(0, 10);
-    return { users: results };
-});
-// ─────────────────────────────────────────────────────────────────
 // requestOwnershipTransfer — owner only
 // ─────────────────────────────────────────────────────────────────
 exports.requestOwnershipTransfer = (0, https_1.onCall)({ region: 'europe-west3', enforceAppCheck: true }, async (request) => {
@@ -323,20 +296,20 @@ exports.requestOwnershipTransfer = (0, https_1.onCall)({ region: 'europe-west3',
     if (!newOwnerSnap.exists || newOwnerSnap.data()?.role !== 'owner') {
         throw new https_1.HttpsError('not-found', 'New owner not found');
     }
+    // Keep ownerId as is (old owner), set transferToOwnerId for the new one
     await carRef.update({
-        ownerId: newOwnerId,
-        previousOwnerId: uid,
         status: 'transfer_requested',
-        carteGriseUrl,
+        transferToOwnerId: newOwnerId,
+        transferCarteGriseUrl: carteGriseUrl,
         updatedAt: firestore_1.FieldValue.serverTimestamp(),
         transferRequestedAt: firestore_1.FieldValue.serverTimestamp(),
-        rejectionReason: firestore_1.FieldValue.delete(),
+        transferRejectionReason: firestore_1.FieldValue.delete(),
     });
     await db.collection('car_audit_logs').add({
         carId,
         actorId: uid,
         action: 'TRANSFER_REQUESTED',
-        details: `Transferred to ${newOwnerId}`,
+        details: `Transfer requested to ${newOwnerId}`,
         timestamp: firestore_1.FieldValue.serverTimestamp(),
     });
     return { ok: true };
@@ -359,9 +332,10 @@ exports.approveTransfer = (0, https_1.onCall)({ region: 'europe-west3', enforceA
     if (car.status !== 'transfer_requested') {
         throw new https_1.HttpsError('failed-precondition', 'Car is not pending transfer');
     }
-    if (car.previousOwnerId) {
+    // If this transfer targets a new owner, verify the previous owner (current ownerId) has no fines
+    if (car.ownerId) {
         const finesSnap = await db.collection('fines')
-            .where('ownerId', '==', car.previousOwnerId)
+            .where('ownerId', '==', car.ownerId)
             .where('plateNumber', '==', car.plateNumber)
             .where('status', '==', 'unpaid')
             .get();
@@ -373,9 +347,14 @@ exports.approveTransfer = (0, https_1.onCall)({ region: 'europe-west3', enforceA
         status: 'active',
         updatedAt: firestore_1.FieldValue.serverTimestamp(),
     };
-    if (car.previousOwnerId) {
-        updates.previousOwnerId = firestore_1.FieldValue.delete();
-        updates.ownershipHistory = firestore_1.FieldValue.arrayUnion(car.previousOwnerId);
+    if (car.transferToOwnerId) {
+        updates.ownerId = car.transferToOwnerId;
+        updates.ownershipHistory = firestore_1.FieldValue.arrayUnion(car.ownerId);
+        updates.transferToOwnerId = firestore_1.FieldValue.delete();
+        if (car.transferCarteGriseUrl) {
+            updates.carteGriseUrl = car.transferCarteGriseUrl;
+            updates.transferCarteGriseUrl = firestore_1.FieldValue.delete();
+        }
     }
     await carRef.update(updates);
     const uid = requireAuth(request.auth);
@@ -408,11 +387,12 @@ exports.rejectTransfer = (0, https_1.onCall)({ region: 'europe-west3', enforceAp
     if (car.status !== 'transfer_requested') {
         throw new https_1.HttpsError('failed-precondition', 'Car is not pending transfer');
     }
-    // Return it to the previous owner, or keep it rejected for the new owner?
-    // Usually rejected means they can retry. So we set status to rejected.
+    // Revert status to active so the old owner regains control
     await carRef.update({
-        status: 'rejected',
-        rejectionReason: reason,
+        status: 'active',
+        transferRejectionReason: reason,
+        transferToOwnerId: firestore_1.FieldValue.delete(),
+        transferCarteGriseUrl: firestore_1.FieldValue.delete(),
         updatedAt: firestore_1.FieldValue.serverTimestamp(),
     });
     const uid = requireAuth(request.auth);

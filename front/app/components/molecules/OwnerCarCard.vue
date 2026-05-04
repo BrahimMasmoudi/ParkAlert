@@ -14,7 +14,9 @@ defineProps<{
     color: string
     carteGriseUrl: string
     rejectionReason?: string
+    transferRejectionReason?: string
   }
+  readonly?: boolean
 }>()
 
 defineEmits<{
@@ -51,7 +53,7 @@ defineEmits<{
         </div>
       </div>
       
-      <div class="flex items-center gap-2">
+      <div v-if="!readonly" class="flex items-center gap-2">
         <UTooltip v-if="car.status === 'deletion_requested'" text="Cancel Deletion Request">
           <UButton
             color="primary"
@@ -70,7 +72,7 @@ defineEmits<{
             color="primary"
             variant="ghost"
             icon="lucide:arrow-right-left"
-            class="opacity-0 group-hover:opacity-100 transition-opacity focus:opacity-100 p-2 -m-2 mr-1"
+            class="transition-opacity p-2 -m-2 mr-1"
             @click="$emit('transfer', car.id)"
           />
         </UTooltip>
@@ -113,6 +115,21 @@ defineEmits<{
           <UButton color="white" variant="solid" size="sm" icon="lucide:refresh-cw" @click="$emit('retry', car.id)">
             Retry
           </UButton>
+        </div>
+      </div>
+    </div>
+
+    <!-- Transfer Rejection Reason -->
+    <div v-if="!readonly && car.status === 'active' && car.transferRejectionReason" class="px-5 pb-5 bg-slate-900">
+      <div class="bg-red-950/30 border border-red-900/50 rounded-lg p-4">
+        <div class="flex items-start gap-4">
+          <div>
+            <p class="text-[10px] text-red-400 font-bold uppercase tracking-widest mb-1 flex items-center gap-1.5">
+              <UIcon name="lucide:alert-circle" class="w-3.5 h-3.5" />
+              Transfer Rejected
+            </p>
+            <p class="text-sm text-red-200 leading-snug">{{ car.transferRejectionReason }}</p>
+          </div>
         </div>
       </div>
     </div>

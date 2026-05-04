@@ -16,13 +16,15 @@ export type CarStatus =
   | 'active'
   | 'deleted'
   | 'rejected'
+  | 'transfer_requested'
 
 export const carStatusMapper: Record<CarStatus, string> = {
   activation_pending: 'Activation Pending',
   deletion_requested: 'Deletion Pending',
   active: 'Active',
   deleted: 'Deleted',
-  rejected: 'Rejected'
+  rejected: 'Rejected',
+  transfer_requested: 'Transfer Requested'
 }
 
 export interface Car {
@@ -36,6 +38,9 @@ export interface Car {
   status: CarStatus
   createdAt: number
   rejectionReason?: string
+  transferRejectionReason?: string
+  transferToOwnerId?: string
+  transferCarteGriseUrl?: string
 }
 
 function getTimestampMillis(ts: any): number {
@@ -67,7 +72,10 @@ const carConverter = {
       carteGriseUrl: data.carteGriseUrl || '',
       status: data.status || 'activation_pending',
       createdAt: getTimestampMillis(data.createdAt),
-      rejectionReason: data.rejectionReason
+      rejectionReason: data.rejectionReason,
+      transferRejectionReason: data.transferRejectionReason,
+      transferToOwnerId: data.transferToOwnerId,
+      transferCarteGriseUrl: data.transferCarteGriseUrl
     }
   }
 }
@@ -112,12 +120,31 @@ export const useCarsStore = defineStore('cars', () => {
   })
 
   /**
+   * HISTORICAL CARS
+   */
+  const historicalCarsRef = computed(() => {
+    if (!authStore.currentUser?.uid) return null
+
+    return query(
+      collection(db, 'cars').withConverter(carConverter),
+      where('ownershipHistory', 'array-contains', authStore.currentUser.uid)
+    )
+  })
+
+  const {
+    data: historicalCars,
+    pending: historicalCarsLoading
+  } = useCollection(historicalCarsRef, {
+    ssrKey: 'historicalCars'
+  })
+
+  /**
    * POLICE PENDING ACTIONS
    */
   const pendingCarsRef = computed(() =>
     query(
       collection(db, 'cars').withConverter(carConverter),
-      where('status', 'in', ['activation_pending', 'deletion_requested'])
+      where('status', 'in', ['activation_pending', 'deletion_requested', 'transfer_requested'])
     )
   )
 
@@ -288,6 +315,8 @@ export const useCarsStore = defineStore('cars', () => {
     activationPendingCars,
     deletionPendingCars,
     transferRequestedCars,
+    historicalCars,
+    historicalCarsLoading,
     isLoading,
     addCar,
     retryCar,

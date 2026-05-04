@@ -6,7 +6,7 @@ const userStore = useUserStore()
 const carsStore = useCarsStore()
 
 const { userProfile, profileLoading } = storeToRefs(userStore)
-const { myCars, carsLoading } = storeToRefs(carsStore)
+const { myCars, carsLoading, historicalCars, historicalCarsLoading } = storeToRefs(carsStore)
 
 const isAddModalOpen = ref(false)
 const isEditModalOpen = ref(false)
@@ -128,6 +128,25 @@ const handleCarTransferAction = (carId: string) => {
                 @transfer="handleCarTransferAction"
               />
             </div>
+
+            <!-- Ownership History Section -->
+            <div v-if="historicalCars?.length" class="mt-12">
+              <div class="flex items-center gap-3 mb-6">
+                <div class="p-2 bg-slate-800 rounded-lg">
+                  <UIcon name="lucide:history" class="w-5 h-5 text-slate-400" />
+                </div>
+                <h2 class="text-xl font-bold tracking-tight text-white">Ownership History</h2>
+              </div>
+              
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                <MoleculesOwnerCarCard
+                  v-for="car in historicalCars"
+                  :key="car.id"
+                  :car="car"
+                  :readonly="true"
+                />
+              </div>
+            </div>
           </section>
         </div>
       </div>
@@ -152,6 +171,6 @@ const handleCarTransferAction = (carId: string) => {
     <OrganismsOwnerDeleteCarModal v-model:open="confirmDeleteModalOpen" :car-id="carToDelete" />
 
     <!-- Transfer Car Modal -->
-    <OrganismsOwnerTransferCarModal v-model:open="isTransferModalOpen" :car="carToTransfer" />
+    <OrganismsOwnerTransferCarModal v-model:open="isTransferModalOpen" :car="carToTransfer" :owners="userStore.availableOwners" />
   </div>
 </template>

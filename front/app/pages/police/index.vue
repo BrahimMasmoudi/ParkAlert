@@ -18,8 +18,9 @@
 
             <LoadingSkeleton v-if="carsStore.pendingCarsLoading" :count="4" />
 
-            <div v-else-if="!carsStore.activationPendingCars.length" class="text-center py-10 text-slate-500">
-              No activation requests
+            <div v-else-if="!carsStore.activationPendingCars.length" class="text-center py-12 text-slate-500 bg-slate-900/50 rounded-xl border border-slate-800">
+              <UIcon name="lucide:check-circle-2" class="w-8 h-8 text-slate-600 mb-2 mx-auto" />
+              <p>No activation requests</p>
             </div>
 
             <UTable v-else :data="carsStore.activationPendingCars" :columns="carColumns">
@@ -79,8 +80,9 @@
 
             <LoadingSkeleton v-if="carsStore.pendingCarsLoading" :count="4" />
 
-            <div v-else-if="!carsStore.deletionPendingCars.length" class="text-center py-10 text-slate-500">
-              No deletion requests
+            <div v-else-if="!carsStore.deletionPendingCars.length" class="text-center py-12 text-slate-500 bg-slate-900/50 rounded-xl border border-slate-800">
+              <UIcon name="lucide:check-circle-2" class="w-8 h-8 text-slate-600 mb-2 mx-auto" />
+              <p>No deletion requests</p>
             </div>
 
             <UTable v-else :data="carsStore.deletionPendingCars" :columns="deleteColumns">
@@ -161,7 +163,7 @@
               </template>
 
               <template #carteGriseUrl-cell="{ row }">
-                <UButton v-if="row.original.carteGriseUrl" :to="row.original.carteGriseUrl" target="_blank" size="xs"
+                <UButton v-if="row.original.transferCarteGriseUrl || row.original.carteGriseUrl" :to="row.original.transferCarteGriseUrl || row.original.carteGriseUrl" target="_blank" size="xs"
                   color="neutral" variant="soft" icon="lucide:external-link">
                   View Document
                 </UButton>
@@ -200,8 +202,9 @@
 
           <LoadingSkeleton v-if="reportsStore.reportsLoading" :count="5" />
 
-          <div v-else-if="!reportsStore.pendingReports?.length" class="text-center py-16 text-slate-500">
-            No pending reports
+          <div v-else-if="!reportsStore.pendingReports?.length" class="text-center py-12 text-slate-500 bg-slate-900/50 rounded-xl border border-slate-800">
+            <UIcon name="lucide:check-circle-2" class="w-8 h-8 text-slate-600 mb-2 mx-auto" />
+            <p>No pending reports</p>
           </div>
 
           <UTable v-else :data="reportsStore.pendingReports" :columns="columns">

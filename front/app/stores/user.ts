@@ -1,6 +1,6 @@
-import { doc, getDoc } from 'firebase/firestore'
+import { doc, getDoc, collection, query, where } from 'firebase/firestore'
 import { httpsCallable } from 'firebase/functions'
-import { useDocument, useFirestore } from 'vuefire'
+import { useDocument, useFirestore, useCollection } from 'vuefire'
 
 export const useUserStore = defineStore('user', () => {
   const authStore = useAuthStore()
@@ -59,10 +59,10 @@ export const useUserStore = defineStore('user', () => {
 
   async function fetchUser(uid: string) {
     if (usersCache.value[uid] || !uid) return usersCache.value[uid]
-    
+
     // Mark as fetching to prevent duplicate calls
     usersCache.value[uid] = { _loading: true }
-    
+
     try {
       const snap = await getDoc(doc(db, 'users', uid))
       if (snap.exists()) {
@@ -74,21 +74,23 @@ export const useUserStore = defineStore('user', () => {
       console.error('Failed to fetch user:', e)
       usersCache.value[uid] = { name: 'Unknown User' }
     }
-    
+
     return usersCache.value[uid]
   }
 
-  async function searchOwners(query: string) {
-    if (!query || query.length < 2) return []
-    try {
-      const { $functions } = useNuxtApp()
-      const res = await httpsCallable($functions, 'searchUsers')({ query })
-      return (res.data as any).users as { id: string; name: string; identityNumber: string }[]
-    } catch (e) {
-      console.error('Failed to search users:', e)
-      return []
-    }
-  }
+  const ownersQuery = query(collection(db, 'users'), where('role', '==', 'owner'))
+  const { data: allOwnersList } = useCollection(ownersQuery)
+
+  const availableOwners = computed(() => {
+    if (!allOwnersList.value) return []
+    return allOwnersList.value
+      .filter((u: any) => u.id !== userProfile.value?.uid)
+      .map((u: any) => ({
+        id: u.id,
+        label: `${u.fullName || u.name || 'Unknown'}`,
+        ...u
+      }))
+  })
 
   return {
     userProfile,
@@ -98,6 +100,6 @@ export const useUserStore = defineStore('user', () => {
     updateProfile,
     usersCache,
     fetchUser,
-    searchOwners,
+    availableOwners,
   }
 })
