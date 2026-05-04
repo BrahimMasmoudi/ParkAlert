@@ -1,13 +1,3 @@
-<script setup lang="ts">
-const props = defineProps<{
-  items: any[]
-  placeholder?: string
-  searchablePlaceholder?: string
-}>()
-
-const selected = defineModel<any | null>()
-</script>
-
 <template>
   <USelectMenu
     v-model="selected"
@@ -49,3 +39,13 @@ const selected = defineModel<any | null>()
     </template>
   </USelectMenu>
 </template>
+
+<script setup lang="ts">
+const props = defineProps<{
+  items: any[]
+  placeholder?: string
+  searchablePlaceholder?: string
+}>()
+
+const selected = defineModel<any | null>()
+</script>

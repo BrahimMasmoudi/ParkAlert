@@ -1,22 +1,3 @@
-<script setup lang="ts">
-import type { Fine } from '~/stores/fines'
-
-const props = defineProps<{
-  fine: Fine
-}>()
-
-const finesStore = useFinesStore()
-
-function formatDate(timestamp: number) {
-  if (!timestamp) return 'Unknown date'
-  return new Date(timestamp).toLocaleDateString('en-US', {
-    month: 'short',
-    day: 'numeric',
-    year: 'numeric'
-  })
-}
-</script>
-
 <template>
   <div class="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden transition-all duration-300 hover:border-slate-700 hover:shadow-xl hover:shadow-black/20 group">
     <div class="p-5 flex items-start justify-between gap-4">
@@ -76,3 +57,22 @@ function formatDate(timestamp: number) {
     </div>
   </div>
 </template>
+
+<script setup lang="ts">
+import type { Fine } from '~/stores/fines'
+
+const props = defineProps<{
+  fine: Fine
+}>()
+
+const finesStore = useFinesStore()
+
+function formatDate(timestamp: number) {
+  if (!timestamp) return 'Unknown date'
+  return new Date(timestamp).toLocaleDateString('en-US', {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric'
+  })
+}
+</script>

@@ -1,13 +1,3 @@
-<script setup lang="ts">
-/**
- * Root index — the role middleware (role.global.ts) handles all redirects:
- *  - Not logged in   → /login
- *  - No role set     → /onboarding
- *  - Role set        → /{role}
- * This page should never render; it's just a fallback loading state.
- */
-</script>
-
 <template>
   <div class="min-h-screen bg-slate-950 flex items-center justify-center">
     <div class="flex flex-col items-center gap-4 text-slate-400">
@@ -18,3 +8,6 @@
     </div>
   </div>
 </template>
+
+<script setup lang="ts">
+</script>

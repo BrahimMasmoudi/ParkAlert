@@ -1,22 +1,3 @@
-<script setup lang="ts">
-import { useCarsStore } from '~/stores/cars'
-import { storeToRefs } from 'pinia'
-
-const props = defineProps<{
-  carId: string | null
-}>()
-
-const isOpen = defineModel<boolean>('open', { required: true })
-
-const carsStore = useCarsStore()
-
-const confirmDelete = async () => {
-  if (!props.carId) return
-  await carsStore.requestDeletion(props.carId)
-  isOpen.value = false
-}
-</script>
-
 <template>
   <UModal v-model:open="isOpen" title="Request Deletion" :ui="{ content: 'bg-slate-900 border border-slate-700' }">
     <template #body>
@@ -44,3 +25,21 @@ const confirmDelete = async () => {
     </template>
   </UModal>
 </template>
+
+<script setup lang="ts">
+import { useCarsStore } from '~/stores/cars'
+
+const props = defineProps<{
+  carId: string | null
+}>()
+
+const isOpen = defineModel<boolean>('open', { required: true })
+
+const carsStore = useCarsStore()
+
+const confirmDelete = async () => {
+  if (!props.carId) return
+  await carsStore.requestDeletion(props.carId)
+  isOpen.value = false
+}
+</script>

@@ -1,40 +1,7 @@
-<script setup lang="ts">
-import type { CarStatus } from '~/stores/cars'
-import { useCarsStore } from '~/stores/cars'
-
-const carsStore = useCarsStore()
-
-const { car } = defineProps<{
-  car: {
-    id: string
-    plateNumber: string
-    status: CarStatus | 'deletion_requested'
-    brand: string
-    model: string
-    color: string
-    carteGriseUrl: string
-    rejectionReason?: string
-    transferRejectionReason?: string
-  }
-  readonly?: boolean
-}>()
-
-defineEmits<{
-  (e: 'delete', id: string): void
-  (e: 'retry', id: string): void
-  (e: 'transfer', id: string): void
-}>()
-const finesStore = useFinesStore()
-const unpaidFinesCount = computed(() => {
-  return finesStore.myFines?.filter(f => f.plateNumber === car.plateNumber && f.status === 'unpaid').length || 0
-})
-</script>
-
 <template>
   <UCard class="group transition-all duration-300 relative overflow-hidden border shadow-lg hover:shadow-xl" :class="car.status === 'deletion_requested'
     ? 'bg-slate-900/40 border-slate-800 opacity-75 grayscale-[0.5]'
     : 'bg-slate-900 border-slate-700 hover:border-slate-500'" :ui="{ body: { padding: 'p-0 sm:p-0' } }">
-    <!-- Card Header (Plate & Status) -->
     <div class="p-5 border-b border-slate-800/50 flex justify-between items-start"
       :class="car.status === 'deletion_requested' ? 'bg-amber-950/20' : 'bg-slate-800/20'">
       <div>
@@ -133,3 +100,36 @@ const unpaidFinesCount = computed(() => {
     </div>
   </UCard>
 </template>
+
+<script setup lang="ts">
+import type { CarStatus } from '~/stores/cars'
+import { useCarsStore } from '~/stores/cars'
+
+const carsStore = useCarsStore()
+
+const { car } = defineProps<{
+  car: {
+    id: string
+    plateNumber: string
+    status: CarStatus | 'deletion_requested'
+    brand: string
+    model: string
+    color: string
+    carteGriseUrl: string
+    rejectionReason?: string
+    transferRejectionReason?: string
+  }
+  readonly?: boolean
+}>()
+
+defineEmits<{
+  (e: 'delete', id: string): void
+  (e: 'retry', id: string): void
+  (e: 'transfer', id: string): void
+}>()
+
+const finesStore = useFinesStore()
+const unpaidFinesCount = computed(() => {
+  return finesStore.myFines?.filter(f => f.plateNumber === car.plateNumber && f.status === 'unpaid').length || 0
+})
+</script>

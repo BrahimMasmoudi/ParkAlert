@@ -1,3 +1,7 @@
+<template>
+  <span>{{ displayName }}</span>
+</template>
+
 <script setup lang="ts">
 import { computed } from 'vue'
 
@@ -10,7 +14,3 @@ const displayName = computed(() => {
   return props.user.fullName || props.user.name || 'Unknown User'
 })
 </script>
-
-<template>
-  <span>{{ displayName }}</span>
-</template>

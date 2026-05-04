@@ -1,7 +1,3 @@
-<script setup lang="ts">
-defineProps<{ count?: number }>()
-</script>
-
 <template>
   <div class="space-y-3">
     <div
@@ -19,3 +15,7 @@ defineProps<{ count?: number }>()
     </div>
   </div>
 </template>
+
+<script setup lang="ts">
+defineProps<{ count?: number }>()
+</script>

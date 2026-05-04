@@ -1,20 +1,3 @@
-<script setup lang="ts">
-const props = defineProps<{
-  title: string
-  role: 'agent' | 'police' | 'owner'
-}>()
-
-const authStore = useAuthStore()
-
-const roleConfig = {
-  agent: { icon: 'lucide:camera', color: 'text-amber-400', bg: 'bg-amber-500/10 border-amber-500/20' },
-  police: { icon: 'lucide:shield', color: 'text-blue-400', bg: 'bg-blue-500/10 border-blue-500/20' },
-  owner: { icon: 'lucide:car', color: 'text-emerald-400', bg: 'bg-emerald-500/10 border-emerald-500/20' },
-}
-
-const cfg = computed(() => roleConfig[props.role])
-</script>
-
 <template>
   <header class="sticky top-0 z-40 bg-slate-950/90 backdrop-blur-lg border-b border-slate-800/80">
     <UContainer class="flex items-center justify-between py-3">
@@ -50,3 +33,20 @@ const cfg = computed(() => roleConfig[props.role])
     </UContainer>
   </header>
 </template>
+
+<script setup lang="ts">
+const props = defineProps<{
+  title: string
+  role: 'agent' | 'police' | 'owner'
+}>()
+
+const authStore = useAuthStore()
+
+const roleConfig = {
+  agent: { icon: 'lucide:camera', color: 'text-amber-400', bg: 'bg-amber-500/10 border-amber-500/20' },
+  police: { icon: 'lucide:shield', color: 'text-blue-400', bg: 'bg-blue-500/10 border-blue-500/20' },
+  owner: { icon: 'lucide:car', color: 'text-emerald-400', bg: 'bg-emerald-500/10 border-emerald-500/20' },
+}
+
+const cfg = computed(() => roleConfig[props.role])
+</script>
