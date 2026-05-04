@@ -1,10 +1,17 @@
 <template>
-  <UDropdownMenu :items="items" :content="{ align: 'end', sideOffset: 8 }" :ui="{
-    content: 'w-48 bg-slate-900 border border-slate-800 shadow-2xl rounded-xl p-1',
-    item: 'flex items-center gap-2 px-3 py-2 text-sm text-slate-300 hover:text-white hover:bg-slate-800 rounded-lg transition-colors cursor-pointer'
-  }">
-    <UButton size="sm" variant="ghost"
-      class="text-slate-400 hover:text-white hover:bg-slate-800/50 flex items-center gap-2 px-2 h-9 min-w-[44px]">
+  <UDropdownMenu
+    :items="items"
+    :content="{ align: 'end', sideOffset: 8 }"
+    :ui="{
+      content: 'w-48 bg-slate-900 border border-slate-800 shadow-2xl rounded-xl p-1',
+      item: 'flex items-center gap-2 px-3 py-2 text-sm text-slate-300 hover:text-white hover:bg-slate-800 rounded-lg transition-colors cursor-pointer'
+    }"
+  >
+    <UButton
+      size="sm"
+      variant="ghost"
+      class="text-slate-400 hover:text-white hover:bg-slate-800/50 flex items-center gap-2 px-2 h-9 min-w-[44px]"
+    >
       <UIcon name="lucide:languages" class="w-4 h-4" />
       <span class="text-xs font-medium uppercase hidden sm:inline">{{ locale }}</span>
     </UButton>

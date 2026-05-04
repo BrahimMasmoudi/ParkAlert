@@ -15,7 +15,12 @@
         <label
           class="block w-full aspect-video bg-slate-800 border-2 border-dashed border-slate-600 rounded-2xl flex flex-col items-center justify-center gap-2 cursor-pointer hover:border-amber-500 transition-colors overflow-hidden"
         >
-          <img v-if="photoPreview" :src="photoPreview" class="w-full h-full object-cover" alt="Preview">
+          <img
+            v-if="photoPreview"
+            :src="photoPreview"
+            class="w-full h-full object-cover"
+            alt="Preview"
+          >
           <template v-else>
             <UIcon name="lucide:camera" class="w-10 h-10 text-slate-400" />
             <span class="text-slate-400 text-sm">{{ $t('agent.form.tap_to_photo') }}</span>
@@ -38,7 +43,13 @@
         >
           {{ $t('common.next') }}
         </UButton>
-        <UButton block size="lg" variant="ghost" class="text-slate-400" @click="step = 2">
+        <UButton
+          block
+          size="lg"
+          variant="ghost"
+          class="text-slate-400"
+          @click="step = 2"
+        >
           {{ $t('agent.form.skip_photo') }}
         </UButton>
       </div>

@@ -10,8 +10,13 @@
     }"
   >
     <template #body>
-      <form @submit.prevent="submitAddCar" class="grid grid-cols-1 sm:grid-cols-2 gap-6">
-        <UFormField :label="$t('owner.modals.add_car.plate_label')" required :error="plateError" :ui="{ label: { base: 'text-slate-300 font-medium tracking-wide text-sm mb-2' } }">
+      <form class="grid grid-cols-1 sm:grid-cols-2 gap-6" @submit.prevent="submitAddCar">
+        <UFormField
+          :label="$t('owner.modals.add_car.plate_label')"
+          required
+          :error="plateError"
+          :ui="{ label: { base: 'text-slate-300 font-medium tracking-wide text-sm mb-2' } }"
+        >
           <UInput 
             v-model="formState.plateNumber" 
             placeholder="e.g. AB-123-CD" 
@@ -51,7 +56,12 @@
           />
         </UFormField>
  
-        <UFormField class="sm:col-span-2" :label="$t('owner.modals.add_car.carte_grise_label')" required :ui="{ label: { base: 'text-slate-300 font-medium tracking-wide text-sm mb-2' } }">
+        <UFormField
+          class="sm:col-span-2"
+          :label="$t('owner.modals.add_car.carte_grise_label')"
+          required
+          :ui="{ label: { base: 'text-slate-300 font-medium tracking-wide text-sm mb-2' } }"
+        >
           <label 
             class="w-full cursor-pointer bg-slate-950 border-2 border-dashed rounded-xl px-4 py-6 flex flex-col items-center justify-center gap-3 transition-all duration-200 group"
             :class="selectedFile ? 'border-indigo-500 bg-indigo-500/5' : 'border-slate-700 hover:border-slate-500 hover:bg-slate-800'"
@@ -65,7 +75,12 @@
               </span>
               <p class="text-sm text-slate-500 mt-1">{{ $t('owner.modals.add_car.upload_required') }}</p>
             </div>
-            <input type="file" accept="image/*" class="hidden" @change="handleFileChange" />
+            <input
+              type="file"
+              accept="image/*"
+              class="hidden"
+              @change="handleFileChange"
+            >
           </label>
         </UFormField>
       </form>
@@ -79,8 +94,8 @@
           variant="soft" 
           size="xl"
           class="flex-1 sm:flex-none justify-center font-semibold"
-          @click="isOpen = false" 
           :disabled="uploadLoading" 
+          @click="isOpen = false" 
         />
         <UButton 
           :label="carToEdit ? $t('owner.modals.add_car.submit_edit') : $t('owner.modals.add_car.submit_new')" 

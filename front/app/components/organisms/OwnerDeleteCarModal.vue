@@ -18,8 +18,18 @@
 
     <template #footer>
       <div class="flex justify-end gap-3">
-        <UButton :label="$t('common.cancel')" color="neutral" variant="ghost" @click="isOpen = false" />
-        <UButton :label="$t('owner.modals.delete_car.confirm_button')" color="error" :loading="props.carId ? carsStore.isLoading(props.carId) : false" @click="confirmDelete" />
+        <UButton
+          :label="$t('common.cancel')"
+          color="neutral"
+          variant="ghost"
+          @click="isOpen = false"
+        />
+        <UButton
+          :label="$t('owner.modals.delete_car.confirm_button')"
+          color="error"
+          :loading="props.carId ? carsStore.isLoading(props.carId) : false"
+          @click="confirmDelete"
+        />
       </div>
     </template>
   </UModal>

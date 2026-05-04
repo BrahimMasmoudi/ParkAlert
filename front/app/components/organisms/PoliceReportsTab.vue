@@ -21,7 +21,13 @@
       </template>
       <template #actions-cell="{ row }">
         <div class="flex gap-2">
-          <UButton size="xs" color="neutral" variant="soft" icon="lucide:eye" @click="$emit('open', row.original)">{{ $t('common.view_details') }}</UButton>
+          <UButton
+            size="xs"
+            color="neutral"
+            variant="soft"
+            icon="lucide:eye"
+            @click="$emit('open', row.original)"
+          >{{ $t('common.view_details') }}</UButton>
         </div>
       </template>
     </UTable>
