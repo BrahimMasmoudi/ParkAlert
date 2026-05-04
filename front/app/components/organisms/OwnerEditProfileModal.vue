@@ -2,8 +2,8 @@
   <UModal
     v-model:open="isOpen"
     prevent-close
-    title="Edit Personal Information"
-    description="Update your profile details for parking enforcement records."
+    :title="$t('owner.modals.edit_profile.title')"
+    :description="$t('owner.modals.edit_profile.description')"
     :ui="{
       content: 'bg-slate-900 border border-slate-700 shadow-2xl shadow-black/50 rounded-2xl overflow-hidden',
       header: 'py-4 sm:py-5 border-b border-slate-800'
@@ -12,7 +12,7 @@
     <template #body>
       <form @submit.prevent="submitUpdate" class="space-y-5">
         <UFormField
-          label="Full Name"
+          :label="$t('owner.modals.edit_profile.full_name')"
           required
           :ui="{ label: { base: 'text-slate-300 font-medium tracking-wide text-sm mb-2' } }"
         >
@@ -26,7 +26,7 @@
         </UFormField>
 
         <UFormField
-          label="Identity Number (CIN / Passport)"
+          :label="$t('owner.modals.edit_profile.identity_number')"
           required
           :ui="{ label: { base: 'text-slate-300 font-medium tracking-wide text-sm mb-2' } }"
         >
@@ -40,7 +40,7 @@
         </UFormField>
 
         <UFormField
-          label="Birth Date"
+          :label="$t('owner.modals.edit_profile.birth_date')"
           required
           :ui="{ label: { base: 'text-slate-300 font-medium tracking-wide text-sm mb-2' } }"
         >
@@ -54,7 +54,7 @@
         </UFormField>
 
         <UFormField
-          label="Phone Number"
+          :label="$t('owner.modals.edit_profile.phone')"
           required
           :ui="{ label: { base: 'text-slate-300 font-medium tracking-wide text-sm mb-2' } }"
         >
@@ -72,7 +72,7 @@
     <template #footer>
       <div class="flex flex-col sm:flex-row justify-center w-full gap-3 pt-2">
         <UButton
-          label="Cancel"
+          :label="$t('common.cancel')"
           color="neutral"
           variant="ghost"
           size="xl"
@@ -82,7 +82,7 @@
         />
 
         <UButton
-          label="Save Changes"
+          :label="$t('owner.modals.edit_profile.save_button')"
           color="primary"
           size="xl"
           class="flex-1 sm:flex-none justify-center font-bold shadow-lg shadow-indigo-500/25"

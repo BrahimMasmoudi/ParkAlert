@@ -1,0 +1,253 @@
+{
+  "common": {
+    "welcome": "مرحباً بكم في ParkAlert",
+    "logout": "تسجيل الخروج",
+    "settings": "الإعدادات",
+    "next": "التالي",
+    "cancel": "إلغاء",
+    "save": "حفظ",
+    "delete": "حذف",
+    "edit": "تعديل",
+    "submit": "إرسال",
+    "loading": "جار التحميل...",
+    "search": "بحث",
+    "or": "أو",
+    "view_details": "عرض التفاصيل",
+    "view_document": "عرض الوثيقة",
+    "details": "تفاصيل",
+    "reject": "رفض",
+    "sign_out": "تسجيل الخروج",
+    "continue": "متابعة",
+    "close": "إغلاق",
+    "retry": "إعادة المحاولة"
+  },
+  "roles": {
+    "agent": "وكيل",
+    "police": "الشرطة",
+    "owner": "مواطن"
+  },
+  "onboarding": {
+    "welcome": "أهلاً بك، {name}",
+    "subtitle": "اختر دورك للوصول إلى لوحة التحكم الخاصة بك.",
+    "continue": "المتابعة كـ {role}",
+    "roles": {
+      "agent": {
+        "label": "وكيل مواقف",
+        "description": "تقديم بلاغات عن المركبات المتوقفة بشكل غير قانوني."
+      },
+      "police": {
+        "label": "ضابط شرطة",
+        "description": "التحقيق في البلاغات وإصدار المخالفات لمالكي المركبات."
+      },
+      "owner": {
+        "label": "مالك مركبة",
+        "description": "عرض حالة مركبتك وإدارة أي مخالفات معلقة."
+      }
+    }
+  },
+  "login": {
+    "title": "ParkAlert",
+    "subtitle": "نظام إنفاذ قوانين مواقف السيارات الحكومي",
+    "signin_title": "تسجيل الدخول للمتابعة",
+    "signin_subtitle": "استخدم حساب جوجل للوصول إلى النظام",
+    "continue_google": "المتابعة باستخدام جوجل",
+    "access_restricted": "الوصول مقتصر على موظفي الحكومة المصرح لهم ومالكي المركبات المسجلين."
+  },
+  "agent": {
+    "title": "لوحة تحكم الوكيل",
+    "reports_today": "بلاغات اليوم",
+    "total_reports": "إجمالي البلاغات",
+    "new_report": "بلاغ جديد",
+    "new_report_subtitle": "انقر للإبلاغ عن مركبة متوقفة بشكل غير قانوني",
+    "footer_info": "تتم معالجة البلاغات المقدمة من قبل ضباط الشرطة.",
+    "steps": {
+      "photo": "الخطوة 1 — التقاط صورة",
+      "location": "الخطوة 2 — تحديد الموقع",
+      "plate": "الخطوة 3 — إدخال رقم اللوحة"
+    },
+    "form": {
+      "tap_to_photo": "انقر لالتقاط / تحميل صورة",
+      "skip_photo": "تخطي الصورة",
+      "capture_gps": "تحديد موقعي (GPS)",
+      "recapture_gps": "إعادة تحديد الموقع",
+      "address_placeholder": "اكتب العنوان الدقيق أو الإحداثيات",
+      "plate_placeholder": "مثال: AB-123-CD",
+      "invalid_plate": "تنسيق غير صالح. يرجى استخدام لوحة فرنسية صالحة (مثال: AB-123-CD)",
+      "submit_report": "تقديم البلاغ"
+    }
+  },
+  "police": {
+    "title": "بوابة الشرطة",
+    "search_placeholder": "بحث حسب اللوحة أو الوكيل أو الموقع...",
+    "pending_reports": "البلاغات المعلقة",
+    "no_reports": "لا توجد بلاغات معلقة",
+    "tabs": {
+      "reports": "البلاغات",
+      "cars": "المركبات",
+      "audit": "سجل التدقيق"
+    },
+    "actions": {
+      "issue_fine": "إصدار مخالفة",
+      "reject": "رفض الطلب",
+      "approve": "موافقة",
+      "approve_registration": "الموافقة على التسجيل",
+      "approve_deletion": "الموافقة على الحذف",
+      "approve_transfer": "الموافقة على النقل",
+      "cancel_deletion": "إلغاء الحذف"
+    },
+    "review": {
+      "vehicle_details": "تفاصيل المركبة",
+      "plate": "اللوحة",
+      "brand_model": "النوع والموديل",
+      "color": "اللون",
+      "requested": "تاريخ الطلب",
+      "ownership_transfer": "نقل الملكية",
+      "current_owner": "المالك الحالي",
+      "new_owner": "المالك الجديد",
+      "owner": "المالك",
+      "carte_grise": "البطاقة الرمادية",
+      "new_carte_grise": "البطاقة الرمادية الجديدة",
+      "open_document": "فتح الوثيقة في علامة تبويب جديدة",
+      "no_document": "لم يتم تحميل أي وثيقة",
+      "activation_request": "طلب تفعيل",
+      "deletion_request": "طلب حذف",
+      "transfer_request": "طلب نقل ملكية"
+    },
+    "fine": {
+      "title": "إصدار مخالفة",
+      "description": "إنشاء مخالفة جديدة لمالك المركبة.",
+      "target_vehicle": "المركبة المستهدفة",
+      "searching_owner": "جار البحث عن مالك المركبة...",
+      "owner_found": "تم العثور على المالك",
+      "no_owner_found": "لم يتم العثور على مالك لهذه اللوحة.",
+      "amount": "قيمة المخالفة (TND)",
+      "notes": "ملاحظات المخالفة",
+      "notes_placeholder": "سبب المخالفة...",
+      "confirm": "تأكيد المخالفة"
+    },
+    "cars": {
+      "pending_activations": "طلبات التفعيل المعلقة",
+      "no_activations": "لا توجد طلبات تفعيل",
+      "deletion_requests": "طلبات الحذف",
+      "no_deletions": "لا توجد طلبات حذف",
+      "transfer_requests": "طلبات النقل",
+      "no_transfers": "لا توجد طلبات نقل معلقة",
+      "status": {
+        "active": "نشط",
+        "activation_pending": "قيد التفعيل",
+        "deletion_requested": "طلب الحذف",
+        "transfer_requested": "طلب النقل",
+        "rejected": "مرفوض"
+      }
+    },
+    "reject": {
+      "title": "رفض الطلب",
+      "description": "يرجى تقديم سبب للرفض.",
+      "placeholder": "سبب الرفض...",
+      "confirm": "تأكيد الرفض"
+    },
+    "audit": {
+      "title": "سجل تدقيق المخالفات",
+      "no_fines": "لم يتم إصدار أي مخالفات بعد",
+      "paid": "تم الدفع",
+      "unpaid": "غير مدفوعة"
+    }
+  },
+  "owner": {
+    "title": "مركباتي",
+    "dashboard_title": "لوحة تحكم المواطن",
+    "personal_info": "المعلومات الشخصية",
+    "add_vehicle": "إضافة مركبة",
+    "no_vehicles": "لا توجد مركبات مسجلة بعد.",
+    "tabs": {
+      "vehicles": "المركبات",
+      "fines": "الغرامات"
+    },
+    "vehicles": {
+      "title": "المركبات المسجلة",
+      "subtitle": "تسجيلات المركبات النشطة والمعلقة",
+      "add_button": "تسجيل مركبة",
+      "no_vehicles": "لم يتم العثور على مركبات",
+      "empty_state_desc": "لم تقم بتسجيل أي مركبة بعد. أضف مركبة لإدارة حالة مواقف السيارات الخاصة بها.",
+      "register_button": "تسجيل مركبة"
+    },
+    "car": {
+      "violations": "مخالفة | مخالفات",
+      "transferred": "تم نقلها",
+      "cancel_deletion_tooltip": "إلغاء طلب الحذف",
+      "transfer_tooltip": "نقل الملكية",
+      "delete_tooltip": "طلب الحذف",
+      "brand_model": "النوع والموديل",
+      "color": "اللون",
+      "rejection_reason": "سبب الرفض",
+      "transfer_rejected": "تم رفض النقل",
+      "carte_grise": "البطاقة الرمادية",
+      "view_doc": "عرض الوثيقة"
+    },
+    "profile": {
+      "edit_tooltip": "تعديل الملف الشخصي",
+      "birth_date": "تاريخ الميلاد",
+      "email": "البريد الإلكتروني",
+      "phone": "رقم الهاتف",
+      "full_name": "الاسم الكامل",
+      "identity_number": "رقم الهوية"
+    },
+    "fines": {
+      "title": "مخالفات المواقف",
+      "subtitle": "عرض وتسوية مخالفات المركبة الخاصة بك",
+      "no_fines": "لم يتم العثور على مخالفات",
+      "empty_state_desc": "ليس لديك أي مخالفات معلقة أو سابقة. عمل جيد في اتباع لوائح وقوف السيارات!",
+      "unpaid_title": "مخالفات غير مدفوعة",
+      "settled_title": "سجلات تمت تسويتها",
+      "pay_button": "دفع الغرامة",
+      "receipt_issued": "تم إصدار الإيصال",
+      "reference": "المرجع"
+    },
+    "history": {
+      "title": "سجل الملكية",
+      "subtitle": "أرشيف المركبات التي كنت تملكها سابقاً"
+    },
+    "modals": {
+      "add_car": {
+        "title_new": "تسجيل مركبة جديدة",
+        "title_edit": "إعادة تقديم طلب تسجيل المركبة",
+        "desc_new": "تسجيل المركبة الرسمي لتطبيق قوانين المواقف.",
+        "desc_edit": "قم بتحديث تفاصيل مركبتك لإعادة محاولة التفعيل.",
+        "plate_label": "رقم لوحة الترخيص",
+        "brand_label": "نوع المركبة",
+        "model_label": "موديل المركبة",
+        "color_label": "لون المركبة",
+        "carte_grise_label": "البطاقة الرمادية (وثيقة رسمية)",
+        "tap_to_upload": "اضغط لتحميل البطاقة الرمادية",
+        "upload_required": "مطلوب للتحقق من قبل الشرطة",
+        "submit_new": "إرسال طلب التسجيل",
+        "submit_edit": "إعادة الإرسال"
+      },
+      "delete_car": {
+        "title": "طلب حذف",
+        "confirmation": "هل أنت متأكد أنك تريد إزالة هذه المركبة من ملفك الشخصي؟",
+        "note": "ملاحظة: هذا الإجراء يتطلب موافقة الشرطة. سيتم وضع علامة \"قيد الانتظار\" على المركبة حتى يراجع ضابط الشرطة الطلب.",
+        "confirm_button": "تأكيد الطلب"
+      },
+      "edit_profile": {
+        "title": "تعديل المعلومات الشخصية",
+        "description": "قم بتحديث تفاصيل ملفك الشخصي لسجلات تطبيق المواقف.",
+        "full_name": "الاسم الكامل",
+        "identity_number": "رقم الهوية (بطاقة التعريف / جواز السفر)",
+        "birth_date": "تاريخ الميلاد",
+        "phone": "رقم الهاتف",
+        "save_button": "حفظ التغييرات"
+      },
+      "transfer_car": {
+        "title": "نقل ملكية السيارة",
+        "description": "انقل مركبتك إلى مالك مسجل آخر.",
+        "vehicle_label": "المركبة المراد نقلها",
+        "new_owner_label": "المالك الجديد",
+        "new_owner_placeholder": "اختر مالكاً جديداً...",
+        "new_owner_search": "البحث بالاسم أو رقم الهوية...",
+        "new_carte_grise_label": "البطاقة الرمادية الجديدة",
+        "submit_button": "طلب النقل"
+      }
+    }
+  }
+}

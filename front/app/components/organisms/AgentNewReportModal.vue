@@ -1,5 +1,5 @@
 <template>
-  <UModal v-model:open="isOpen" title="New Report" :ui="{ content: 'bg-slate-900 border border-slate-700' }">
+  <UModal v-model:open="isOpen" :title="$t('agent.new_report')" :ui="{ content: 'bg-slate-900 border border-slate-700' }">
     <template #body>
       <div class="flex items-center gap-2 mb-6">
         <div
@@ -11,14 +11,14 @@
       </div>
 
       <div v-if="step === 1" class="space-y-4">
-        <p class="font-semibold text-white text-lg">Step 1 — Take a Photo</p>
+        <p class="font-semibold text-white text-lg">{{ $t('agent.steps.photo') }}</p>
         <label
           class="block w-full aspect-video bg-slate-800 border-2 border-dashed border-slate-600 rounded-2xl flex flex-col items-center justify-center gap-2 cursor-pointer hover:border-amber-500 transition-colors overflow-hidden"
         >
           <img v-if="photoPreview" :src="photoPreview" class="w-full h-full object-cover" alt="Preview">
           <template v-else>
             <UIcon name="lucide:camera" class="w-10 h-10 text-slate-400" />
-            <span class="text-slate-400 text-sm">Tap to take / upload photo</span>
+            <span class="text-slate-400 text-sm">{{ $t('agent.form.tap_to_photo') }}</span>
           </template>
           <input
             id="photo-input"
@@ -36,15 +36,15 @@
           class="bg-amber-500 hover:bg-amber-400 text-white font-semibold"
           @click="step = 2"
         >
-          Next
+          {{ $t('common.next') }}
         </UButton>
         <UButton block size="lg" variant="ghost" class="text-slate-400" @click="step = 2">
-          Skip photo
+          {{ $t('agent.form.skip_photo') }}
         </UButton>
       </div>
 
       <div v-else-if="step === 2" class="space-y-4">
-        <p class="font-semibold text-white text-lg">Step 2 — Capture Location</p>
+        <p class="font-semibold text-white text-lg">{{ $t('agent.steps.location') }}</p>
         
         <UButton
           id="capture-location-btn"
@@ -55,18 +55,18 @@
           @click="captureLocation"
         >
           <UIcon name="lucide:crosshair" class="w-5 h-5 mr-2" />
-          {{ location ? 'Re-capture Location' : 'Capture My Location (GPS)' }}
+          {{ location ? $t('agent.form.recapture_gps') : $t('agent.form.capture_gps') }}
         </UButton>
 
         <div class="relative flex items-center py-2">
           <div class="flex-grow border-t border-slate-700" />
-          <span class="flex-shrink-0 mx-4 text-slate-500 text-sm">OR</span>
+          <span class="flex-shrink-0 mx-4 text-slate-500 text-sm">{{ $t('common.or') }}</span>
           <div class="flex-grow border-t border-slate-700" />
         </div>
 
         <UTextarea
           v-model="locationAddress"
-          placeholder="Write down the exact address or coordinates"
+          :placeholder="$t('agent.form.address_placeholder')"
           :rows="2"
           class="w-full"
           :ui="{ base: 'bg-slate-800 text-white border-slate-600 focus:border-amber-500' }"
@@ -79,23 +79,23 @@
           class="bg-amber-500 hover:bg-amber-400 text-white font-semibold"
           @click="step = 3"
         >
-          Next
+          {{ $t('common.next') }}
         </UButton>
       </div>
 
       <div v-else-if="step === 3" class="space-y-4">
-        <p class="font-semibold text-white text-lg">Step 3 — Enter Plate Number</p>
+        <p class="font-semibold text-white text-lg">{{ $t('agent.steps.plate') }}</p>
         <UInput
           id="plate-input"
           v-model="plateNumber"
-          placeholder="e.g. AB-123-CD"
+          :placeholder="$t('agent.form.plate_placeholder')"
           size="xl"
           :color="plateNumber && !isPlateValid ? 'red' : 'white'"
           class="text-center font-mono text-2xl uppercase tracking-widest"
           autofocus
         />
         <p v-if="plateNumber && !isPlateValid" class="text-red-400 text-sm text-center">
-          Invalid format. Please use a valid French plate (e.g., AB-123-CD)
+          {{ $t('agent.form.invalid_plate') }}
         </p>
         <UButton
           id="submit-report-btn"
@@ -106,7 +106,7 @@
           class="bg-amber-500 hover:bg-amber-400 text-white font-bold disabled:opacity-50"
           @click="submitReport"
         >
-          Submit Report
+          {{ $t('agent.form.submit_report') }}
         </UButton>
       </div>
     </template>

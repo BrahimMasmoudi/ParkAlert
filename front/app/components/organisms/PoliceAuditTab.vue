@@ -1,12 +1,12 @@
 <template>
   <UContainer class="py-6">
     <div class="flex items-center justify-between mb-4">
-      <h2 class="text-xl font-bold">Fine Issuance Audit</h2>
+      <h2 class="text-xl font-bold">{{ $t('police.audit.title') }}</h2>
     </div>
     <LoadingSkeleton v-if="loading" :count="8" />
     <div v-else-if="!fines.length" class="text-center py-12 text-slate-500 bg-slate-900/50 rounded-xl border border-slate-800">
       <UIcon name="lucide:clipboard-list" class="w-8 h-8 text-slate-600 mb-2 mx-auto" />
-      <p>No fines have been issued yet</p>
+      <p>{{ $t('police.audit.no_fines') }}</p>
     </div>
     <UTable v-else :data="fines" :columns="columns">
       <template #plateNumber-cell="{ row }">

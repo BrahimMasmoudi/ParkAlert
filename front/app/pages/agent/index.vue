@@ -5,7 +5,7 @@
         {{reportsStore.agentReportsTodayCount}}
       </p>
       <p class="text-slate-400 text-xs mt-1">
-        Reports Today
+        {{ $t('agent.reports_today') }}
       </p>
     </UCard>
     <UCard class="bg-slate-800/60 border border-slate-700/50 text-center p-4">
@@ -13,7 +13,7 @@
         {{reportsStore.agentTotalReportsCount}}
       </p>
       <p class="text-slate-400 text-xs mt-1">
-        Total Reports
+        {{ $t('agent.total_reports') }}
       </p>
     </UCard>
   </div>
@@ -24,21 +24,23 @@
     @click="isOpen = true"
   >
     <UIcon name="lucide:camera" class="w-12 h-12" />
-    <span class="text-xl font-bold tracking-tight">New Report</span>
-    <span class="text-amber-200 text-sm">Tap to report an illegally parked vehicle</span>
+    <span class="text-xl font-bold tracking-tight">{{ $t('agent.new_report') }}</span>
+    <span class="text-amber-200 text-sm">{{ $t('agent.new_report_subtitle') }}</span>
   </button>
 
   <p class="text-slate-500 text-sm text-center">
-    Your submitted reports are processed by police officers.
+    {{ $t('agent.footer_info') }}
   </p>
 
   <OrganismsAgentNewReportModal v-model:open="isOpen" />
 </template>
 
 <script setup lang="ts">
+const { t } = useI18n()
+
 definePageMeta({ 
   ssr: false,
-  title: 'Agent Dashboard',
+  title: 'agent.title',
   role: 'agent',
   containerClass: 'max-w-lg'
 })

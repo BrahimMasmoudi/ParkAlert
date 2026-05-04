@@ -4,7 +4,7 @@
       <section>
         <h2 class="text-lg font-bold text-white mb-4 tracking-tight flex items-center gap-2">
           <UIcon name="lucide:user" class="w-5 h-5 text-indigo-400" />
-          Personal Information
+          {{ $t('owner.personal_info') }}
         </h2>
         <LoadingSkeleton v-if="profileLoading" :count="1" class="h-64" />
         <OrganismsOwnerProfileCard 
@@ -61,8 +61,10 @@
 import { storeToRefs } from 'pinia'
 import { useCarsStore } from '~/stores/cars'
 
+const { t } = useI18n()
+
 definePageMeta({
-  title: 'Citizen Dashboard',
+  title: 'owner.dashboard_title',
   role: 'owner',
   containerClass: 'max-w-7xl',
   containerPadding: 'py-8'
@@ -78,13 +80,13 @@ const { myFines, finesLoading } = storeToRefs(finesStore)
 
 const tabs = computed(() => [
   {
-    label: 'Vehicles',
+    label: t('owner.tabs.vehicles'),
     icon: 'i-lucide-car',
     slot: 'vehicles',
     badge: myCars.value?.length || 0
   },
   {
-    label: 'Fines',
+    label: t('owner.tabs.fines'),
     icon: 'i-lucide-circle-dollar-sign',
     slot: 'fines',
     badge: myFines.value?.filter(f => f.status === 'unpaid').length || 0

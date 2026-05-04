@@ -1,0 +1,253 @@
+{
+  "common": {
+    "welcome": "Welcome to ParkAlert",
+    "logout": "Logout",
+    "settings": "Settings",
+    "next": "Next",
+    "cancel": "Cancel",
+    "save": "Save",
+    "delete": "Delete",
+    "edit": "Edit",
+    "submit": "Submit",
+    "loading": "Loading...",
+    "search": "Search",
+    "or": "OR",
+    "view_details": "View Details",
+    "view_document": "View Document",
+    "details": "Details",
+    "reject": "Reject",
+    "sign_out": "Sign out",
+    "continue": "Continue",
+    "close": "Close",
+    "retry": "Retry"
+  },
+  "roles": {
+    "agent": "Agent",
+    "police": "Police",
+    "owner": "Citizen"
+  },
+  "onboarding": {
+    "welcome": "Welcome, {name}",
+    "subtitle": "Select your role to access your personalised dashboard.",
+    "continue": "Continue as {role}",
+    "roles": {
+      "agent": {
+        "label": "Parking Agent",
+        "description": "File reports on illegally parked vehicles in the field."
+      },
+      "police": {
+        "label": "Police Officer",
+        "description": "Investigate reports and issue fines to vehicle owners."
+      },
+      "owner": {
+        "label": "Car Owner",
+        "description": "View your vehicle's status and manage any outstanding fines."
+      }
+    }
+  },
+  "login": {
+    "title": "ParkAlert",
+    "subtitle": "Government Parking Enforcement System",
+    "signin_title": "Sign in to continue",
+    "signin_subtitle": "Use your Google account to access the system",
+    "continue_google": "Continue with Google",
+    "access_restricted": "Access is restricted to authorised government personnel and registered vehicle owners."
+  },
+  "agent": {
+    "title": "Agent Dashboard",
+    "reports_today": "Reports Today",
+    "total_reports": "Total Reports",
+    "new_report": "New Report",
+    "new_report_subtitle": "Tap to report an illegally parked vehicle",
+    "footer_info": "Your submitted reports are processed by police officers.",
+    "steps": {
+      "photo": "Step 1 — Take a Photo",
+      "location": "Step 2 — Capture Location",
+      "plate": "Step 3 — Enter Plate Number"
+    },
+    "form": {
+      "tap_to_photo": "Tap to take / upload photo",
+      "skip_photo": "Skip photo",
+      "capture_gps": "Capture My Location (GPS)",
+      "recapture_gps": "Re-capture Location",
+      "address_placeholder": "Write down the exact address or coordinates",
+      "plate_placeholder": "e.g. AB-123-CD",
+      "invalid_plate": "Invalid format. Please use a valid French plate (e.g., AB-123-CD)",
+      "submit_report": "Submit Report"
+    }
+  },
+  "police": {
+    "title": "Police Portal",
+    "search_placeholder": "Search by plate, agent, or location...",
+    "pending_reports": "Pending Reports",
+    "no_reports": "No pending reports",
+    "tabs": {
+      "reports": "Reports",
+      "cars": "Cars",
+      "audit": "Audit Log"
+    },
+    "actions": {
+      "issue_fine": "Issue Fine",
+      "reject": "Reject Request",
+      "approve": "Approve",
+      "approve_registration": "Approve Registration",
+      "approve_deletion": "Approve Deletion",
+      "approve_transfer": "Approve Transfer",
+      "cancel_deletion": "Cancel Deletion"
+    },
+    "review": {
+      "vehicle_details": "Vehicle Details",
+      "plate": "Plate",
+      "brand_model": "Brand & Model",
+      "color": "Color",
+      "requested": "Requested",
+      "ownership_transfer": "Ownership Transfer",
+      "current_owner": "Current Owner",
+      "new_owner": "New Owner",
+      "owner": "Owner",
+      "carte_grise": "Carte Grise",
+      "new_carte_grise": "New Carte Grise",
+      "open_document": "Open Document in New Tab",
+      "no_document": "No document uploaded",
+      "activation_request": "Activation Request",
+      "deletion_request": "Deletion Request",
+      "transfer_request": "Ownership Transfer Request"
+    },
+    "fine": {
+      "title": "Issue Fine",
+      "description": "Create a new fine for a vehicle owner.",
+      "target_vehicle": "Target Vehicle",
+      "searching_owner": "Searching for vehicle owner...",
+      "owner_found": "Owner Found",
+      "no_owner_found": "No owner found for this plate.",
+      "amount": "Fine Amount (TND)",
+      "notes": "Violation Notes",
+      "notes_placeholder": "Reason for the fine...",
+      "confirm": "Confirm Fine"
+    },
+    "cars": {
+      "pending_activations": "Pending Activations",
+      "no_activations": "No activation requests",
+      "deletion_requests": "Deletion Requests",
+      "no_deletions": "No deletion requests",
+      "transfer_requests": "Transfer Requests",
+      "no_transfers": "No pending transfer requests",
+      "status": {
+        "active": "Active",
+        "activation_pending": "Activation Pending",
+        "deletion_requested": "Deletion Requested",
+        "transfer_requested": "Transfer Requested",
+        "rejected": "Rejected"
+      }
+    },
+    "reject": {
+      "title": "Reject Request",
+      "description": "Please provide a reason for the rejection.",
+      "placeholder": "Reason for rejection...",
+      "confirm": "Confirm Rejection"
+    },
+    "audit": {
+      "title": "Fine Issuance Audit",
+      "no_fines": "No fines have been issued yet",
+      "paid": "Paid",
+      "unpaid": "Unpaid"
+    }
+  },
+  "owner": {
+    "title": "My Vehicles",
+    "dashboard_title": "Citizen Dashboard",
+    "personal_info": "Personal Information",
+    "add_vehicle": "Add Vehicle",
+    "no_vehicles": "No vehicles registered yet.",
+    "tabs": {
+      "vehicles": "Vehicles",
+      "fines": "Fines"
+    },
+    "vehicles": {
+      "title": "Registered Vehicles",
+      "subtitle": "Active and pending vehicle registrations",
+      "add_button": "Register Vehicle",
+      "no_vehicles": "No vehicles found",
+      "empty_state_desc": "You haven't registered any vehicles yet. Add a vehicle to manage its parking status.",
+      "register_button": "Register a Vehicle"
+    },
+    "car": {
+      "violations": "VIOLATION | VIOLATIONS",
+      "transferred": "Transferred",
+      "cancel_deletion_tooltip": "Cancel Deletion Request",
+      "transfer_tooltip": "Transfer Ownership",
+      "delete_tooltip": "Request Deletion",
+      "brand_model": "Brand & Model",
+      "color": "Color",
+      "rejection_reason": "Rejection Reason",
+      "transfer_rejected": "Transfer Rejected",
+      "carte_grise": "Carte Grise",
+      "view_doc": "View Doc"
+    },
+    "profile": {
+      "edit_tooltip": "Edit Profile",
+      "birth_date": "Birth Date",
+      "email": "Email Address",
+      "phone": "Phone Number",
+      "full_name": "Full Name",
+      "identity_number": "Identity Number"
+    },
+    "fines": {
+      "title": "Parking Fines",
+      "subtitle": "View and settle your vehicle violations",
+      "no_fines": "No fines found",
+      "empty_state_desc": "You have no pending or past fines. Good job on following parking regulations!",
+      "unpaid_title": "Unpaid Violations",
+      "settled_title": "Settled Records",
+      "pay_button": "Pay Fine",
+      "receipt_issued": "Receipt Issued",
+      "reference": "Reference"
+    },
+    "history": {
+      "title": "Ownership History",
+      "subtitle": "Archive of vehicles you previously owned"
+    },
+    "modals": {
+      "add_car": {
+        "title_new": "Register New Vehicle",
+        "title_edit": "Resubmit Vehicle Registration",
+        "desc_new": "Official vehicle registration for parking enforcement.",
+        "desc_edit": "Update your vehicle details to retry activation.",
+        "plate_label": "License Plate Number",
+        "brand_label": "Vehicle Brand",
+        "model_label": "Vehicle Model",
+        "color_label": "Vehicle Color",
+        "carte_grise_label": "Carte Grise (Official Document)",
+        "tap_to_upload": "Tap to upload Carte Grise",
+        "upload_required": "Required for police verification",
+        "submit_new": "Submit Registration",
+        "submit_edit": "Resubmit Registration"
+      },
+      "delete_car": {
+        "title": "Request Deletion",
+        "confirmation": "Are you sure you want to remove this vehicle from your profile?",
+        "note": "Note: This action requires police approval. The vehicle will be marked as \"Pending\" until a police officer reviews the request.",
+        "confirm_button": "Confirm Request"
+      },
+      "edit_profile": {
+        "title": "Edit Personal Information",
+        "description": "Update your profile details for parking enforcement records.",
+        "full_name": "Full Name",
+        "identity_number": "Identity Number (CIN / Passport)",
+        "birth_date": "Birth Date",
+        "phone": "Phone Number",
+        "save_button": "Save Changes"
+      },
+      "transfer_car": {
+        "title": "Transfer Car Ownership",
+        "description": "Transfer your vehicle to another registered owner.",
+        "vehicle_label": "Vehicle to Transfer",
+        "new_owner_label": "New Owner",
+        "new_owner_placeholder": "Select a new owner...",
+        "new_owner_search": "Search by name or identity number...",
+        "new_carte_grise_label": "New Carte Grise",
+        "submit_button": "Request Transfer"
+      }
+    }
+  }
+}

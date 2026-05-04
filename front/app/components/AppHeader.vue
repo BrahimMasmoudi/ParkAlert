@@ -10,25 +10,22 @@
             ParkAlert
           </p>
           <p class="text-slate-400 text-xs">
-            {{ title }}
+            {{ $t(title) }}
           </p>
         </div>
       </div>
 
       <div class="flex items-center gap-2">
-        <div :class="`flex items-center gap-1.5 px-2.5 py-1 rounded-full border text-xs font-medium ${cfg.color} ${cfg.bg}`">
+        <div
+          :class="`flex items-center gap-1.5 px-2.5 py-1 rounded-full border text-xs font-medium ${cfg.color} ${cfg.bg}`">
           <UIcon :name="cfg.icon" class="w-3.5 h-3.5" />
-          <span class="capitalize">{{ role }}</span>
+          <span class="capitalize">{{ $t(`roles.${role}`) }}</span>
         </div>
 
-        <UButton
-          id="signout-header-btn"
-          size="sm"
-          variant="ghost"
-          icon="lucide:log-out"
-          class="text-slate-400 hover:text-white"
-          @click="authStore.logout"
-        />
+        <MoleculesLanguageMenu />
+
+        <UButton id="signout-header-btn" size="sm" variant="ghost" icon="lucide:log-out"
+          class="text-slate-400 hover:text-white" @click="authStore.logout" />
       </div>
     </UContainer>
   </header>
@@ -40,6 +37,7 @@ const props = defineProps<{
   role: 'agent' | 'police' | 'owner'
 }>()
 
+const { locale } = useI18n()
 const authStore = useAuthStore()
 
 const roleConfig = {

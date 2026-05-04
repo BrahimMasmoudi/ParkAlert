@@ -11,7 +11,7 @@
         </div>
         <div>
           <h3 class="text-lg font-bold text-white tracking-tight">{{ fine.plateNumber }}</h3>
-          <p class="text-xs text-slate-500 font-mono tracking-widest uppercase mt-0.5">Reference: #{{ fine.id.slice(-6).toUpperCase() }}</p>
+          <p class="text-xs text-slate-500 font-mono tracking-widest uppercase mt-0.5">{{ $t('owner.fines.reference') }}: #{{ fine.id.slice(-6).toUpperCase() }}</p>
         </div>
       </div>
       
@@ -23,7 +23,7 @@
           size="xs" 
           class="mt-2 font-bold uppercase tracking-wider px-2 py-0.5"
         >
-          {{ fine.status }}
+          {{ $t(`police.audit.${fine.status}`) || fine.status }}
         </UBadge>
       </div>
     </div>
@@ -42,7 +42,7 @@
       
       <UButton
         v-if="fine.status === 'unpaid'"
-        label="Pay Fine"
+        :label="$t('owner.fines.pay_button')"
         color="primary"
         size="sm"
         icon="i-lucide-credit-card"
@@ -52,7 +52,7 @@
       />
       <div v-else class="flex items-center gap-1.5 text-green-500 font-bold text-[10px] uppercase tracking-widest">
         <UIcon name="i-lucide-verified" class="w-3.5 h-3.5" />
-        Receipt Issued
+        {{ $t('owner.fines.receipt_issued') }}
       </div>
     </div>
   </div>

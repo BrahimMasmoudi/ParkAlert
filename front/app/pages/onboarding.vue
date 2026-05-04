@@ -11,10 +11,10 @@
           <UIcon name="lucide:user-check" class="w-8 h-8 text-white" />
         </div>
         <h1 class="text-3xl font-bold text-white tracking-tight">
-          Welcome, {{ authStore.currentUser?.displayName?.split(' ')[0] }}
+          {{ $t('onboarding.welcome', { name: authStore.currentUser?.displayName?.split(' ')[0] }) }}
         </h1>
         <p class="text-slate-400 mt-2 text-sm max-w-sm mx-auto">
-          Select your role to access your personalised dashboard.
+          {{ $t('onboarding.subtitle') }}
         </p>
       </div>
 
@@ -37,10 +37,10 @@
           </div>
           <div class="flex-1 min-w-0">
             <p class="font-semibold text-white text-base">
-              {{ role.label }}
+              {{ $t(`onboarding.roles.${role.id}.label`) }}
             </p>
             <p class="text-slate-400 text-sm mt-0.5 truncate">
-              {{ role.description }}
+              {{ $t(`onboarding.roles.${role.id}.description`) }}
             </p>
           </div>
           <Transition name="pop">
@@ -62,7 +62,7 @@
         class="bg-blue-600 hover:bg-blue-500 text-white font-semibold shadow-lg shadow-blue-600/25 transition-all duration-200 disabled:opacity-40"
         @click="confirmRole"
       >
-        Continue as {{ selectedRoleLabel }}
+        {{ $t('onboarding.continue', { role: selectedRoleLabel }) }}
       </UButton>
 
       <button
@@ -70,7 +70,7 @@
         class="mt-4 w-full text-slate-500 hover:text-slate-300 text-sm text-center transition-colors py-2"
         @click="authStore.logout"
       >
-        Sign out
+        {{ $t('common.sign_out') }}
       </button>
     </div>
   </div>
@@ -79,6 +79,7 @@
 <script setup lang="ts">
 definePageMeta({ layout: false })
 
+const { t } = useI18n()
 const userStore = useUserStore()
 const authStore = useAuthStore()
 const router = useRouter()
@@ -89,8 +90,6 @@ const loading = ref(false)
 const roles = [
   {
     id: 'agent' as const,
-    label: 'Parking Agent',
-    description: 'File reports on illegally parked vehicles in the field.',
     icon: 'lucide:camera',
     gradient: 'from-amber-500 to-orange-600',
     ring: 'ring-amber-500',
@@ -98,8 +97,6 @@ const roles = [
   },
   {
     id: 'police' as const,
-    label: 'Police Officer',
-    description: 'Investigate reports and issue fines to vehicle owners.',
     icon: 'lucide:shield',
     gradient: 'from-blue-500 to-indigo-600',
     ring: 'ring-blue-500',
@@ -107,8 +104,6 @@ const roles = [
   },
   {
     id: 'owner' as const,
-    label: 'Car Owner',
-    description: 'View your vehicle\'s status and manage any outstanding fines.',
     icon: 'lucide:car',
     gradient: 'from-emerald-500 to-teal-600',
     ring: 'ring-emerald-500',
@@ -117,7 +112,7 @@ const roles = [
 ]
 
 const selectedRoleLabel = computed(
-  () => roles.find(r => r.id === selectedRole.value)?.label ?? '...',
+  () => selectedRole.value ? t(`onboarding.roles.${selectedRole.value}.label`) : '...',
 )
 
 async function confirmRole() {

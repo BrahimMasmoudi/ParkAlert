@@ -1,0 +1,253 @@
+{
+  "common": {
+    "welcome": "Bienvenue sur ParkAlert",
+    "logout": "Déconnexion",
+    "settings": "Paramètres",
+    "next": "Suivant",
+    "cancel": "Annuler",
+    "save": "Enregistrer",
+    "delete": "Supprimer",
+    "edit": "Modifier",
+    "submit": "Envoyer",
+    "loading": "Chargement...",
+    "search": "Rechercher",
+    "or": "OU",
+    "view_details": "Voir Détails",
+    "view_document": "Voir Document",
+    "details": "Détails",
+    "reject": "Rejeter",
+    "sign_out": "Déconnexion",
+    "continue": "Continuer",
+    "close": "Fermer",
+    "retry": "Réessayer"
+  },
+  "roles": {
+    "agent": "Agent",
+    "police": "Police",
+    "owner": "Citoyen"
+  },
+  "onboarding": {
+    "welcome": "Bienvenue, {name}",
+    "subtitle": "Sélectionnez votre rôle pour accéder à votre tableau de bord personnalisé.",
+    "continue": "Continuer en tant que {role}",
+    "roles": {
+      "agent": {
+        "label": "Agent de Stationnement",
+        "description": "Signalez les véhicules mal stationnés sur le terrain."
+      },
+      "police": {
+        "label": "Officier de Police",
+        "description": "Enquêtez sur les rapports et délivrez des amendes."
+      },
+      "owner": {
+        "label": "Propriétaire de Voiture",
+        "description": "Consultez le statut de votre véhicule et gérez vos amendes."
+      }
+    }
+  },
+  "login": {
+    "title": "ParkAlert",
+    "subtitle": "Système National de Stationnement",
+    "signin_title": "Connectez-vous pour continuer",
+    "signin_subtitle": "Utilisez votre compte Google pour accéder au système",
+    "continue_google": "Continuer avec Google",
+    "access_restricted": "L'accès est réservé au personnel gouvernemental autorisé et aux propriétaires de véhicules enregistrés."
+  },
+  "agent": {
+    "title": "Tableau de Bord Agent",
+    "reports_today": "Signalements Aujourd'hui",
+    "total_reports": "Total Signalements",
+    "new_report": "Nouveau Signalement",
+    "new_report_subtitle": "Appuyez pour signaler un véhicule mal stationné",
+    "footer_info": "Vos signalements sont traités par des officiers de police.",
+    "steps": {
+      "photo": "Étape 1 — Prendre une Photo",
+      "location": "Étape 2 — Localisation",
+      "plate": "Étape 3 — Numéro de Plaque"
+    },
+    "form": {
+      "tap_to_photo": "Appuyez pour prendre / charger une photo",
+      "skip_photo": "Passer la photo",
+      "capture_gps": "Ma position actuelle (GPS)",
+      "recapture_gps": "Recalculer la position",
+      "address_placeholder": "Saisissez l'adresse exacte ou les coordonnées",
+      "plate_placeholder": "ex: AB-123-CD",
+      "invalid_plate": "Format invalide. Utilisez une plaque française valide (ex: AB-123-CD)",
+      "submit_report": "Envoyer le Signalement"
+    }
+  },
+  "police": {
+    "title": "Portail de Police",
+    "search_placeholder": "Chercher par plaque, agent ou lieu...",
+    "pending_reports": "Signalements en Attente",
+    "no_reports": "Aucun signalement en attente",
+    "tabs": {
+      "reports": "Signalements",
+      "cars": "Véhicules",
+      "audit": "Journal d'Audit"
+    },
+    "actions": {
+      "issue_fine": "Délivrer une Amende",
+      "reject": "Rejeter la Demande",
+      "approve": "Approuver",
+      "approve_registration": "Approuver l'Enregistrement",
+      "approve_deletion": "Approuver la Suppression",
+      "approve_transfer": "Approuver le Transfert",
+      "cancel_deletion": "Annuler la Suppression"
+    },
+    "review": {
+      "vehicle_details": "Détails du Véhicule",
+      "plate": "Plaque",
+      "brand_model": "Marque & Modèle",
+      "color": "Couleur",
+      "requested": "Demandé le",
+      "ownership_transfer": "Transfert de Propriété",
+      "current_owner": "Propriétaire Actuel",
+      "new_owner": "Nouveau Propriétaire",
+      "owner": "Propriétaire",
+      "carte_grise": "Carte Grise",
+      "new_carte_grise": "Nouvelle Carte Grise",
+      "open_document": "Ouvrir le document dans un nouvel onglet",
+      "no_document": "Aucun document téléchargé",
+      "activation_request": "Demande d'Activation",
+      "deletion_request": "Demande de Suppression",
+      "transfer_request": "Demande de Transfert de Propriété"
+    },
+    "fine": {
+      "title": "Délivrer une Amende",
+      "description": "Créer une nouvelle amende pour le propriétaire.",
+      "target_vehicle": "Véhicule Ciblé",
+      "searching_owner": "Recherche du propriétaire...",
+      "owner_found": "Propriétaire Trouvé",
+      "no_owner_found": "Aucun propriétaire trouvé pour cette plaque.",
+      "amount": "Montant de l'Amende (TND)",
+      "notes": "Notes d'Infraction",
+      "notes_placeholder": "Raison de l'amende...",
+      "confirm": "Confirmer l'Amende"
+    },
+    "cars": {
+      "pending_activations": "Activations en Attente",
+      "no_activations": "Aucune demande d'activation",
+      "deletion_requests": "Demandes de Suppression",
+      "no_deletions": "Aucune demande de suppression",
+      "transfer_requests": "Demandes de Transfert",
+      "no_transfers": "Aucune demande de transfert en attente",
+      "status": {
+        "active": "Actif",
+        "activation_pending": "Activation en attente",
+        "deletion_requested": "Suppression demandée",
+        "transfer_requested": "Transfert demandé",
+        "rejected": "Rejeté"
+      }
+    },
+    "reject": {
+      "title": "Rejeter la Demande",
+      "description": "Veuillez fournir une raison pour le rejet.",
+      "placeholder": "Raison du rejet...",
+      "confirm": "Confirmer le Rejet"
+    },
+    "audit": {
+      "title": "Journal d'Audit des Amendes",
+      "no_fines": "Aucune amende n'a encore été délivrée",
+      "paid": "Payée",
+      "unpaid": "Non payée"
+    }
+  },
+  "owner": {
+    "title": "Mes Véhicules",
+    "dashboard_title": "Tableau de Bord Citoyen",
+    "personal_info": "Informations Personnelles",
+    "add_vehicle": "Ajouter un véhicule",
+    "no_vehicles": "Aucun véhicule enregistré.",
+    "tabs": {
+      "vehicles": "Véhicules",
+      "fines": "Amendes"
+    },
+    "vehicles": {
+      "title": "Véhicules Enregistrés",
+      "subtitle": "Enregistrements actifs et en attente",
+      "add_button": "Enregistrer un véhicule",
+      "no_vehicles": "Aucun véhicule trouvé",
+      "empty_state_desc": "Vous n'avez pas encore enregistré de véhicule. Ajoutez-en un pour gérer son statut.",
+      "register_button": "Enregistrer un Véhicule"
+    },
+    "car": {
+      "violations": "INFRACTION | INFRACTIONS",
+      "transferred": "Transféré",
+      "cancel_deletion_tooltip": "Annuler la demande de suppression",
+      "transfer_tooltip": "Transférer la propriété",
+      "delete_tooltip": "Demander la suppression",
+      "brand_model": "Marque & Modèle",
+      "color": "Couleur",
+      "rejection_reason": "Raison du rejet",
+      "transfer_rejected": "Transfert rejeté",
+      "carte_grise": "Carte Grise",
+      "view_doc": "Voir Doc"
+    },
+    "profile": {
+      "edit_tooltip": "Modifier le Profil",
+      "birth_date": "Date de Naissance",
+      "email": "Adresse E-mail",
+      "phone": "Numéro de Téléphone",
+      "full_name": "Nom Complet",
+      "identity_number": "Numéro d'Identité"
+    },
+    "fines": {
+      "title": "Amendes de Stationnement",
+      "subtitle": "Consultez et réglez vos infractions",
+      "no_fines": "Aucune amende trouvée",
+      "empty_state_desc": "Vous n'avez aucune amende en attente. Félicitations pour le respect des règles de stationnement !",
+      "unpaid_title": "Infractions Non Payées",
+      "settled_title": "Dossiers Règlementés",
+      "pay_button": "Payer l'Amende",
+      "receipt_issued": "Reçu Émis",
+      "reference": "Référence"
+    },
+    "history": {
+      "title": "Historique de Propriété",
+      "subtitle": "Archive des véhicules que vous possédiez auparavant"
+    },
+    "modals": {
+      "add_car": {
+        "title_new": "Enregistrer un Nouveau Véhicule",
+        "title_edit": "Soumettre à Nouveau l'Enregistrement",
+        "desc_new": "Enregistrement officiel du véhicule pour l'application du stationnement.",
+        "desc_edit": "Mettez à jour les détails de votre véhicule pour réessayer l'activation.",
+        "plate_label": "Plaque d'Immatriculation",
+        "brand_label": "Marque du Véhicule",
+        "model_label": "Modèle du Véhicule",
+        "color_label": "Couleur du Véhicule",
+        "carte_grise_label": "Carte Grise (Document Officiel)",
+        "tap_to_upload": "Appuyez pour télécharger la Carte Grise",
+        "upload_required": "Requis pour la vérification par la police",
+        "submit_new": "Soumettre l'Enregistrement",
+        "submit_edit": "Soumettre à Nouveau"
+      },
+      "delete_car": {
+        "title": "Demander la Suppression",
+        "confirmation": "Êtes-vous sûr de vouloir supprimer ce véhicule de votre profil ?",
+        "note": "Note : Cette action nécessite l'approbation de la police. Le véhicule sera marqué comme \"En attente\" jusqu'à ce qu'un officier de police examine la demande.",
+        "confirm_button": "Confirmer la Demande"
+      },
+      "edit_profile": {
+        "title": "Modifier les Informations Personnelles",
+        "description": "Mettez à jour vos informations de profil pour les dossiers officiels.",
+        "full_name": "Nom Complet",
+        "identity_number": "Numéro d'Identité (CIN / Passeport)",
+        "birth_date": "Date de Naissance",
+        "phone": "Numéro de Téléphone",
+        "save_button": "Enregistrer les Modifications"
+      },
+      "transfer_car": {
+        "title": "Transférer la Propriété du Véhicule",
+        "description": "Transférez votre véhicule à un autre propriétaire enregistré.",
+        "vehicle_label": "Véhicule à Transférer",
+        "new_owner_label": "Nouveau Propriétaire",
+        "new_owner_placeholder": "Sélectionnez un nouveau propriétaire...",
+        "new_owner_search": "Rechercher par nom ou numéro d'identité...",
+        "new_carte_grise_label": "Nouvelle Carte Grise",
+        "submit_button": "Demander le Transfert"
+      }
+    }
+  }
+}
