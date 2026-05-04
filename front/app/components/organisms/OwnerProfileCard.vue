@@ -1,25 +1,3 @@
-<script setup lang="ts">
-import { useAuthStore } from '~/stores/auth'
-
-const authStore = useAuthStore()
-const photoUrl = computed(() => authStore.currentUser?.photoURL)
-
-defineProps<{
-  userProfile: {
-    name?: string
-    fullName?: string
-    identityNumber?: string
-    birthDate?: string
-    email?: string
-    phone?: string
-  }
-}>()
-
-defineEmits<{
-  (e: 'edit'): void
-}>()
-</script>
-
 <template>
   <UCard
     class="bg-slate-900 border border-slate-800 shadow-xl overflow-hidden relative group"
@@ -61,3 +39,25 @@ defineEmits<{
     </dl>
   </UCard>
 </template>
+
+<script setup lang="ts">
+import { useAuthStore } from '~/stores/auth'
+
+const authStore = useAuthStore()
+const photoUrl = computed(() => authStore.currentUser?.photoURL)
+
+defineProps<{
+  userProfile: {
+    name?: string
+    fullName?: string
+    identityNumber?: string
+    birthDate?: string
+    email?: string
+    phone?: string
+  }
+}>()
+
+defineEmits<{
+  (e: 'edit'): void
+}>()
+</script>

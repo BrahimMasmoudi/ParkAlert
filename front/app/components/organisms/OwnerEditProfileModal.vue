@@ -1,43 +1,3 @@
-<script setup lang="ts">
-import { useUserStore } from '~/stores/user'
-import { storeToRefs } from 'pinia'
-
-const isOpen = defineModel<boolean>('open', { required: true })
-
-const userStore = useUserStore()
-const { userProfile } = storeToRefs(userStore)
-
-const formState = ref({
-  fullName: '',
-  identityNumber: '',
-  birthDate: '',
-  phone: ''
-})
-
-const saving = ref(false)
-
-watch(isOpen, (val) => {
-  if (val && userProfile.value) {
-    formState.value = {
-      fullName: userProfile.value.fullName || userProfile.value.name || '',
-      identityNumber: userProfile.value.identityNumber || '',
-      birthDate: userProfile.value.birthDate || '',
-      phone: userProfile.value.phone || ''
-    }
-  }
-})
-
-const submitUpdate = async () => {
-  saving.value = true
-  try {
-    await userStore.updateProfile(formState.value)
-    isOpen.value = false
-  } finally {
-    saving.value = false
-  }
-}
-</script>
-
 <template>
   <UModal
     v-model:open="isOpen"
@@ -133,3 +93,43 @@ const submitUpdate = async () => {
     </template>
   </UModal>
 </template>
+
+<script setup lang="ts">
+import { useUserStore } from '~/stores/user'
+import { storeToRefs } from 'pinia'
+
+const isOpen = defineModel<boolean>('open', { required: true })
+
+const userStore = useUserStore()
+const { userProfile } = storeToRefs(userStore)
+
+const formState = ref({
+  fullName: '',
+  identityNumber: '',
+  birthDate: '',
+  phone: ''
+})
+
+const saving = ref(false)
+
+watch(isOpen, (val) => {
+  if (val && userProfile.value) {
+    formState.value = {
+      fullName: userProfile.value.fullName || userProfile.value.name || '',
+      identityNumber: userProfile.value.identityNumber || '',
+      birthDate: userProfile.value.birthDate || '',
+      phone: userProfile.value.phone || ''
+    }
+  }
+})
+
+const submitUpdate = async () => {
+  saving.value = true
+  try {
+    await userStore.updateProfile(formState.value)
+    isOpen.value = false
+  } finally {
+    saving.value = false
+  }
+}
+</script>

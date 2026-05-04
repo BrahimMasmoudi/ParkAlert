@@ -307,6 +307,18 @@ export const useCarsStore = defineStore('cars', () => {
     })
   }
 
+  async function getCarByPlate(plateNumber: string) {
+    const q = query(
+      collection(db, 'cars').withConverter(carConverter),
+      where('plateNumber', '==', plateNumber),
+      where('status', '==', 'active')
+    )
+    const { getDocs } = await import('firebase/firestore')
+    const snap = await getDocs(q)
+    if (snap.empty) return null
+    return snap.docs[0].data()
+  }
+
   return {
     myCars,
     carsLoading,
@@ -327,6 +339,7 @@ export const useCarsStore = defineStore('cars', () => {
     rejectTransfer,
     approveDeletion,
     requestDeletion,
-    cancelCarDeletion
+    cancelCarDeletion,
+    getCarByPlate
   }
 })

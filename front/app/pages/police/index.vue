@@ -1,323 +1,176 @@
 <template>
-  <div class="min-h-screen bg-slate-950 text-white">
-    <AppHeader title="Police Dashboard" role="police" />
+  <MoleculesPoliceSearchBar v-model="searchQuery" />
 
-    <UTabs class="px-10" :items="items">
-      <template #cars>
-        <UContainer class="py-6 space-y-10">
-          <section>
-            <div class="flex items-center justify-between mb-4">
-              <h2 class="text-xl font-bold">
-                Pending Activations
-              </h2>
+  <UTabs :items="items" :ui="{ 
+    list: 'bg-slate-900 border border-slate-800 p-1 mb-8',
+    indicator: 'bg-indigo-600',
+    trigger: 'font-bold uppercase tracking-widest text-xs py-3'
+  }">
+    <template #cars>
+      <OrganismsPoliceCarsTab
+        :activations="filteredActivationPending"
+        :deletions="filteredDeletionPending"
+        :transfers="filteredTransferRequested"
+        :loading="carsStore.pendingCarsLoading"
+        :car-columns="carColumns"
+        :delete-columns="deleteColumns"
+        @review="openReview"
+        @reject="openRejectModal"
+      />
+    </template>
 
-              <UBadge v-if="!carsStore.pendingCarsLoading" color="warning" variant="soft">
-                {{ carsStore.activationPendingCars.length }}
-              </UBadge>
+    <template #reports>
+      <OrganismsPoliceReportsTab
+        :reports="filteredPendingReports"
+        :loading="reportsStore.reportsLoading"
+        :columns="columns"
+        @open="openReport"
+      />
+    </template>
+
+    <template #audit>
+      <OrganismsPoliceAuditTab
+        :fines="filteredAllFines"
+        :loading="finesStore.allFinesLoading"
+        :columns="auditColumns"
+      />
+    </template>
+  </UTabs>
+
+  <UModal v-model:open="isDetailOpen" :title="`Report - ${selected?.plateNumber}`">
+    <template #body>
+      <div v-if="selected" class="space-y-4">
+        <a v-if="selected.photoUrl" :href="selected.photoUrl" target="_blank" class="block group cursor-zoom-in relative">
+          <img :src="selected.photoUrl" class="w-full rounded-xl transition-all duration-300 group-hover:brightness-75 group-hover:scale-[1.01]">
+          <div class="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+            <UIcon name="i-lucide-maximize-2" class="w-8 h-8 text-white drop-shadow-lg" />
+          </div>
+        </a>
+
+        <UButton block color="error" @click="openIssuePane">
+          Issue Fine
+        </UButton>
+      </div>
+    </template>
+  </UModal>
+
+  <UModal v-model:open="isFineOpen" title="Issue Fine" description="Create a new fine for a vehicle owner."
+    :ui="{ 
+      content: 'bg-slate-900 border border-slate-700 shadow-2xl shadow-black/50 rounded-2xl overflow-hidden',
+      header: 'py-4 sm:py-5 border-b border-slate-800'
+    }">
+    <template #body>
+      <div class="space-y-6">
+        <div v-if="selected" class="bg-slate-950 p-4 rounded-xl border border-slate-800">
+          <div class="flex items-center gap-4">
+            <div class="p-3 bg-slate-900 rounded-lg border border-slate-800">
+              <UIcon name="i-lucide-car" class="w-6 h-6 text-indigo-400" />
             </div>
-
-            <LoadingSkeleton v-if="carsStore.pendingCarsLoading" :count="4" />
-
-            <div v-else-if="!carsStore.activationPendingCars.length" class="text-center py-12 text-slate-500 bg-slate-900/50 rounded-xl border border-slate-800">
-              <UIcon name="lucide:check-circle-2" class="w-8 h-8 text-slate-600 mb-2 mx-auto" />
-              <p>No activation requests</p>
+            <div>
+              <p class="text-xs text-slate-500 font-bold uppercase tracking-wider">Target Vehicle</p>
+              <p class="font-mono text-xl font-black text-white tracking-widest">{{ selected.plateNumber }}</p>
             </div>
-
-            <UTable v-else :data="carsStore.activationPendingCars" :columns="carColumns">
-              <template #plateNumber-cell="{ row }">
-                <span class="font-mono font-bold text-amber-400">
-                  {{ row.original.plateNumber }}
-                </span>
-              </template>
-
-              <template #vehicle-cell="{ row }">
-                {{ row.original.brand }} {{ row.original.model }}
-              </template>
-
-              <template #ownerId-cell="{ row }">
-                <AtomsUserName :user="userStore.usersCache[row.original.ownerId]" />
-              </template>
-
-              <template #status-cell="{ row }">
-                <UBadge color="warning" variant="soft">
-                  {{ carStatusMapper[row.original.status] }}
-                </UBadge>
-              </template>
-
-              <template #createdAt-cell="{ row }">
-                <span class="text-sm text-slate-400">
-                  {{ new Date(row.original.createdAt).toLocaleString() }}
-                </span>
-              </template>
-
-              <template #actions-cell="{ row }">
-                <div class="flex gap-2">
-                  <UButton size="xs" color="neutral" variant="soft" icon="lucide:eye"
-                    @click="openReview(row.original, 'activation')">
-                    Details
-                  </UButton>
-                  <UButton size="xs" color="success" :loading="carsStore.isLoading(`${row.original.id}-approve`)"
-                    @click="carsStore.approveCar(row.original.id)">
-                    Approve
-                  </UButton>
-                  <UButton size="xs" color="error" variant="soft"
-                    :loading="carsStore.isLoading(`${row.original.id}-reject`)"
-                    @click="openRejectModal(row.original.id)">
-                    Reject
-                  </UButton>
-                </div>
-              </template>
-            </UTable>
-          </section>
-
-          <section class="mt-12">
-            <div class="flex items-center justify-between mb-4">
-              <h2 class="text-xl font-bold">
-                Deletion Requests
-              </h2>
-
-              <UBadge v-if="!carsStore.pendingCarsLoading" color="error" variant="soft">
-                {{ carsStore.deletionPendingCars.length }}
-              </UBadge>
-            </div>
-
-            <LoadingSkeleton v-if="carsStore.pendingCarsLoading" :count="4" />
-
-            <div v-else-if="!carsStore.deletionPendingCars.length" class="text-center py-12 text-slate-500 bg-slate-900/50 rounded-xl border border-slate-800">
-              <UIcon name="lucide:check-circle-2" class="w-8 h-8 text-slate-600 mb-2 mx-auto" />
-              <p>No deletion requests</p>
-            </div>
-
-            <UTable v-else :data="carsStore.deletionPendingCars" :columns="deleteColumns">
-              <template #plateNumber-cell="{ row }">
-                <span class="font-mono font-bold text-amber-400">
-                  {{ row.original.plateNumber }}
-                </span>
-              </template>
-
-              <template #vehicle-cell="{ row }">
-                {{ row.original.brand }} {{ row.original.model }}
-              </template>
-
-              <template #ownerId-cell="{ row }">
-                <AtomsUserName :user="userStore.usersCache[row.original.ownerId]" />
-              </template>
-
-              <template #createdAt-cell="{ row }">
-                <span class="text-sm text-slate-400">
-                  {{ new Date(row.original.createdAt).toLocaleString() }}
-                </span>
-              </template>
-
-              <template #actions-cell="{ row }">
-                <div class="flex gap-2">
-                  <UButton size="xs" color="neutral" variant="soft" icon="lucide:eye"
-                    @click="openReview(row.original, 'deletion')">
-                    Details
-                  </UButton>
-                  <UButton size="xs" color="error" :loading="carsStore.isLoading(row.original.id)"
-                    @click="carsStore.approveDeletion(row.original.id)">
-                    Approve Deletion
-                  </UButton>
-                </div>
-              </template>
-            </UTable>
-          </section>
-
-          <UDivider class="my-10" />
-
-          <section>
-            <div class="flex items-center justify-between mb-4">
-              <h2 class="text-xl font-bold flex items-center gap-2">
-                <UIcon name="lucide:arrow-right-left" class="w-6 h-6 text-primary" />
-                Transfer Requests
-              </h2>
-              <UBadge v-if="!carsStore.pendingCarsLoading" color="primary" variant="soft">
-                {{ carsStore.transferRequestedCars?.length ?? 0 }}
-              </UBadge>
-            </div>
-
-            <LoadingSkeleton v-if="carsStore.pendingCarsLoading" :count="3" />
-
-            <div v-else-if="!carsStore.transferRequestedCars?.length" class="text-center py-12 text-slate-500 bg-slate-900/50 rounded-xl border border-slate-800">
-              <UIcon name="lucide:check-circle-2" class="w-8 h-8 text-slate-600 mb-2 mx-auto" />
-              <p>No pending transfer requests</p>
-            </div>
-
-            <UTable v-else :data="carsStore.transferRequestedCars" :columns="carColumns">
-              <template #plateNumber-cell="{ row }">
-                <span class="font-mono font-bold text-amber-400">
-                  {{ row.original.plateNumber }}
-                </span>
-              </template>
-
-              <template #vehicle-cell="{ row }">
-                {{ row.original.brand }} {{ row.original.model }}
-              </template>
-
-              <template #ownerId-cell="{ row }">
-                <AtomsUserName :user="userStore.usersCache[row.original.ownerId]" />
-              </template>
-
-              <template #status-cell="{ row }">
-                <UBadge color="primary" variant="soft">
-                  Transfer Requested
-                </UBadge>
-              </template>
-
-              <template #createdAt-cell="{ row }">
-                <span class="text-sm text-slate-400">
-                  {{ new Date(row.original.createdAt).toLocaleString() }}
-                </span>
-              </template>
-
-              <template #carteGriseUrl-cell="{ row }">
-                <UButton v-if="row.original.transferCarteGriseUrl || row.original.carteGriseUrl" :to="row.original.transferCarteGriseUrl || row.original.carteGriseUrl" target="_blank" size="xs"
-                  color="neutral" variant="soft" icon="lucide:external-link">
-                  View Document
-                </UButton>
-                <span v-else class="text-slate-500 italic text-sm">No doc</span>
-              </template>
-
-              <template #actions-cell="{ row }">
-                <div class="flex gap-2">
-                  <UButton size="xs" color="neutral" variant="soft" icon="lucide:eye"
-                    @click="openReview(row.original, 'transfer')">
-                    Details
-                  </UButton>
-                  <UButton size="xs" color="success" :loading="carsStore.isLoading(row.original.id + '-approve')"
-                    @click="carsStore.approveTransfer(row.original.id)">
-                    Approve
-                  </UButton>
-                  <UButton size="xs" color="error" variant="soft" :loading="carsStore.isLoading(row.original.id + '-reject')"
-                    @click="openRejectModal(row.original.id, true)">
-                    Reject
-                  </UButton>
-                </div>
-              </template>
-            </UTable>
-          </section>
-        </UContainer>
-      </template>
-
-      <template #fines>
-        <UContainer class="py-6">
-          <div class="flex items-center justify-between mb-4">
-            <h2 class="text-xl font-bold">
-              Pending Reports
-            </h2>
-
-            <UBadge v-if="!reportsStore.reportsLoading" color="warning" variant="soft">
-              {{ reportsStore.pendingReports?.length ?? 0 }}
-            </UBadge>
           </div>
 
-          <LoadingSkeleton v-if="reportsStore.reportsLoading" :count="5" />
-
-          <div v-else-if="!reportsStore.pendingReports?.length" class="text-center py-12 text-slate-500 bg-slate-900/50 rounded-xl border border-slate-800">
-            <UIcon name="lucide:check-circle-2" class="w-8 h-8 text-slate-600 mb-2 mx-auto" />
-            <p>No pending reports</p>
+          <div v-if="fineForm.searching" class="mt-4 flex items-center gap-2 text-slate-400 text-sm italic">
+            <UIcon name="i-lucide-loader-2" class="w-4 h-4 animate-spin" />
+            Searching for vehicle owner...
           </div>
-
-          <UTable v-else :data="reportsStore.pendingReports" :columns="columns">
-            <template #plateNumber-cell="{ row }">
-              <span class="font-mono font-bold text-amber-400">
-                {{ row.original.plateNumber }}
-              </span>
-            </template>
-
-            <template #status-cell="{ row }">
-              <UBadge color="warning" variant="soft">
-                {{ row.original.status }}
-              </UBadge>
-            </template>
-
-            <template #timestamp-cell="{ row }">
-              <span class="text-sm text-slate-400">
-                {{ new Date(row.original.timestamp).toLocaleString() }}
-              </span>
-            </template>
-
-            <template #actions-cell="{ row }">
-              <UButton variant="ghost" icon="i-lucide-eye" @click="openReport(row.original)" />
-            </template>
-          </UTable>
-        </UContainer>
-      </template>
-    </UTabs>
-
-    <!-- REPORT MODAL -->
-    <UModal v-model:open="isDetailOpen" :title="`Report - ${selected?.plateNumber}`">
-      <template #body>
-        <div v-if="selected" class="space-y-4">
-          <img v-if="selected.photoUrl" :src="selected.photoUrl" class="w-full rounded-xl">
-
-          <UButton block color="error" @click="openIssuePane">
-            Issue Fine
-          </UButton>
-        </div>
-      </template>
-    </UModal>
-
-    <!-- FINE MODAL -->
-    <UModal v-model:open="isFineOpen" title="Issue Fine">
-      <template #body>
-        <div class="space-y-4">
-          <UInput v-model="fineForm.ownerId" placeholder="Owner UID" />
-
-          <UInput v-model.number="fineForm.amount" type="number" />
-
-          <UTextarea v-model="fineForm.notes" placeholder="Notes" />
-
-          <UButton block color="error" @click="submitFine">
-            Confirm Fine
-          </UButton>
-        </div>
-      </template>
-    </UModal>
-    <!-- REJECT CAR MODAL -->
-    <UModal v-model:open="isRejectModalOpen" title="Reject Vehicle">
-      <template #body>
-        <div class="space-y-4">
-          <p class="text-sm text-slate-400">
-            Please provide a reason for rejecting this vehicle. This will be sent to the user.
-          </p>
-
-          <UTextarea class="w-full" v-model="rejectionReason" placeholder="Rejection reason..." :rows="4" />
-
-          <div class="flex justify-end gap-2">
-            <UButton color="gray" variant="ghost" @click="isRejectModalOpen = false">
-              Cancel
-            </UButton>
-            <UButton color="error"
-              :loading="selectedCarIdForRejection ? carsStore.isLoading(`${selectedCarIdForRejection}-reject`) : false"
-              :disabled="!rejectionReason.trim()" @click="submitReject">
-              Confirm Rejection
-            </UButton>
+          
+          <div v-else-if="fineForm.selectedOwner" class="mt-4 pt-4 border-t border-slate-800/50 flex items-center gap-3">
+            <UAvatar :src="fineForm.selectedOwner.photoURL" :alt="fineForm.selectedOwner.fullName || fineForm.selectedOwner.name" size="sm" />
+            <div class="min-w-0">
+              <p class="text-xs text-slate-500 font-bold uppercase tracking-wider">Owner Found</p>
+              <p class="text-sm font-bold text-white truncate">{{ fineForm.selectedOwner.fullName || fineForm.selectedOwner.name }}</p>
+              <p class="text-[10px] text-indigo-400 font-mono">{{ fineForm.selectedOwner.identityNumber }}</p>
+            </div>
+          </div>
+          <div v-else class="mt-4 p-3 bg-red-950/20 border border-red-900/30 rounded-lg text-xs text-red-400 flex items-center gap-2">
+            <UIcon name="lucide:alert-circle" class="w-4 h-4" />
+            No owner found for this plate.
           </div>
         </div>
-      </template>
-    </UModal>
 
-    <!-- REVIEW MODAL -->
-    <OrganismsPoliceCarReviewModal
-      v-model:open="isReviewModalOpen"
-      :car="reviewCar"
-      :mode="reviewMode"
-      @approve="handleReviewApprove"
-      @reject="handleReviewReject"
-    />
-  </div>
+        <UFormField label="Fine Amount (TND)">
+          <UInput v-model="fineForm.amount" type="number" size="xl" icon="i-lucide-circle-dollar-sign" />
+        </UFormField>
+
+        <UFormField label="Violation Notes">
+          <UTextarea v-model="fineForm.notes" placeholder="Reason for the fine..." size="xl" />
+        </UFormField>
+      </div>
+    </template>
+
+    <template #footer>
+      <div class="flex gap-3 justify-end w-full">
+        <UButton label="Cancel" color="neutral" variant="ghost" @click="isFineOpen = false" />
+        <UButton 
+          label="Confirm Fine" 
+          color="error" 
+          icon="i-lucide-check-circle" 
+          class="font-bold px-6 shadow-lg shadow-red-500/20"
+          :loading="finesStore.acting"
+          :disabled="!fineForm.selectedOwner"
+          @click="confirmFine" 
+        />
+      </div>
+    </template>
+  </UModal>
+
+  <UModal v-model:open="isRejectModalOpen" title="Reject Request" description="Please provide a reason for the rejection.">
+    <template #body>
+      <UTextarea v-model="rejectionReason" placeholder="Reason for rejection..." class="w-full" />
+    </template>
+    <template #footer>
+      <div class="flex gap-2 justify-end w-full">
+        <UButton label="Cancel" color="neutral" variant="ghost" @click="isRejectModalOpen = false" />
+        <UButton label="Confirm Rejection" color="error" :loading="carsStore.isLoading(`${targetCarId}-reject`)"
+          @click="confirmReject" />
+      </div>
+    </template>
+  </UModal>
+
+  <OrganismsPoliceCarReviewModal v-model:open="isReviewModalOpen" :car="reviewCar" :mode="reviewMode"
+    @approve="handleReviewApprove" @reject="handleReviewReject" />
 </template>
 
 <script setup lang="ts">
-import { carStatusMapper } from '~/stores/cars'
+import { useReportsStore } from '~/stores/reports'
+import { useCarsStore } from '~/stores/cars'
+import { useUserStore } from '~/stores/user'
+import { useFinesStore } from '~/stores/fines'
 import type { Report } from '~/stores/reports'
+
+definePageMeta({
+  title: 'Police Dashboard',
+  role: 'police',
+  containerClass: 'max-w-7xl'
+})
 
 const reportsStore = useReportsStore()
 const carsStore = useCarsStore()
-const finesStore = useFinesStore()
 const userStore = useUserStore()
+const finesStore = useFinesStore()
+
+const searchQuery = ref('')
+
+function filterList<T extends { plateNumber?: string, ownerId?: string }>(list: T[] | null) {
+  if (!list) return []
+  if (!searchQuery.value.trim()) return list
+  const q = searchQuery.value.toLowerCase()
+  return list.filter(item => {
+    const plateMatch = item.plateNumber?.toLowerCase().includes(q)
+    const owner = item.ownerId ? userStore.usersCache[item.ownerId] : null
+    const ownerMatch = owner?.fullName?.toLowerCase().includes(q) || owner?.name?.toLowerCase().includes(q)
+    return plateMatch || ownerMatch
+  })
+}
+
+const filteredActivationPending = computed(() => filterList(carsStore.activationPendingCars))
+const filteredDeletionPending = computed(() => filterList(carsStore.deletionPendingCars))
+const filteredTransferRequested = computed(() => filterList(carsStore.transferRequestedCars))
+const filteredPendingReports = computed(() => filterList(reportsStore.pendingReports))
+const filteredAllFines = computed(() => filterList(finesStore.allFines))
 
 watch(() => carsStore.activationPendingCars, (cars) => {
   cars.forEach(car => userStore.fetchUser(car.ownerId))
@@ -331,23 +184,24 @@ watch(() => carsStore.transferRequestedCars, (cars) => {
   cars.forEach(car => userStore.fetchUser(car.ownerId))
 }, { immediate: true })
 
-const selected = ref<(Report & { id: string }) | null>(null)
+watch(() => finesStore.allFines, (fines) => {
+  if (!fines) return
+  fines.forEach(fine => userStore.fetchUser(fine.ownerId))
+}, { immediate: true })
 
+const selected = ref<(Report & { id: string }) | null>(null)
 const isDetailOpen = ref(false)
 const isFineOpen = ref(false)
-
 const isRejectModalOpen = ref(false)
-const selectedCarIdForRejection = ref<string | null>(null)
 const rejectionReason = ref('')
-const isRejectingTransfer = ref(false)
+const targetCarId = ref('')
+const isTransferRejection = ref(false)
 
-// Review modal
 const isReviewModalOpen = ref(false)
 const reviewCar = ref<any | null>(null)
 const reviewMode = ref<'activation' | 'deletion' | 'transfer'>('activation')
 
 function openReview(car: any, mode: 'activation' | 'deletion' | 'transfer') {
-  // Ensure owner(s) are pre-fetched for the modal
   userStore.fetchUser(car.ownerId)
   if (car.transferToOwnerId) userStore.fetchUser(car.transferToOwnerId)
   reviewCar.value = car
@@ -370,68 +224,83 @@ function handleReviewReject() {
 }
 
 const fineForm = reactive({
-  ownerId: '',
+  selectedOwner: null as any,
+  searching: false,
   amount: 100,
   notes: ''
 })
 
-const items = [
+const items = computed(() => [
   {
     label: 'CARS',
     icon: 'i-lucide-car-front',
-    slot: 'cars'
+    slot: 'cars',
+    badge: filteredActivationPending.value.length + 
+           filteredDeletionPending.value.length + 
+           filteredTransferRequested.value.length
   },
   {
-    label: 'FINES',
-    icon: 'i-lucide-circle-dollar-sign',
-    slot: 'fines'
+    label: 'REPORTS',
+    icon: 'i-lucide-camera',
+    slot: 'reports',
+    badge: filteredPendingReports.value.length
+  },
+  {
+    label: 'AUDIT',
+    icon: 'i-lucide-history',
+    slot: 'audit',
+    badge: filteredAllFines.value.length
   }
-]
+])
 
 function openReport(report: Report & { id: string }) {
   selected.value = report
   isDetailOpen.value = true
 }
 
-function openIssuePane() {
-  fineForm.ownerId = ''
-  fineForm.amount = 100
-  fineForm.notes = ''
+async function openIssuePane() {
+  isDetailOpen.value = false
   isFineOpen.value = true
-}
-
-function openRejectModal(carId: string, isTransfer = false) {
-  selectedCarIdForRejection.value = carId
-  isRejectingTransfer.value = isTransfer
-  rejectionReason.value = ''
-  isRejectModalOpen.value = true
-}
-
-async function submitReject() {
-  if (!selectedCarIdForRejection.value || !rejectionReason.value.trim()) return
-
-  if (isRejectingTransfer.value) {
-    await carsStore.rejectTransfer(selectedCarIdForRejection.value, rejectionReason.value)
-  } else {
-    await carsStore.rejectCar(selectedCarIdForRejection.value, rejectionReason.value)
+  if (selected.value) {
+    fineForm.searching = true
+    fineForm.selectedOwner = null
+    try {
+      const owner = await carsStore.getCarByPlate(selected.value.plateNumber)
+      if (owner) {
+        await userStore.fetchUser(owner.ownerId)
+        fineForm.selectedOwner = userStore.usersCache[owner.ownerId]
+      }
+    } finally {
+      fineForm.searching = false
+    }
   }
-  
-  isRejectModalOpen.value = false
 }
 
-async function submitFine() {
-  if (!selected.value) return
-
+async function confirmFine() {
+  if (!selected.value || !fineForm.selectedOwner) return
   await finesStore.issueFine({
     reportId: selected.value.id,
-    ownerId: fineForm.ownerId,
+    ownerId: fineForm.selectedOwner.id,
     plateNumber: selected.value.plateNumber,
     amount: fineForm.amount,
     notes: fineForm.notes
   })
-
   isFineOpen.value = false
-  isDetailOpen.value = false
+  selected.value = null
+}
+
+function openRejectModal(carId: string, isTransfer = false) {
+  targetCarId.value = carId
+  isTransferRejection.value = isTransfer
+  rejectionReason.value = ''
+  isRejectModalOpen.value = true
+}
+
+async function confirmReject() {
+  if (!targetCarId.value || !rejectionReason.value) return
+  if (isTransferRejection.value) await carsStore.rejectTransfer(targetCarId.value, rejectionReason.value)
+  else await carsStore.rejectCar(targetCarId.value, rejectionReason.value)
+  isRejectModalOpen.value = false
 }
 
 const carColumns = [
@@ -439,7 +308,7 @@ const carColumns = [
   { accessorKey: 'vehicle', header: 'Vehicle' },
   { accessorKey: 'ownerId', header: 'Owner' },
   { accessorKey: 'status', header: 'Status' },
-  { accessorKey: 'createdAt', header: 'Created' },
+  { accessorKey: 'createdAt', header: 'Requested' },
   { id: 'actions', header: 'Actions' }
 ]
 
@@ -447,6 +316,7 @@ const deleteColumns = [
   { accessorKey: 'plateNumber', header: 'Plate' },
   { accessorKey: 'vehicle', header: 'Vehicle' },
   { accessorKey: 'ownerId', header: 'Owner' },
+  { accessorKey: 'status', header: 'Status' },
   { accessorKey: 'createdAt', header: 'Requested' },
   { id: 'actions', header: 'Actions' }
 ]
@@ -458,10 +328,12 @@ const columns = [
   { accessorKey: 'timestamp', header: 'Time' },
   { id: 'actions', header: 'Actions' }
 ]
-</script>
 
-<style scoped>
-:deep(th) {
-  color: white !important;
-}
-</style>
+const auditColumns = [
+  { accessorKey: 'plateNumber', header: 'Plate' },
+  { accessorKey: 'ownerId', header: 'Owner' },
+  { accessorKey: 'amount', header: 'Amount' },
+  { accessorKey: 'status', header: 'Status' },
+  { accessorKey: 'issuedAt', header: 'Date Issued' }
+]
+</script>
