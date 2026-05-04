@@ -9,10 +9,10 @@ import {
     setUserProperties,
 } from 'firebase/analytics'
 import { connectFunctionsEmulator, getFunctions } from 'firebase/functions'
-import { useFirebaseApp, useFirestore, getCurrentUser, useFirebaseStorage, useFirebaseAuth } from 'vuefire'
+import { useFirebaseApp, useFirestore, getCurrentUser, useFirebaseStorage } from 'vuefire'
 import { getMessaging } from 'firebase/messaging'
-import { onAuthStateChanged } from 'firebase/auth'
 import { initializeAppCheck, ReCaptchaV3Provider, CustomProvider } from 'firebase/app-check'
+import { connectStorageEmulator } from 'firebase/storage'
 
 type RemoteConfig = Record<string, any>
 
@@ -97,6 +97,10 @@ export default defineNuxtPlugin(async ({ provide, $config }) => {
 
     provide('firestore', firestoreInstance)
     provide('storage', storageInstance)
+
+    if (import.meta.dev && import.meta.client) {
+        connectStorageEmulator(storageInstance, '127.0.0.1', 9199)
+    }
 
     if (functionsConfig.enable) {
         const functionsInstance = getFunctions(firebaseApp, 'europe-west3')
