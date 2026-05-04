@@ -9,8 +9,35 @@ export interface Fine {
   plateNumber: string
   amount: number
   status: 'unpaid' | 'paid'
-  issuedAt: string
+  issuedAt: number
   notes?: string
+}
+
+function getTimestampMillis(ts: any): number {
+  if (!ts) return Date.now()
+  if (typeof ts.toMillis === 'function') return ts.toMillis()
+  if (ts.seconds) return ts.seconds * 1000
+  if (ts._seconds) return ts._seconds * 1000
+  return new Date(ts).getTime()
+}
+
+const fineConverter = {
+  toFirestore(fine: Fine) {
+    return fine
+  },
+  fromFirestore(snapshot: any, options: any): Fine {
+    const data = snapshot.data(options)
+    return {
+      id: snapshot.id,
+      reportId: data.reportId || '',
+      ownerId: data.ownerId || '',
+      plateNumber: data.plateNumber || '',
+      amount: data.amount || 0,
+      status: data.status || 'unpaid',
+      issuedAt: getTimestampMillis(data.issuedAt),
+      notes: data.notes
+    }
+  }
 }
 
 export const useFinesStore = defineStore('fines', () => {
@@ -22,7 +49,7 @@ export const useFinesStore = defineStore('fines', () => {
   const ownerFinesQuery = computed(() =>
     authStore.currentUser?.uid
       ? query(
-          collection(db, 'fines'),
+          collection(db, 'fines').withConverter(fineConverter),
           where('ownerId', '==', authStore.currentUser.uid),
           orderBy('issuedAt', 'desc'),
         )
@@ -86,9 +113,18 @@ export const useFinesStore = defineStore('fines', () => {
     }
   }
 
+  // ── Police: reactive list of ALL fines ─────────────────────────────────────
+  const allFinesQuery = query(
+    collection(db, 'fines').withConverter(fineConverter),
+    orderBy('issuedAt', 'desc'),
+  )
+  const { data: allFines, pending: allFinesLoading } = useCollection(allFinesQuery, { ssrKey: 'allFines' })
+
   return {
     myFines,
     finesLoading,
+    allFines,
+    allFinesLoading,
     hasUnpaidFines,
     acting,
     issueFine,

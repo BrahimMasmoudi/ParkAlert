@@ -2,7 +2,22 @@
   <div class="min-h-screen bg-slate-950 text-white">
     <AppHeader title="Police Dashboard" role="police" />
 
-    <UTabs class="px-10" :items="items">
+    <div class="px-10 py-6">
+      <UInput
+        v-model="searchQuery"
+        icon="i-lucide-search"
+        size="xl"
+        placeholder="Search by plate number or owner name..."
+        class="max-w-md shadow-inner"
+        :ui="{ base: 'bg-slate-900 border-slate-800 focus:ring-indigo-500' }"
+      />
+    </div>
+
+    <UTabs class="px-10" :items="items" :ui="{ 
+      list: 'bg-slate-900 border border-slate-800 p-1 mb-8',
+      indicator: 'bg-indigo-600',
+      trigger: 'font-bold uppercase tracking-widest text-xs py-3'
+    }">
       <template #cars>
         <UContainer class="py-6 space-y-10">
           <section>
@@ -23,7 +38,7 @@
               <p>No activation requests</p>
             </div>
 
-            <UTable v-else :data="carsStore.activationPendingCars" :columns="carColumns">
+            <UTable v-else :data="filteredActivationPending" :columns="carColumns">
               <template #plateNumber-cell="{ row }">
                 <span class="font-mono font-bold text-amber-400">
                   {{ row.original.plateNumber }}
@@ -88,7 +103,7 @@
               <p>No deletion requests</p>
             </div>
 
-            <UTable v-else :data="carsStore.deletionPendingCars" :columns="deleteColumns">
+            <UTable v-else :data="filteredDeletionPending" :columns="deleteColumns">
               <template #plateNumber-cell="{ row }">
                 <span class="font-mono font-bold text-amber-400">
                   {{ row.original.plateNumber }}
@@ -144,7 +159,7 @@
               <p>No pending transfer requests</p>
             </div>
 
-            <UTable v-else :data="carsStore.transferRequestedCars" :columns="carColumns">
+            <UTable v-else :data="filteredTransferRequested" :columns="carColumns">
               <template #plateNumber-cell="{ row }">
                 <span class="font-mono font-bold text-amber-400">
                   {{ row.original.plateNumber }}
@@ -200,7 +215,7 @@
         </UContainer>
       </template>
 
-      <template #fines>
+      <template #reports>
         <UContainer class="py-6">
           <div class="flex items-center justify-between mb-4">
             <h2 class="text-xl font-bold">
@@ -219,7 +234,7 @@
             <p>No pending reports</p>
           </div>
 
-          <UTable v-else :data="reportsStore.pendingReports" :columns="columns">
+          <UTable v-else :data="filteredPendingReports" :columns="columns">
             <template #plateNumber-cell="{ row }">
               <span class="font-mono font-bold text-amber-400">
                 {{ row.original.plateNumber }}
@@ -244,13 +259,63 @@
           </UTable>
         </UContainer>
       </template>
+
+      <template #audit>
+        <UContainer class="py-6">
+          <div class="flex items-center justify-between mb-4">
+            <h2 class="text-xl font-bold">
+              Fine Issuance Audit
+            </h2>
+          </div>
+
+          <LoadingSkeleton v-if="finesStore.allFinesLoading" :count="8" />
+
+          <div v-else-if="!finesStore.allFines?.length" class="text-center py-12 text-slate-500 bg-slate-900/50 rounded-xl border border-slate-800">
+            <UIcon name="lucide:clipboard-list" class="w-8 h-8 text-slate-600 mb-2 mx-auto" />
+            <p>No fines have been issued yet</p>
+          </div>
+
+          <UTable v-else :data="filteredAllFines" :columns="auditColumns">
+            <template #plateNumber-cell="{ row }">
+              <span class="font-mono font-bold text-amber-400">
+                {{ row.original.plateNumber }}
+              </span>
+            </template>
+
+            <template #ownerId-cell="{ row }">
+              <AtomsUserName :user="userStore.usersCache[row.original.ownerId] || { name: row.original.ownerId }" />
+            </template>
+
+            <template #amount-cell="{ row }">
+              <span class="font-bold text-white">TND {{ row.original.amount }}</span>
+            </template>
+
+            <template #status-cell="{ row }">
+              <UBadge :color="row.original.status === 'paid' ? 'success' : 'error'" variant="subtle" size="xs" class="uppercase font-bold">
+                {{ row.original.status }}
+              </UBadge>
+            </template>
+
+            <template #issuedAt-cell="{ row }">
+              <span class="text-sm text-slate-400">
+                {{ new Date(row.original.issuedAt).toLocaleString() }}
+              </span>
+            </template>
+          </UTable>
+        </UContainer>
+      </template>
     </UTabs>
 
     <!-- REPORT MODAL -->
     <UModal v-model:open="isDetailOpen" :title="`Report - ${selected?.plateNumber}`">
       <template #body>
         <div v-if="selected" class="space-y-4">
-          <img v-if="selected.photoUrl" :src="selected.photoUrl" class="w-full rounded-xl">
+          <a v-if="selected.photoUrl" :href="selected.photoUrl" target="_blank" class="block group cursor-zoom-in relative">
+            <img :src="selected.photoUrl" class="w-full rounded-xl transition-all duration-300 group-hover:brightness-75 group-hover:scale-[1.01]">
+            <div class="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+              <UIcon name="i-lucide-maximize-2" class="w-8 h-8 text-white drop-shadow-lg" />
+            </div>
+          </a>
 
           <UButton block color="error" @click="openIssuePane">
             Issue Fine
@@ -376,6 +441,27 @@ const carsStore = useCarsStore()
 const finesStore = useFinesStore()
 const userStore = useUserStore()
 
+const searchQuery = ref('')
+
+function filterList<T extends { plateNumber?: string, ownerId?: string }>(list: T[] | null) {
+  if (!list) return []
+  if (!searchQuery.value.trim()) return list
+
+  const q = searchQuery.value.toLowerCase()
+  return list.filter(item => {
+    const plateMatch = item.plateNumber?.toLowerCase().includes(q)
+    const owner = item.ownerId ? userStore.usersCache[item.ownerId] : null
+    const ownerMatch = owner?.fullName?.toLowerCase().includes(q) || owner?.name?.toLowerCase().includes(q)
+    return plateMatch || ownerMatch
+  })
+}
+
+const filteredActivationPending = computed(() => filterList(carsStore.activationPendingCars))
+const filteredDeletionPending = computed(() => filterList(carsStore.deletionPendingCars))
+const filteredTransferRequested = computed(() => filterList(carsStore.transferRequestedCars))
+const filteredPendingReports = computed(() => filterList(reportsStore.pendingReports))
+const filteredAllFines = computed(() => filterList(finesStore.allFines))
+
 watch(() => carsStore.activationPendingCars, (cars) => {
   cars.forEach(car => userStore.fetchUser(car.ownerId))
 }, { immediate: true })
@@ -386,6 +472,11 @@ watch(() => carsStore.deletionPendingCars, (cars) => {
 
 watch(() => carsStore.transferRequestedCars, (cars) => {
   cars.forEach(car => userStore.fetchUser(car.ownerId))
+}, { immediate: true })
+
+watch(() => finesStore.allFines, (fines) => {
+  if (!fines) return
+  fines.forEach(fine => userStore.fetchUser(fine.ownerId))
 }, { immediate: true })
 
 const selected = ref<(Report & { id: string }) | null>(null)
@@ -433,18 +524,28 @@ const fineForm = reactive({
   notes: ''
 })
 
-const items = [
+const items = computed(() => [
   {
     label: 'CARS',
     icon: 'i-lucide-car-front',
-    slot: 'cars'
+    slot: 'cars',
+    badge: filteredActivationPending.value.length + 
+           filteredDeletionPending.value.length + 
+           filteredTransferRequested.value.length
   },
   {
-    label: 'FINES',
-    icon: 'i-lucide-circle-dollar-sign',
-    slot: 'fines'
+    label: 'REPORTS',
+    icon: 'i-lucide-camera',
+    slot: 'reports',
+    badge: filteredPendingReports.value.length
+  },
+  {
+    label: 'AUDIT',
+    icon: 'i-lucide-history',
+    slot: 'audit',
+    badge: filteredAllFines.value.length
   }
-]
+])
 
 function openReport(report: Report & { id: string }) {
   selected.value = report
@@ -529,6 +630,14 @@ const columns = [
   { accessorKey: 'status', header: 'Status' },
   { accessorKey: 'timestamp', header: 'Time' },
   { id: 'actions', header: 'Actions' }
+]
+
+const auditColumns = [
+  { accessorKey: 'plateNumber', header: 'Plate' },
+  { accessorKey: 'ownerId', header: 'Owner' },
+  { accessorKey: 'amount', header: 'Amount' },
+  { accessorKey: 'status', header: 'Status' },
+  { accessorKey: 'issuedAt', header: 'Date Issued' }
 ]
 </script>
 

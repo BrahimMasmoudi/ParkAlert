@@ -162,11 +162,16 @@ const isApproving = computed(() =>
 
           <div v-if="carteGriseToShow" class="space-y-3">
             <!-- Image preview if it's an image -->
-            <img
-              :src="carteGriseToShow"
-              class="w-full rounded-lg border border-slate-700 object-contain max-h-64"
-              @error="($event.target as HTMLImageElement).style.display='none'"
-            />
+            <a :href="carteGriseToShow" target="_blank" class="block group cursor-zoom-in relative">
+              <img
+                :src="carteGriseToShow"
+                class="w-full rounded-lg border border-slate-700 object-contain max-h-64 transition-all duration-300 group-hover:brightness-75"
+                @error="($event.target as HTMLImageElement).parentElement!.style.display='none'"
+              />
+              <div class="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                <UIcon name="i-lucide-maximize-2" class="w-8 h-8 text-white drop-shadow-lg" />
+              </div>
+            </a>
             <UButton
               :to="carteGriseToShow"
               target="_blank"
