@@ -260,18 +260,75 @@
     </UModal>
 
     <!-- FINE MODAL -->
-    <UModal v-model:open="isFineOpen" title="Issue Fine">
+    <UModal v-model:open="isFineOpen" title="Issue Fine" description="Create a new fine for a vehicle owner."
+      :ui="{ 
+        content: 'bg-slate-900 border border-slate-700 shadow-2xl shadow-black/50 rounded-2xl overflow-hidden',
+        header: 'py-4 sm:py-5 border-b border-slate-800'
+      }">
       <template #body>
-        <div class="space-y-4">
-          <UInput v-model="fineForm.ownerId" placeholder="Owner UID" />
+        <div class="space-y-6">
+          <div v-if="selected" class="bg-slate-950 p-4 rounded-xl border border-slate-800">
+            <p class="text-xs text-slate-500 uppercase tracking-wider font-bold mb-1">Vehicle Details</p>
+            <div class="flex items-center gap-3">
+              <span class="font-mono text-lg text-amber-400 font-bold">{{ selected.plateNumber }}</span>
+              <span class="text-slate-300">{{ selected.address }}</span>
+            </div>
+          </div>
 
-          <UInput v-model.number="fineForm.amount" type="number" />
+          <UFormField label="Vehicle Owner" :ui="{ label: { base: 'text-slate-300 font-medium text-sm mb-2' } }">
+            <div v-if="fineForm.selectedOwner" class="flex items-center gap-3 p-4 bg-slate-950 rounded-xl border border-slate-800 shadow-inner">
+              <UAvatar :src="fineForm.selectedOwner.photoURL" :alt="fineForm.selectedOwner.fullName || fineForm.selectedOwner.name" size="lg" class="ring-2 ring-slate-800" />
+              <div class="flex flex-col min-w-0">
+                <span class="text-sm font-bold text-white truncate">{{ fineForm.selectedOwner.fullName || fineForm.selectedOwner.name }}</span>
+                <div class="flex items-center gap-2 mt-0.5">
+                  <span v-if="fineForm.selectedOwner.identityNumber" class="text-[10px] text-indigo-400 font-mono tracking-tighter">{{ fineForm.selectedOwner.identityNumber }}</span>
+                  <span v-if="fineForm.selectedOwner.email" class="text-[10px] text-slate-500 truncate">{{ fineForm.selectedOwner.email }}</span>
+                </div>
+              </div>
+            </div>
+            <div v-else-if="fineForm.searching" class="p-4 bg-slate-950 rounded-xl border border-slate-800 flex items-center justify-center gap-3">
+              <UIcon name="i-lucide-loader-2" class="w-5 h-5 text-indigo-500 animate-spin" />
+              <span class="text-sm text-slate-400">Searching for owner...</span>
+            </div>
+            <div v-else class="p-4 bg-red-950/20 rounded-xl border border-red-900/50 flex flex-col items-center gap-2 text-center">
+              <UIcon name="i-lucide-user-x" class="w-6 h-6 text-red-500" />
+              <p class="text-sm text-red-400 font-medium">No registered owner found for this vehicle.</p>
+              <p class="text-[10px] text-slate-500">The fine will be issued to the vehicle record if possible, or manual lookup required.</p>
+            </div>
+          </UFormField>
 
-          <UTextarea v-model="fineForm.notes" placeholder="Notes" />
+          <UFormField label="Fine Amount (TND)" required :ui="{ label: { base: 'text-slate-300 font-medium text-sm mb-2' } }">
+            <UInput 
+              v-model.number="fineForm.amount" 
+              type="number" 
+              size="xl"
+              class="w-full"
+              icon="i-lucide-circle-dollar-sign"
+              :ui="{ base: 'bg-slate-950 border-slate-700 focus:ring-red-500 shadow-inner font-mono font-bold text-red-400' }" 
+            />
+          </UFormField>
 
-          <UButton block color="error" @click="submitFine">
-            Confirm Fine
-          </UButton>
+          <UFormField label="Police Notes" :ui="{ label: { base: 'text-slate-300 font-medium text-sm mb-2' } }">
+            <UTextarea 
+              v-model="fineForm.notes" 
+              placeholder="Reason for fine, evidence details..." 
+              :rows="3"
+              size="xl"
+              class="w-full"
+              :ui="{ base: 'bg-slate-950 border-slate-700 focus:ring-indigo-500 shadow-inner' }"
+            />
+          </UFormField>
+        </div>
+      </template>
+
+      <template #footer>
+        <div class="flex flex-col sm:flex-row justify-center w-full gap-3 pt-2">
+          <UButton label="Cancel" color="neutral" variant="soft" size="xl"
+            class="flex-1 sm:flex-none justify-center font-semibold" @click="isFineOpen = false" :disabled="finesStore.acting" />
+          <UButton label="Confirm Fine" color="error" size="xl"
+            class="flex-1 sm:flex-none justify-center font-bold shadow-lg shadow-red-500/25" 
+            :loading="finesStore.acting"
+            :disabled="!fineForm.selectedOwner || !fineForm.amount || fineForm.searching" @click="submitFine" />
         </div>
       </template>
     </UModal>
@@ -370,7 +427,8 @@ function handleReviewReject() {
 }
 
 const fineForm = reactive({
-  ownerId: '',
+  selectedOwner: null as any,
+  searching: false,
   amount: 100,
   notes: ''
 })
@@ -393,11 +451,25 @@ function openReport(report: Report & { id: string }) {
   isDetailOpen.value = true
 }
 
-function openIssuePane() {
-  fineForm.ownerId = ''
+async function openIssuePane() {
+  if (!selected.value) return
+  
+  fineForm.selectedOwner = null
+  fineForm.searching = true
   fineForm.amount = 100
   fineForm.notes = ''
   isFineOpen.value = true
+
+  try {
+    const car = await carsStore.getCarByPlate(selected.value.plateNumber)
+    if (car && car.ownerId) {
+      fineForm.selectedOwner = await userStore.fetchUser(car.ownerId)
+    }
+  } catch (e) {
+    console.error('Failed to lookup owner:', e)
+  } finally {
+    fineForm.searching = false
+  }
 }
 
 function openRejectModal(carId: string, isTransfer = false) {
@@ -420,11 +492,11 @@ async function submitReject() {
 }
 
 async function submitFine() {
-  if (!selected.value) return
+  if (!selected.value || !fineForm.selectedOwner) return
 
   await finesStore.issueFine({
     reportId: selected.value.id,
-    ownerId: fineForm.ownerId,
+    ownerId: fineForm.selectedOwner.id,
     plateNumber: selected.value.plateNumber,
     amount: fineForm.amount,
     notes: fineForm.notes

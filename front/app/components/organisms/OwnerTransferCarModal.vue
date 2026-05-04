@@ -75,10 +75,12 @@ const submitTransfer = async () => {
         </div>
         <UFormField label="New Owner" required
           :ui="{ label: { base: 'text-slate-300 font-medium tracking-wide text-sm mb-2' } }">
-          <USelectMenu v-model="selectedUser" :items="owners" searchable
-            searchable-placeholder="Search by name or identity number..." placeholder="Select a new owner..."
-            option-attribute="label" class="w-full" size="xl"
-            :ui="{ base: 'bg-slate-950 border-slate-700 focus:ring-indigo-500 shadow-inner' }" />
+          <MoleculesUserSelectMenu 
+            v-model="selectedUser" 
+            :items="owners" 
+            placeholder="Select a new owner..."
+            searchable-placeholder="Search by name or identity number..."
+          />
         </UFormField>
 
         <UFormField label="New Carte Grise" required

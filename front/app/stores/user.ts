@@ -66,7 +66,7 @@ export const useUserStore = defineStore('user', () => {
     try {
       const snap = await getDoc(doc(db, 'users', uid))
       if (snap.exists()) {
-        usersCache.value[uid] = snap.data()
+        usersCache.value[uid] = { id: snap.id, ...snap.data() }
       } else {
         usersCache.value[uid] = { name: 'Unknown User' }
       }
@@ -92,6 +92,15 @@ export const useUserStore = defineStore('user', () => {
       }))
   })
 
+  const allOwners = computed(() => {
+    if (!allOwnersList.value) return []
+    return allOwnersList.value.map((u: any) => ({
+      id: u.id,
+      label: `${u.fullName || u.name || 'Unknown'}`,
+      ...u
+    }))
+  })
+
   return {
     userProfile,
     profileLoading,
@@ -101,5 +110,6 @@ export const useUserStore = defineStore('user', () => {
     usersCache,
     fetchUser,
     availableOwners,
+    allOwners,
   }
 })
