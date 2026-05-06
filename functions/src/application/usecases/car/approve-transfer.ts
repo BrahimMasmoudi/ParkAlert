@@ -19,8 +19,8 @@ export class ApproveTransferUseCase {
     const car = await this.carRepository.getById(carId);
     if (!car) throw new Error('Car not found');
 
-    if (car.status !== 'transfer_requested') {
-      throw new Error('Car is not pending transfer');
+    if (car.status !== 'transfer_pending_police') {
+      throw new Error('Car is not pending police approval for transfer');
     }
 
     if (car.ownerId) {

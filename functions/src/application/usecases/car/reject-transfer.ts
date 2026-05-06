@@ -1,7 +1,7 @@
 import { CarRepository } from '../../../domain/repositories/car.repository';
 
 export class RejectTransferUseCase {
-  constructor(private readonly carRepository: CarRepository) {}
+  constructor(private readonly carRepository: CarRepository) { }
 
   async execute(request: { carId: string; reason: string; actorId: string }) {
     const { carId, reason, actorId } = request;
@@ -10,7 +10,9 @@ export class RejectTransferUseCase {
 
     const car = await this.carRepository.getById(carId);
     if (!car) throw new Error('Car not found');
-    if (car.status !== 'transfer_requested') throw new Error('Car is not pending transfer');
+    if (!['transfer_pending_owner', 'transfer_pending_police'].includes(car.status)) {
+      throw new Error('Car is not pending transfer');
+    }
 
     await this.carRepository.update(carId, {
       status: 'active',

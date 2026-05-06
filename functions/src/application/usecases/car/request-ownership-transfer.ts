@@ -1,26 +1,37 @@
 import { CarRepository } from '../../../domain/repositories/car.repository';
-import { UserRepository } from '../../../domain/repositories/user.repository';
+import { FineRepository } from '../../../domain/repositories/fine.repository';
 
 export class RequestOwnershipTransferUseCase {
   constructor(
     private readonly carRepository: CarRepository,
-    private readonly userRepository: UserRepository
+    private readonly fineRepository: FineRepository
   ) {}
 
-  async execute(request: { carId: string; userId: string; newOwnerId: string; carteGriseUrl: string }) {
-    const { carId, userId, newOwnerId, carteGriseUrl } = request;
-    if (!carId || !newOwnerId || !carteGriseUrl) throw new Error('Missing required fields');
+  async execute(request: { plateNumber: string; receiverId: string; carteGriseUrl: string }) {
+    const { plateNumber, receiverId, carteGriseUrl } = request;
+    if (!plateNumber || !receiverId || !carteGriseUrl) throw new Error('Missing required fields');
 
-    const car = await this.carRepository.getById(carId);
+    const car = await this.carRepository.getByPlateNumber(plateNumber);
+    
     if (!car) throw new Error('Car not found');
-    if (car.ownerId !== userId) throw new Error('Not your car');
+    const carId = car.id; // Use the actual document ID from the found car
+    
+    if (car.ownerId === receiverId) throw new Error('You already own this car');
+    
+    if (['transfer_pending_owner', 'transfer_pending_police'].includes(car.status)) {
+      throw new Error('A transfer is already in progress for this vehicle');
+    }
 
-    const newOwner = await this.userRepository.getById(newOwnerId);
-    if (!newOwner || newOwner.role !== 'owner') throw new Error('New owner not found');
+    const normalizedPlate = car.plateNumberNormalized;
+    // Block if current owner has unpaid fines for this vehicle
+    const hasUnpaid = await this.fineRepository.hasUnpaidFines(car.ownerId, normalizedPlate);
+    if (hasUnpaid) {
+      throw new Error('UNPAID_FINES_EXIST');
+    }
 
     await this.carRepository.update(carId, {
-      status: 'transfer_requested',
-      transferToOwnerId: newOwnerId,
+      status: 'transfer_pending_owner',
+      transferToOwnerId: receiverId,
       transferCarteGriseUrl: carteGriseUrl,
       transferRequestedAt: new Date(),
       transferRejectionReason: null,
@@ -28,9 +39,9 @@ export class RequestOwnershipTransferUseCase {
 
     await this.carRepository.addAuditLog({
       carId,
-      actorId: userId,
-      action: 'TRANSFER_REQUESTED',
-      details: `Transfer requested to ${newOwnerId}`,
+      actorId: receiverId,
+      action: 'TRANSFER_INITIATED_BY_RECEIVER',
+      details: `Transfer requested by user ${receiverId}`,
       timestamp: new Date(),
     });
 

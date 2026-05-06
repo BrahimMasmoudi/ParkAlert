@@ -1,8 +1,8 @@
 import { onCall, HttpsError } from 'firebase-functions/v2/https';
 import { RequestOwnershipTransferUseCase } from '../../../application/usecases/car/request-ownership-transfer';
-import { carRepository, userRepository } from '../index';
+import { carRepository, fineRepository } from '../index';
 
-const requestOwnershipTransferUseCase = new RequestOwnershipTransferUseCase(carRepository, userRepository);
+const requestOwnershipTransferUseCase = new RequestOwnershipTransferUseCase(carRepository, fineRepository);
 
 export const requestOwnershipTransfer = onCall(
   { region: 'europe-west3', enforceAppCheck: true },
@@ -13,7 +13,7 @@ export const requestOwnershipTransfer = onCall(
 
     try {
       return await requestOwnershipTransferUseCase.execute({
-        userId: request.auth.uid,
+        receiverId: request.auth.uid,
         ...request.data,
       });
     } catch (error: any) {

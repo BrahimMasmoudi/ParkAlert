@@ -39,7 +39,7 @@
           </UBadge>
           <UBadge
             v-else
-            :color="car.status === 'active' ? 'success' : (car.status === 'activation_pending' || car.status === 'deletion_requested' || car.status === 'transfer_requested' ? 'warning' : (car.status === 'rejected' ? 'error' : 'neutral'))"
+            :color="car.status === 'active' ? 'success' : (['activation_pending', 'deletion_requested', 'transfer_pending_owner', 'transfer_pending_police'].includes(car.status) ? 'warning' : (car.status === 'rejected' ? 'error' : 'neutral'))"
             variant="subtle"
             class="capitalize font-semibold text-xs px-2.5 py-1"
           >
@@ -55,28 +55,21 @@
             variant="soft"
             icon="lucide:rotate-ccw"
             size="sm"
-            class="opacity-0 group-hover:opacity-100 transition-opacity focus:opacity-100"
+            class="transition-opacity"
             :loading="carsStore.isLoading(car.id)"
             @click="$emit('delete', car.id)"
           />
         </UTooltip>
 
-        <UTooltip v-if="car.status === 'active'" :text="$t('owner.car.transfer_tooltip')">
-          <UButton
-            color="primary"
-            variant="ghost"
-            icon="lucide:arrow-right-left"
-            class="transition-opacity p-2 -m-2 mr-1"
-            @click="$emit('transfer', car.id)"
-          />
-        </UTooltip>
-
-        <UTooltip v-else-if="car.status !== 'deleted' && car.status !== 'deletion_requested'" :text="$t('owner.car.delete_tooltip')">
+        <UTooltip
+          v-else-if="car.status !== 'deleted' && car.status !== 'deletion_requested' && car.status !== 'transfer_pending_owner' && car.status !== 'transfer_pending_police'"
+          :text="$t('owner.car.delete_tooltip')"
+        >
           <UButton
             color="error"
             variant="ghost"
             icon="lucide:trash-2"
-            class="opacity-0 group-hover:opacity-100 transition-opacity focus:opacity-100 p-2 -m-2"
+            class="transition-opacity"
             @click="$emit('delete', car.id)"
           />
         </UTooltip>
@@ -85,7 +78,8 @@
 
     <div class="p-5 grid grid-cols-2 gap-6 bg-slate-900">
       <div>
-        <p class="text-[10px] text-slate-500 font-bold uppercase tracking-widest mb-1">{{ $t('owner.car.brand_model') }}</p>
+        <p class="text-[10px] text-slate-500 font-bold uppercase tracking-widest mb-1">{{ $t('owner.car.brand_model') }}
+        </p>
         <p class="text-sm text-slate-200 font-medium capitalize">{{ car.brand }} {{ car.model }}</p>
       </div>
       <div>
@@ -94,8 +88,12 @@
       </div>
     </div>
 
-    <div v-if="car.status === 'rejected' && car.rejectionReason" class="px-5 pb-5 bg-slate-900">
-      <div class="bg-red-950/30 border border-red-900/50 rounded-lg p-4">
+    <div v-if="!readonly" class="pb-5 bg-slate-900">
+      <!-- Rejection Reason for Registration -->
+      <div
+        v-if="car.status === 'rejected' && car.rejectionReason"
+        class="bg-red-950/30 border border-red-900/50 rounded-lg p-4 mb-4"
+      >
         <div class="flex items-start justify-between gap-4">
           <div>
             <p class="text-[10px] text-red-400 font-bold uppercase tracking-widest mb-1 flex items-center gap-1.5">
@@ -115,10 +113,109 @@
           </UButton>
         </div>
       </div>
-    </div>
 
-    <div v-if="!readonly && car.status === 'active' && car.transferRejectionReason" class="px-5 pb-5 bg-slate-900">
-      <div class="bg-red-950/30 border border-red-900/50 rounded-lg p-4">
+      <!-- Incoming Transfer Request (Collapsible) -->
+      <UCollapsible
+        v-if="car.status === 'transfer_pending_owner'"
+        class="bg-indigo-950/20 border-t border-indigo-500/20"
+      >
+        <template #default="{ open }">
+          <div class="py-4 flex items-center justify-between cursor-pointer hover:bg-indigo-500/5 transition-colors">
+            <div class="flex items-center gap-3">
+              <div class="p-2 bg-indigo-500/20 rounded-full text-indigo-400">
+                <UIcon name="lucide:arrow-right-left" class="w-4 h-4" />
+              </div>
+              <span class="text-indigo-300 font-bold text-xs tracking-wider uppercase">{{
+                $t('owner.car.incoming_transfer_title') }}</span>
+            </div>
+            <div class="flex items-center gap-3">
+              <UBadge
+                color="primary"
+                variant="soft"
+                size="xs"
+                class="font-bold"
+              >{{ $t('owner.car.action_required') }}
+              </UBadge>
+              <UIcon
+                name="lucide:chevron-down"
+                class="w-5 h-5 text-indigo-400 transition-transform duration-200"
+                :class="open ? 'rotate-180' : ''"
+              />
+            </div>
+          </div>
+        </template>
+
+        <template #content>
+          <div class="pb-6">
+            <div class="bg-indigo-900/10 rounded-xl p-5 border border-indigo-500/10">
+              <p class="text-slate-300 text-sm leading-relaxed mb-6">{{ $t('owner.car.incoming_transfer_desc') }}</p>
+
+              <!-- Requester Info Card -->
+              <div class="bg-slate-950/50 rounded-lg p-4 mb-6 border border-indigo-500/10">
+                <p class="text-[10px] text-indigo-400 font-bold uppercase tracking-widest mb-3">{{
+                  $t('owner.car.proposed_new_owner') }}</p>
+                <div class="flex items-center gap-4">
+                  <UAvatar
+                    :src="requester?.photoURL"
+                    :alt="requester?.fullName || requester?.name"
+                    size="lg"
+                    class="ring-2 ring-indigo-500/20 flex-shrink-0"
+                  />
+                  <div class="min-w-0 flex-1">
+                    <p class="text-slate-100 font-bold truncate">{{ requester?.fullName || requester?.name ||
+                      'Loading...' }}</p>
+                    <div class="flex flex-col gap-1 mt-1">
+                      <p v-if="requester?.email" class="text-xs text-slate-400 flex items-center gap-1.5 min-w-0">
+                        <UIcon name="lucide:mail" class="w-3 h-3 flex-shrink-0" />
+                        <span class="truncate">{{ requester.email }}</span>
+                      </p>
+                      <p
+                        v-if="requester?.identityNumber"
+                        class="text-xs text-indigo-300 font-mono flex items-center gap-1.5 min-w-0"
+                      >
+                        <UIcon name="lucide:id-card" class="w-3 h-3 flex-shrink-0" />
+                        <span class="truncate">{{ requester.identityNumber }}</span>
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="flex flex-col sm:flex-row gap-3">
+                <UButton
+                  color="error"
+                  variant="soft"
+                  size="md"
+                  icon="lucide:x-circle"
+                  class="flex-1 justify-center font-semibold"
+                  :loading="carsStore.isLoading(`${car.id}-reject`)"
+                  @click="carsStore.rejectTransfer(car.id)"
+                >
+                  {{ $t('owner.car.reject_transfer_button') }}
+                </UButton>
+                <UButton
+                  color="primary"
+                  variant="solid"
+                  size="md"
+                  icon="lucide:check-circle"
+                  class="flex-1 justify-center font-bold shadow-lg shadow-indigo-500/20"
+                  :loading="carsStore.isLoading(`${car.id}-acknowledge`)"
+                  @click="carsStore.acknowledgeTransfer(car.id)"
+                >
+                  {{ $t('owner.car.acknowledge_button') }}
+                </UButton>
+
+              </div>
+            </div>
+          </div>
+        </template>
+      </UCollapsible>
+
+      <!-- Transfer Rejected Reason -->
+      <div
+        v-if="car.status === 'active' && car.transferRejectionReason"
+        class="bg-red-950/30 border border-red-900/50 rounded-lg p-4 mt-4"
+      >
         <div class="flex items-start gap-4">
           <div>
             <p class="text-[10px] text-red-400 font-bold uppercase tracking-widest mb-1 flex items-center gap-1.5">
@@ -134,7 +231,8 @@
     <div class="px-5 py-3 bg-slate-950 border-t border-slate-800 flex items-center justify-between">
       <div class="flex items-center gap-2">
         <UIcon name="lucide:file-text" class="w-4 h-4 text-slate-500" />
-        <span class="text-xs text-slate-400 font-medium uppercase tracking-wider">{{ $t('owner.car.carte_grise') }}</span>
+        <span class="text-xs text-slate-400 font-medium uppercase tracking-wider">{{ $t('owner.car.carte_grise')
+        }}</span>
       </div>
       <UButton
         :to="car.carteGriseUrl"
@@ -167,6 +265,7 @@ const { car } = defineProps<{
     carteGriseUrl: string
     rejectionReason?: string
     transferRejectionReason?: string
+    transferToOwnerId?: string
   }
   readonly?: boolean
 }>()
@@ -176,6 +275,15 @@ defineEmits<{
   (e: 'retry', id: string): void
   (e: 'transfer', id: string): void
 }>()
+
+const userStore = useUserStore()
+const requester = ref<any>(null)
+
+watchEffect(async () => {
+  if (car.transferToOwnerId && car.status === 'transfer_pending_owner') {
+    requester.value = await userStore.fetchUser(car.transferToOwnerId)
+  }
+})
 
 const finesStore = useFinesStore()
 const unpaidFinesCount = computed(() => {

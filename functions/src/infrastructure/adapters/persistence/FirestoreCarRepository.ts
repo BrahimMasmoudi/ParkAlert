@@ -18,6 +18,20 @@ export class FirestoreCarRepository implements CarRepository {
     return doc.data() as Car;
   }
 
+  async getByPlateNumber(plateNumber: string): Promise<Car | null> {
+    const normalized = plateNumber.toUpperCase().replace(/[^A-Z0-9]/g, '');
+    const snapshot = await this.connector.db.collection('cars')
+      .where('plateNumberNormalized', '==', normalized)
+      .limit(1)
+      .get();
+    
+    if (snapshot.empty) {
+      // Fallback to exact match on ID for backward compatibility
+      return this.getById(normalized);
+    }
+    return snapshot.docs[0].data() as Car;
+  }
+
   async update(id: string, updates: Partial<Car>): Promise<void> {
     const firestoreUpdates: any = { ...updates };
 

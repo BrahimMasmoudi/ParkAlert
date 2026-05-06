@@ -136,7 +136,8 @@
         "active": "Actif",
         "activation_pending": "Activation en attente",
         "deletion_requested": "Suppression demandée",
-        "transfer_requested": "Transfert demandé",
+        "transfer_pending_owner": "Acceptation du propriétaire en attente",
+        "transfer_pending_police": "Approbation de la police en attente",
         "rejected": "Rejeté"
       }
     },
@@ -182,7 +183,13 @@
       "rejection_reason": "Raison du rejet",
       "transfer_rejected": "Transfert rejeté",
       "carte_grise": "Carte Grise",
-      "view_doc": "Voir Doc"
+      "view_doc": "Voir Doc",
+      "incoming_transfer_title": "Demande de Transfert Entrante",
+      "incoming_transfer_desc": "Quelqu'un a demandé à prendre la propriété de ce véhicule. Acceptez UNIQUEMENT si vous vendez ou transférez le véhicule.",
+      "action_required": "Action Requise",
+      "proposed_new_owner": "Nouveau Propriétaire Proposé",
+      "acknowledge_button": "Accepter le Transfert",
+      "reject_transfer_button": "Rejeter la Demande"
     },
     "profile": {
       "edit_tooltip": "Modifier le Profil",
@@ -221,7 +228,8 @@
         "tap_to_upload": "Appuyez pour télécharger la Carte Grise",
         "upload_required": "Requis pour la vérification par la police",
         "submit_new": "Soumettre l'Enregistrement",
-        "submit_edit": "Soumettre à Nouveau"
+        "submit_edit": "Soumettre à Nouveau",
+        "submit_transfer": "Demander le Transfert"
       },
       "delete_car": {
         "title": "Demander la Suppression",

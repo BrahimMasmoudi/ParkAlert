@@ -135,8 +135,8 @@
         <template #ownerId-cell="{ row }">
           <AtomsUserName :user="userStore.usersCache[row.original.ownerId]" />
         </template>
-        <template #status-cell>
-          <UBadge color="primary" variant="soft">{{ $t('police.cars.status.transfer_requested') }}</UBadge>
+        <template #status-cell="{ row }">
+          <UBadge color="primary" variant="soft">{{ $t(`police.cars.status.${row.original.status}`) }}</UBadge>
         </template>
         <template #createdAt-cell="{ row }">
           <span class="text-sm text-slate-400">{{ new Date(row.original.createdAt).toLocaleString() }}</span>

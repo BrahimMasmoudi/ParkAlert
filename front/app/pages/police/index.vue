@@ -14,7 +14,7 @@
         <OrganismsPoliceCarsTab
           :activations="filteredActivationPending"
           :deletions="filteredDeletionPending"
-          :transfers="filteredTransferRequested"
+          :transfers="filteredTransferPendingPolice"
           :loading="carsStore.pendingCarsLoading"
           :car-columns="carColumns"
           :delete-columns="deleteColumns"
@@ -229,7 +229,7 @@ function filterList<T extends { plateNumber?: string, ownerId?: string }>(list: 
 
 const filteredActivationPending = computed(() => filterList(carsStore.activationPendingCars))
 const filteredDeletionPending = computed(() => filterList(carsStore.deletionPendingCars))
-const filteredTransferRequested = computed(() => filterList(carsStore.transferRequestedCars))
+const filteredTransferPendingPolice = computed(() => filterList(carsStore.transferPendingPoliceCars))
 const filteredPendingReports = computed(() => filterList(reportsStore.pendingReports))
 const filteredAllFines = computed(() => filterList(finesStore.allFines))
 
@@ -241,7 +241,7 @@ watch(() => carsStore.deletionPendingCars, (cars) => {
   cars.forEach(car => userStore.fetchUser(car.ownerId))
 }, { immediate: true })
 
-watch(() => carsStore.transferRequestedCars, (cars) => {
+watch(() => carsStore.transferPendingPoliceCars, (cars) => {
   cars.forEach(car => userStore.fetchUser(car.ownerId))
 }, { immediate: true })
 
@@ -298,7 +298,7 @@ const tabs = computed(() => [
     slot: 'cars',
     badge: filteredActivationPending.value.length +
       filteredDeletionPending.value.length +
-      filteredTransferRequested.value.length
+      filteredTransferPendingPolice.value.length
   },
   {
     label: t('police.tabs.reports'),

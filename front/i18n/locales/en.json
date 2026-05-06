@@ -136,7 +136,8 @@
         "active": "Active",
         "activation_pending": "Activation Pending",
         "deletion_requested": "Deletion Requested",
-        "transfer_requested": "Transfer Requested",
+        "transfer_pending_owner": "Awaiting Owner Acceptance",
+        "transfer_pending_police": "Awaiting Police Approval",
         "rejected": "Rejected"
       }
     },
@@ -182,7 +183,13 @@
       "rejection_reason": "Rejection Reason",
       "transfer_rejected": "Transfer Rejected",
       "carte_grise": "Carte Grise",
-      "view_doc": "View Doc"
+      "view_doc": "View Doc",
+      "incoming_transfer_title": "Incoming Transfer Request",
+      "incoming_transfer_desc": "Someone has requested to take ownership of this vehicle. Acknowledge this ONLY if you are selling or transferring the vehicle.",
+      "action_required": "Action Required",
+      "proposed_new_owner": "Proposed New Owner",
+      "acknowledge_button": "Acknowledge Transfer",
+      "reject_transfer_button": "Reject Request"
     },
     "profile": {
       "edit_tooltip": "Edit Profile",
@@ -221,7 +228,8 @@
         "tap_to_upload": "Tap to upload Carte Grise",
         "upload_required": "Required for police verification",
         "submit_new": "Submit Registration",
-        "submit_edit": "Resubmit Registration"
+        "submit_edit": "Resubmit Registration",
+        "submit_transfer": "Request Transfer"
       },
       "delete_car": {
         "title": "Request Deletion",

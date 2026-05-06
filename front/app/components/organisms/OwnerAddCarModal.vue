@@ -10,11 +10,12 @@
     }"
   >
     <template #body>
-      <form class="grid grid-cols-1 sm:grid-cols-2 gap-6" @submit.prevent="submitAddCar">
+      <form class="grid grid-cols-1 sm:grid-cols-2 gap-6" @submit.prevent="handleSubmit">
         <UFormField
           :label="$t('owner.modals.add_car.plate_label')"
           required
           :error="plateError"
+          :help="transferMessage"
           :ui="{ label: { base: 'text-slate-300 font-medium tracking-wide text-sm mb-2' } }"
         >
           <UInput 
@@ -22,43 +23,59 @@
             placeholder="e.g. AB-123-CD" 
             class="font-mono text-lg uppercase tracking-wider" 
             size="xl" 
+            :loading="isCheckingPlate"
+            :disabled="isTransferMode"
             :ui="{ base: 'bg-slate-950 border-slate-700 focus:ring-indigo-500 focus:border-indigo-500 shadow-inner' }"
           />
         </UFormField>
         
-        <UFormField :label="$t('owner.modals.add_car.brand_label')" required :ui="{ label: { base: 'text-slate-300 font-medium tracking-wide text-sm mb-2' } }">
-          <UInput 
-            v-model="formState.brand" 
-            placeholder="e.g. Renault" 
-            class="text-lg"
-            size="xl" 
-            :ui="{ base: 'bg-slate-950 border-slate-700 focus:ring-indigo-500 shadow-inner' }"
-          />
-        </UFormField>
-        
-        <UFormField :label="$t('owner.modals.add_car.model_label')" required :ui="{ label: { base: 'text-slate-300 font-medium tracking-wide text-sm mb-2' } }">
-          <UInput 
-            v-model="formState.model" 
-            placeholder="e.g. Clio" 
-            class="text-lg" 
-            size="xl" 
-            :ui="{ base: 'bg-slate-950 border-slate-700 focus:ring-indigo-500 shadow-inner' }"
-          />
-        </UFormField>
- 
-        <UFormField :label="$t('owner.modals.add_car.color_label')" required :ui="{ label: { base: 'text-slate-300 font-medium tracking-wide text-sm mb-2' } }">
-          <UInput 
-            v-model="formState.color" 
-            placeholder="e.g. Black" 
-            class="text-lg"
-            size="xl" 
-            :ui="{ base: 'bg-slate-950 border-slate-700 focus:ring-indigo-500 shadow-inner' }"
-          />
-        </UFormField>
- 
+        <div v-if="isTransferMode" class="sm:col-span-1 flex items-end pb-1">
+          <UButton 
+            color="neutral" 
+            variant="ghost" 
+            icon="lucide:refresh-cw" 
+            size="sm"
+            @click="resetPlate"
+          >
+            Change Plate
+          </UButton>
+        </div>
+
+        <template v-if="!isTransferMode">
+          <UFormField :label="$t('owner.modals.add_car.brand_label')" required :ui="{ label: { base: 'text-slate-300 font-medium tracking-wide text-sm mb-2' } }">
+            <UInput 
+              v-model="formState.brand" 
+              placeholder="e.g. Renault" 
+              class="text-lg"
+              size="xl" 
+              :ui="{ base: 'bg-slate-950 border-slate-700 focus:ring-indigo-500 shadow-inner' }"
+            />
+          </UFormField>
+          
+          <UFormField :label="$t('owner.modals.add_car.model_label')" required :ui="{ label: { base: 'text-slate-300 font-medium tracking-wide text-sm mb-2' } }">
+            <UInput 
+              v-model="formState.model" 
+              placeholder="e.g. Clio" 
+              class="text-lg" 
+              size="xl" 
+              :ui="{ base: 'bg-slate-950 border-slate-700 focus:ring-indigo-500 shadow-inner' }"
+            />
+          </UFormField>
+   
+          <UFormField :label="$t('owner.modals.add_car.color_label')" required :ui="{ label: { base: 'text-slate-300 font-medium tracking-wide text-sm mb-2' } }">
+            <UInput 
+              v-model="formState.color" 
+              placeholder="e.g. Black" 
+              class="text-lg"
+              size="xl" 
+              :ui="{ base: 'bg-slate-950 border-slate-700 focus:ring-indigo-500 shadow-inner' }"
+            />
+          </UFormField>
+        </template>
+
         <UFormField
           class="sm:col-span-2"
-          :label="$t('owner.modals.add_car.carte_grise_label')"
+          :label="isTransferMode ? 'Upload YOUR Carte Grise for transfer' : $t('owner.modals.add_car.carte_grise_label')"
           required
           :ui="{ label: { base: 'text-slate-300 font-medium tracking-wide text-sm mb-2' } }"
         >
@@ -98,13 +115,13 @@
           @click="isOpen = false" 
         />
         <UButton 
-          :label="carToEdit ? $t('owner.modals.add_car.submit_edit') : $t('owner.modals.add_car.submit_new')" 
+          :label="isTransferMode ? $t('owner.modals.add_car.submit_transfer') : (carToEdit ? $t('owner.modals.add_car.submit_edit') : $t('owner.modals.add_car.submit_new'))" 
           color="primary" 
           size="xl"
           class="flex-1 sm:flex-none justify-center font-bold shadow-lg shadow-indigo-500/25"
           :loading="uploadLoading" 
           :disabled="!isFormValid"
-          @click="submitAddCar"
+          @click="handleSubmit"
         />
       </div>
     </template>
@@ -138,7 +155,13 @@ const formState = ref({
 const selectedFile = ref<File | null>(null)
 const uploadLoading = ref(false)
 
+const isCheckingPlate = ref(false)
+const isTransferMode = ref(false)
+const transferMessage = ref('')
+
 watch(() => isOpen.value, (newVal) => {
+  isTransferMode.value = false
+  transferMessage.value = ''
   if (newVal && props.carToEdit) {
     formState.value = {
       plateNumber: props.carToEdit.plateNumber,
@@ -162,11 +185,41 @@ const { isFrenchPlateValid, formatFrenchPlate } = useVehicleValidation()
 
 const isPlateValid = computed(() => isFrenchPlateValid(formState.value.plateNumber))
 
-watch(() => formState.value.plateNumber, (newVal) => {
+watch(() => formState.value.plateNumber, async (newVal) => {
   if (newVal) {
     formState.value.plateNumber = formatFrenchPlate(newVal)
+    
+    if (isPlateValid.value && !props.carToEdit) {
+      isCheckingPlate.value = true
+      try {
+        const { available } = await carsStore.checkPlate(formState.value.plateNumber)
+        if (!available) {
+          isTransferMode.value = true
+          transferMessage.value = 'Vehicle already registered. Request a transfer below.'
+        } else {
+          isTransferMode.value = false
+          transferMessage.value = ''
+        }
+      } catch (e) {
+        transferMessage.value = ''
+      } finally {
+        isCheckingPlate.value = false
+      }
+    } else {
+      isTransferMode.value = false
+      transferMessage.value = ''
+    }
+  } else {
+    isTransferMode.value = false
+    transferMessage.value = ''
   }
 })
+
+const resetPlate = () => {
+  isTransferMode.value = false
+  transferMessage.value = ''
+  formState.value.plateNumber = ''
+}
 
 const plateError = computed(() => {
   if (formState.value.plateNumber && !isPlateValid.value) {
@@ -176,6 +229,9 @@ const plateError = computed(() => {
 })
 
 const isFormValid = computed(() => {
+  if (isTransferMode.value) {
+    return isPlateValid.value && selectedFile.value !== null
+  }
   return isPlateValid.value && 
          formState.value.brand.trim() !== '' && 
          formState.value.model.trim() !== '' && 
@@ -187,6 +243,42 @@ const handleFileChange = (e: Event) => {
   const target = e.target as HTMLInputElement
   if (target.files?.length) {
     selectedFile.value = target.files[0]
+  }
+}
+
+const handleSubmit = async () => {
+  if (isTransferMode.value) {
+    await submitTransferRequest()
+  } else {
+    await submitAddCar()
+  }
+}
+
+const submitTransferRequest = async () => {
+  if (!selectedFile.value) return
+
+  uploadLoading.value = true
+  try {
+    const fileRef = storageRef(storage, `transfers/${userProfile.value?.uid}/${Date.now()}_${selectedFile.value.name}`)
+    const snapshot = await uploadBytes(fileRef, selectedFile.value)
+    const url = await getDownloadURL(snapshot.ref)
+
+    await carsStore.requestOwnershipTransfer({
+      plateNumber: formState.value.plateNumber,
+      carteGriseUrl: url
+    })
+
+    isOpen.value = false
+    resetPlate()
+    selectedFile.value = null
+  } catch (error: any) {
+    if (error.message.includes('UNPAID_FINES_EXIST')) {
+      toast.add({ title: 'Transfer Blocked', description: 'This vehicle has unpaid fines. Please tell the current owner to pay them before transfer.', color: 'error' })
+    } else {
+      toast.add({ title: 'Transfer failed', description: error.message, color: 'error' })
+    }
+  } finally {
+    uploadLoading.value = false
   }
 }
 
@@ -230,7 +322,13 @@ const submitAddCar = async () => {
     }
     selectedFile.value = null
   } catch (error: any) {
-    toast.add({ title: 'Upload failed', description: error.message, color: 'error' })
+    if (error.message.includes('VEHICLE_ALREADY_REGISTERED')) {
+       // Should have been caught by watcher, but just in case
+       isTransferMode.value = true
+       transferMessage.value = 'Vehicle already registered. Request a transfer below.'
+    } else {
+      toast.add({ title: 'Upload failed', description: error.message, color: 'error' })
+    }
   } finally {
     uploadLoading.value = false
   }

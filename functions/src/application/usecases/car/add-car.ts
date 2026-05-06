@@ -28,11 +28,21 @@ export class AddCarUseCase {
       throw new Error('plateNumber, brand, model, color, and carteGriseUrl are required');
     }
 
-    const carId = this.carRepository.generateId();
+    const formattedPlate = String(plateNumber).toUpperCase().replace(/[^A-Z0-9]/g, '');
+    const existingCar = await this.carRepository.getById(formattedPlate);
+    
+    if (existingCar) {
+      if (existingCar.ownerId === request.userId) {
+        throw new Error('You have already registered this vehicle');
+      }
+      throw new Error('VEHICLE_ALREADY_REGISTERED');
+    }
+
     const car: Car = {
-      id: carId,
+      id: formattedPlate,
       ownerId: request.userId,
-      plateNumber: String(plateNumber).toUpperCase(),
+      plateNumber: plateNumber.toUpperCase(), // Keep dashes if they were there
+      plateNumberNormalized: formattedPlate,
       brand,
       model,
       color,
@@ -42,6 +52,6 @@ export class AddCarUseCase {
     };
 
     await this.carRepository.create(car);
-    return { ok: true, carId };
+    return { ok: true, carId: formattedPlate };
   }
 }

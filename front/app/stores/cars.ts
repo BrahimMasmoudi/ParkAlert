@@ -16,7 +16,8 @@ export type CarStatus =
   | 'active'
   | 'deleted'
   | 'rejected'
-  | 'transfer_requested'
+  | 'transfer_pending_owner'
+  | 'transfer_pending_police'
 
 export const carStatusMapper: Record<CarStatus, string> = {
   activation_pending: 'Activation Pending',
@@ -24,7 +25,8 @@ export const carStatusMapper: Record<CarStatus, string> = {
   active: 'Active',
   deleted: 'Deleted',
   rejected: 'Rejected',
-  transfer_requested: 'Transfer Requested'
+  transfer_pending_owner: 'Awaiting Owner Acceptance',
+  transfer_pending_police: 'Awaiting Police Approval'
 }
 
 export interface Car {
@@ -144,7 +146,7 @@ export const useCarsStore = defineStore('cars', () => {
   const pendingCarsRef = computed(() =>
     query(
       collection(db, 'cars').withConverter(carConverter),
-      where('status', 'in', ['activation_pending', 'deletion_requested', 'transfer_requested'])
+      where('status', 'in', ['activation_pending', 'deletion_requested', 'transfer_pending_owner', 'transfer_pending_police'])
     )
   )
 
@@ -167,9 +169,15 @@ export const useCarsStore = defineStore('cars', () => {
     )
   )
 
-  const transferRequestedCars = computed(() =>
+  const transferPendingOwnerCars = computed(() =>
     (pendingCars.value || []).filter(
-      car => car.status === 'transfer_requested'
+      car => car.status === 'transfer_pending_owner'
+    )
+  )
+
+  const transferPendingPoliceCars = computed(() =>
+    (pendingCars.value || []).filter(
+      car => car.status === 'transfer_pending_police'
     )
   )
 
@@ -214,17 +222,33 @@ export const useCarsStore = defineStore('cars', () => {
     })
   }
 
+  async function checkPlate(plateNumber: string) {
+    const res = await callFn('checkPlate', { plateNumber })
+    return res.data as { available: boolean, status?: CarStatus }
+  }
+
   async function requestOwnershipTransfer(payload: {
-    carId: string
-    newOwnerId: string
+    plateNumber: string
     carteGriseUrl: string
   }) {
-    return withLoading(`${payload.carId}-transfer`, async () => {
+    return withLoading(`transfer-${payload.plateNumber}`, async () => {
       await callFn('requestOwnershipTransfer', payload)
 
       toast.add({
-        title: 'Ownership transfer requested',
-        description: 'Car moved to new owner pending activation.',
+        title: 'Transfer requested',
+        description: 'The current owner has been notified to accept the transfer.',
+        color: 'success'
+      })
+    })
+  }
+
+  async function acknowledgeTransfer(carId: string) {
+    return withLoading(`${carId}-acknowledge`, async () => {
+      await callFn('acknowledgeTransfer', { carId })
+
+      toast.add({
+        title: 'Transfer acknowledged',
+        description: 'Now waiting for police final approval.',
         color: 'success'
       })
     })
@@ -326,13 +350,16 @@ export const useCarsStore = defineStore('cars', () => {
     pendingCarsLoading,
     activationPendingCars,
     deletionPendingCars,
-    transferRequestedCars,
+    transferPendingOwnerCars,
+    transferPendingPoliceCars,
     historicalCars,
     historicalCarsLoading,
     isLoading,
     addCar,
+    checkPlate,
     retryCar,
     requestOwnershipTransfer,
+    acknowledgeTransfer,
     approveCar,
     rejectCar,
     approveTransfer,

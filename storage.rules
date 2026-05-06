@@ -23,5 +23,14 @@ service firebase.storage {
                    && request.resource.size < 10 * 1024 * 1024  // 10 MB max
                    && (request.resource.contentType.matches('image/.*') || request.resource.contentType == 'application/pdf');
     }
+
+    // Transfer documents: only authenticated users can upload to their own folder; police can read
+    match /transfers/{userId}/{fileName} {
+      allow read:  if isSecureRequest();
+      allow write: if isSecureRequest()
+                   && request.auth.uid == userId
+                   && request.resource.size < 10 * 1024 * 1024  // 10 MB max
+                   && (request.resource.contentType.matches('image/.*') || request.resource.contentType == 'application/pdf');
+    }
   }
 }
