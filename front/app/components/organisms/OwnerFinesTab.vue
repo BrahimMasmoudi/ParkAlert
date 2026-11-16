@@ -12,7 +12,10 @@
 
     <LoadingSkeleton v-if="loading" :count="3" class="h-32 mb-4" />
 
-    <div v-else-if="!fines?.length" class="flex flex-col items-center justify-center py-20 bg-slate-900 border border-slate-800 border-dashed rounded-2xl">
+    <div
+      v-else-if="!fines?.length"
+      class="flex flex-col items-center justify-center py-20 bg-slate-900 border border-slate-800 border-dashed rounded-2xl"
+    >
       <div class="p-4 bg-slate-800 rounded-full mb-4">
         <UIcon name="lucide:smile" class="w-8 h-8 text-green-500" />
       </div>
@@ -42,6 +45,17 @@
         :key="fine.id"
         :fine="fine"
       />
+
+      <div v-if="cancelledFines.length" class="flex items-center gap-2 mt-8 mb-2">
+        <span class="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">{{ $t('owner.fines.cancelled_title') }}</span>
+        <div class="h-px flex-1 bg-slate-800"/>
+      </div>
+
+      <MoleculesOwnerFineCard
+        v-for="fine in cancelledFines"
+        :key="fine.id"
+        :fine="fine"
+      />
     </div>
   </section>
 </template>
@@ -54,4 +68,5 @@ const props = defineProps<{
 
 const unpaidFines = computed(() => (props.fines || []).filter(f => f.status === 'unpaid'))
 const paidFines = computed(() => (props.fines || []).filter(f => f.status === 'paid'))
+const cancelledFines = computed(() => (props.fines || []).filter(f => f.status === 'cancelled'))
 </script>

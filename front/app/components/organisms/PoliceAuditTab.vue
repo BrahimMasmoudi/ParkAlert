@@ -20,16 +20,16 @@
       </template>
       <template #status-cell="{ row }">
         <UBadge
-          :color="row.original.status === 'paid' ? 'success' : 'error'"
+          :color="statusColor(row.original.status)"
           variant="subtle"
           size="xs"
           class="uppercase font-bold"
         >
-          {{ row.original.status }}
+          {{ $t(`police.audit.${row.original.status}`) || row.original.status }}
         </UBadge>
       </template>
       <template #issuedAt-cell="{ row }">
-        <span class="text-sm text-slate-400">{{ new Date(row.original.issuedAt).toLocaleString() }}</span>
+        <span class="text-sm text-slate-400">{{ new Date(row.original.issuedAt).toLocaleString($i18n.locale) }}</span>
       </template>
     </UTable>
   </UContainer>
@@ -37,10 +37,18 @@
 
 <script setup lang="ts">
 import { useUserStore } from '~/stores/user'
+
 defineProps<{
   fines: any[]
   loading: boolean
   columns: any[]
 }>()
+
 const userStore = useUserStore()
+
+function statusColor(status: string) {
+  if (status === 'paid') return 'success'
+  if (status === 'cancelled') return 'neutral'
+  return 'error'
+}
 </script>

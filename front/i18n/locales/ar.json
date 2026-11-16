@@ -112,6 +112,7 @@
     "tabs": {
       "reports": "البلاغات",
       "cars": "المركبات",
+      "disputes": "الاعتراضات",
       "audit": "سجل التدقيق"
     },
     "actions": {
@@ -186,11 +187,29 @@
       "placeholder": "مثال: صورة اللوحة غير واضحة أو مركبة غير مسجلة...",
       "confirm": "تأكيد الإغلاق"
     },
+    "disputes": {
+      "title": "الاعتراضات المعلقة على المخالفات",
+      "no_disputes": "لا توجد اعتراضات معلقة",
+      "owner_explanation": "توضيح المالك",
+      "original_plate": "اللوحة المبلغ عنها أصلاً",
+      "issued_plate": "اللوحة المسجلة في المخالفة",
+      "cancel_fine": "إلغاء المخالفة",
+      "dismiss_dispute": "رفض الاعتراض",
+      "cancel_title": "إلغاء المخالفة المعترض عليها",
+      "cancel_description": "أكد سبب إلغاء هذه المخالفة (سيتم إغلاق البلاغ المرتبط بها).",
+      "dismiss_title": "رفض اعتراض المالك",
+      "dismiss_description": "وضح سبب رفض الاعتراض وبقاء المخالفة واجبة السداد.",
+      "reason_placeholder": "أدخل سبب القرار (من 3 إلى 500 حرف)...",
+      "confirm_cancel": "تأكيد الإلغاء",
+      "confirm_dismiss": "تأكيد الرفض",
+      "reason_length_error": "يجب أن يتراوح سبب القرار بين 3 و 500 حرف."
+    },
     "audit": {
       "title": "سجل تدقيق المخالفات",
       "no_fines": "لم يتم إصدار أي مخالفات بعد",
       "paid": "تم الدفع",
-      "unpaid": "غير مدفوعة"
+      "unpaid": "غير مدفوعة",
+      "cancelled": "ملغاة"
     }
   },
   "owner": {
@@ -245,9 +264,26 @@
       "empty_state_desc": "ليس لديك أي مخالفات معلقة أو سابقة. عمل جيد في اتباع لوائح وقوف السيارات!",
       "unpaid_title": "مخالفات غير مدفوعة",
       "settled_title": "سجلات تمت تسويتها",
+      "cancelled_title": "مخالفات ملغاة",
       "pay_button": "دفع الغرامة",
       "receipt_issued": "تم إصدار الإيصال",
-      "reference": "المرجع"
+      "reference": "المرجع",
+      "view_evidence": "عرض الأدلة",
+      "evidence_modal_title": "أدلة المخالفة",
+      "no_evidence_legacy": "لا توجد صور أدلة مرفقة بهذه المخالفة التاريخية.",
+      "dispute_button": "الاعتراض على المخالفة",
+      "dispute_modal_title": "الاعتراض على مخالفة التوقف",
+      "dispute_modal_description": "قدم شرحاً واضحاً لسبب اعتقادك أن هذه المخالفة صدرت عن طريق الخطأ.",
+      "dispute_placeholder": "اشرح ما حدث (من 3 إلى 500 حرف)...",
+      "dispute_reason_length_error": "يجب أن يتراوح شرح الاعتراض بين 3 و 500 حرف.",
+      "submit_dispute": "إرسال الاعتراض",
+      "under_review": "الاعتراض قيد المراجعة",
+      "dispute_reason_label": "سبب اعتراضك",
+      "resolution_reason_label": "ملاحظة قرار الشرطة",
+      "dispute_pending_badge": "اعتراض معلق",
+      "dispute_rejected_badge": "اعتراض مرفوض",
+      "dispute_accepted_badge": "اعتراض مقبول",
+      "unknown_date": "تاريخ غير معروف"
     },
     "history": {
       "title": "سجل الملكية",

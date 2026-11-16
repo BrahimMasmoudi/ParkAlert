@@ -32,6 +32,15 @@
         />
       </template>
 
+      <template #disputes>
+        <OrganismsPoliceDisputesTab
+          :fines="filteredPendingDisputes"
+          :loading="finesStore.pendingDisputesLoading"
+          :columns="disputeColumns"
+          @open="openDispute"
+        />
+      </template>
+
       <template #audit>
         <OrganismsPoliceAuditTab
           :fines="filteredAllFines"
@@ -231,6 +240,138 @@
       @approve="handleReviewApprove"
       @reject="handleReviewReject"
     />
+
+    <UModal
+      v-model:open="isDisputeModalOpen"
+      :title="`${$t('police.disputes.title')} - ${selectedDispute?.plateNumber}`"
+      :ui="{
+        content: 'bg-slate-900 border border-slate-700 shadow-2xl shadow-black/50 rounded-2xl overflow-hidden max-w-4xl sm:min-h-[36rem]',
+        header: 'py-4 sm:py-5 border-b border-slate-800',
+        body: 'p-5 sm:p-6',
+      }"
+    >
+      <template #body>
+        <div v-if="selectedDispute" class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <MoleculesEvidenceGallery
+            :items="disputeEvidenceItems"
+            :loading="loadingEvidence"
+            :empty-message="$t('police.review.no_evidence')"
+            @refresh="loadDisputeEvidence"
+          />
+
+          <div class="space-y-4">
+            <div class="bg-slate-950 p-4 rounded-xl border border-slate-800 space-y-3">
+              <div class="flex items-center justify-between">
+                <span class="text-xs font-bold uppercase tracking-wider text-slate-400">
+                  {{ $t('police.disputes.issued_plate') }}
+                </span>
+                <span class="font-mono text-lg font-bold text-amber-400">
+                  {{ selectedDispute.plateNumber }}
+                </span>
+              </div>
+
+              <div
+                v-if="selectedDispute.originalPlateNumber && selectedDispute.originalPlateNumber !== selectedDispute.plateNumber"
+                class="flex items-center justify-between pt-2 border-t border-slate-800"
+              >
+                <span class="text-xs font-bold uppercase tracking-wider text-slate-400">
+                  {{ $t('police.disputes.original_plate') }}
+                </span>
+                <span class="font-mono text-sm text-slate-300">
+                  {{ selectedDispute.originalPlateNumber }}
+                </span>
+              </div>
+
+              <div class="flex items-center justify-between pt-2 border-t border-slate-800">
+                <span class="text-xs text-slate-400">{{ $t('police.review.owner') }}</span>
+                <AtomsUserName
+                  :user="userStore.usersCache[selectedDispute.ownerId] || { name: selectedDispute.ownerId }"
+                />
+              </div>
+
+              <div class="flex items-center justify-between pt-2 border-t border-slate-800">
+                <span class="text-xs text-slate-400">{{ $t('police.fine.amount') }}</span>
+                <span class="font-bold text-white">TND {{ selectedDispute.amount }}</span>
+              </div>
+            </div>
+
+            <div class="bg-slate-950 p-4 rounded-xl border border-amber-500/30 space-y-2">
+              <p class="text-xs font-bold uppercase tracking-wider text-amber-400">
+                {{ $t('police.disputes.owner_explanation') }}
+              </p>
+              <p class="text-sm text-slate-200 whitespace-pre-wrap leading-relaxed">
+                {{ selectedDispute.disputeReason }}
+              </p>
+            </div>
+          </div>
+        </div>
+      </template>
+
+      <template #footer>
+        <div class="flex items-center justify-between w-full gap-2 flex-wrap">
+          <UButton
+            :label="$t('common.close')"
+            color="neutral"
+            variant="ghost"
+            @click="isDisputeModalOpen = false"
+          />
+          <div class="flex items-center gap-2">
+            <UButton
+              :label="$t('police.disputes.dismiss_dispute')"
+              color="warning"
+              variant="soft"
+              icon="i-lucide-shield-check"
+              :loading="finesStore.acting"
+              @click="openResolveDisputeModal('dismiss_dispute')"
+            />
+            <UButton
+              :label="$t('police.disputes.cancel_fine')"
+              color="error"
+              icon="i-lucide-ban"
+              :loading="finesStore.acting"
+              @click="openResolveDisputeModal('cancel_fine')"
+            />
+          </div>
+        </div>
+      </template>
+    </UModal>
+
+    <UModal
+      v-model:open="isResolveDisputeModalOpen"
+      :title="disputeResolveAction === 'cancel_fine' ? $t('police.disputes.cancel_title') : $t('police.disputes.dismiss_title')"
+      :description="disputeResolveAction === 'cancel_fine' ? $t('police.disputes.cancel_description') : $t('police.disputes.dismiss_description')"
+    >
+      <template #body>
+        <div class="space-y-2">
+          <UTextarea
+            v-model="disputeResolveReason"
+            :placeholder="$t('police.disputes.reason_placeholder')"
+            :rows="4"
+            class="w-full"
+          />
+          <p v-if="disputeResolveReasonError" class="text-xs text-red-400">
+            {{ disputeResolveReasonError }}
+          </p>
+        </div>
+      </template>
+      <template #footer>
+        <div class="flex gap-2 justify-end w-full">
+          <UButton
+            :label="$t('common.cancel')"
+            color="neutral"
+            variant="ghost"
+            @click="isResolveDisputeModalOpen = false"
+          />
+          <UButton
+            :label="disputeResolveAction === 'cancel_fine' ? $t('police.disputes.confirm_cancel') : $t('police.disputes.confirm_dismiss')"
+            :color="disputeResolveAction === 'cancel_fine' ? 'error' : 'warning'"
+            :loading="finesStore.acting"
+            :disabled="Boolean(disputeResolveReasonError)"
+            @click="confirmResolveDispute"
+          />
+        </div>
+      </template>
+    </UModal>
   </UContainer>
 </template>
 
@@ -240,6 +381,7 @@ import { useCarsStore } from '~/stores/cars'
 import { useUserStore } from '~/stores/user'
 import { useFinesStore } from '~/stores/fines'
 import type { EvidenceUrlItem } from '~/composables/useDocumentViewer'
+import type { Fine } from '~/stores/fines'
 import type { Report } from '~/stores/reports'
 
 definePageMeta({
@@ -274,6 +416,7 @@ const filteredActivationPending = computed(() => filterList(carsStore.activation
 const filteredDeletionPending = computed(() => filterList(carsStore.deletionPendingCars))
 const filteredTransferPendingPolice = computed(() => filterList(carsStore.transferPendingPoliceCars))
 const filteredPendingReports = computed(() => filterList(reportsStore.pendingReports))
+const filteredPendingDisputes = computed(() => filterList(finesStore.pendingDisputes))
 const filteredAllFines = computed(() => filterList(finesStore.allFines))
 
 watch(() => carsStore.activationPendingCars, (cars) => {
@@ -293,11 +436,31 @@ watch(() => finesStore.allFines, (fines) => {
   fines.forEach(fine => userStore.fetchUser(fine.ownerId))
 }, { immediate: true })
 
+watch(() => finesStore.pendingDisputes, (fines) => {
+  if (!fines) return
+  fines.forEach(fine => userStore.fetchUser(fine.ownerId))
+}, { immediate: true })
+
 const selected = ref<Report | null>(null)
 const isReportModalOpen = ref(false)
 const isDismissModalOpen = ref(false)
 const dismissReason = ref('')
 const evidenceItems = ref<EvidenceUrlItem[]>([])
+
+const selectedDispute = ref<Fine | null>(null)
+const isDisputeModalOpen = ref(false)
+const disputeEvidenceItems = ref<EvidenceUrlItem[]>([])
+const isResolveDisputeModalOpen = ref(false)
+const disputeResolveAction = ref<'cancel_fine' | 'dismiss_dispute'>('cancel_fine')
+const disputeResolveReason = ref('')
+
+const disputeResolveReasonError = computed(() => {
+  const len = disputeResolveReason.value.trim().length
+  if (len < 3 || len > 500) {
+    return t('police.disputes.reason_length_error')
+  }
+  return ''
+})
 
 const isRejectModalOpen = ref(false)
 const rejectionReason = ref('')
@@ -359,6 +522,12 @@ const tabs = computed(() => [
     icon: 'i-lucide-camera',
     slot: 'reports',
     badge: filteredPendingReports.value.length,
+  },
+  {
+    label: t('police.tabs.disputes'),
+    icon: 'i-lucide-scale',
+    slot: 'disputes',
+    badge: filteredPendingDisputes.value.length,
   },
   {
     label: t('police.tabs.audit'),
@@ -453,6 +622,42 @@ async function confirmDismiss() {
   selected.value = null
 }
 
+async function loadDisputeEvidence() {
+  if (!selectedDispute.value) return
+  try {
+    disputeEvidenceItems.value = await fetchEvidenceUrls('fine', selectedDispute.value.id)
+  }
+  catch {
+    disputeEvidenceItems.value = []
+  }
+}
+
+async function openDispute(fine: Fine) {
+  selectedDispute.value = fine
+  disputeEvidenceItems.value = []
+  isDisputeModalOpen.value = true
+  userStore.fetchUser(fine.ownerId)
+  await loadDisputeEvidence()
+}
+
+function openResolveDisputeModal(action: 'cancel_fine' | 'dismiss_dispute') {
+  disputeResolveAction.value = action
+  disputeResolveReason.value = ''
+  isResolveDisputeModalOpen.value = true
+}
+
+async function confirmResolveDispute() {
+  if (!selectedDispute.value || disputeResolveReasonError.value) return
+  await finesStore.resolveDispute(
+    selectedDispute.value.id,
+    disputeResolveAction.value,
+    disputeResolveReason.value.trim(),
+  )
+  isResolveDisputeModalOpen.value = false
+  isDisputeModalOpen.value = false
+  selectedDispute.value = null
+}
+
 function openRejectModal(carId: string, isTransfer = false) {
   targetCarId.value = carId
   isTransferRejection.value = isTransfer
@@ -499,5 +704,14 @@ const auditColumns = [
   { accessorKey: 'amount', header: 'Amount' },
   { accessorKey: 'status', header: 'Status' },
   { accessorKey: 'issuedAt', header: 'Issued' },
+]
+
+const disputeColumns = [
+  { accessorKey: 'plateNumber', header: 'Plate' },
+  { accessorKey: 'ownerId', header: 'Owner' },
+  { accessorKey: 'amount', header: 'Amount' },
+  { accessorKey: 'disputeReason', header: 'Explanation' },
+  { accessorKey: 'disputedAt', header: 'Submitted' },
+  { id: 'actions', header: 'Actions' },
 ]
 </script>

@@ -112,6 +112,7 @@
     "tabs": {
       "reports": "Reports",
       "cars": "Cars",
+      "disputes": "Disputes",
       "audit": "Audit Log"
     },
     "actions": {
@@ -186,11 +187,29 @@
       "placeholder": "e.g. Blurry plate photo or unregistered vehicle...",
       "confirm": "Confirm Dismissal"
     },
+    "disputes": {
+      "title": "Pending Fine Disputes",
+      "no_disputes": "No pending fine disputes",
+      "owner_explanation": "Owner Explanation",
+      "original_plate": "Original Reported Plate",
+      "issued_plate": "Issued Plate",
+      "cancel_fine": "Cancel Fine",
+      "dismiss_dispute": "Dismiss Dispute",
+      "cancel_title": "Cancel Disputed Fine",
+      "cancel_description": "Confirm why this fine is being cancelled (the linked report will be closed).",
+      "dismiss_title": "Dismiss Owner Dispute",
+      "dismiss_description": "Explain why the dispute is rejected and the fine remains payable.",
+      "reason_placeholder": "Enter resolution reason (3-500 characters)...",
+      "confirm_cancel": "Confirm Cancellation",
+      "confirm_dismiss": "Confirm Dismissal",
+      "reason_length_error": "Resolution reason must be between 3 and 500 characters."
+    },
     "audit": {
       "title": "Fine Issuance Audit",
       "no_fines": "No fines have been issued yet",
       "paid": "Paid",
-      "unpaid": "Unpaid"
+      "unpaid": "Unpaid",
+      "cancelled": "Cancelled"
     }
   },
   "owner": {
@@ -245,9 +264,26 @@
       "empty_state_desc": "You have no pending or past fines. Good job on following parking regulations!",
       "unpaid_title": "Unpaid Violations",
       "settled_title": "Settled Records",
+      "cancelled_title": "Cancelled Records",
       "pay_button": "Pay Fine",
       "receipt_issued": "Receipt Issued",
-      "reference": "Reference"
+      "reference": "Reference",
+      "view_evidence": "View Evidence",
+      "evidence_modal_title": "Fine Evidence",
+      "no_evidence_legacy": "No evidence photos are attached to this historical fine.",
+      "dispute_button": "Dispute Fine",
+      "dispute_modal_title": "Dispute Parking Fine",
+      "dispute_modal_description": "Provide a clear explanation of why you believe this fine was issued in error.",
+      "dispute_placeholder": "Explain what happened (3-500 characters)...",
+      "dispute_reason_length_error": "Dispute explanation must be between 3 and 500 characters.",
+      "submit_dispute": "Submit Dispute",
+      "under_review": "Dispute Under Review",
+      "dispute_reason_label": "Your Dispute Explanation",
+      "resolution_reason_label": "Police Resolution Note",
+      "dispute_pending_badge": "Dispute Pending",
+      "dispute_rejected_badge": "Dispute Rejected",
+      "dispute_accepted_badge": "Dispute Accepted",
+      "unknown_date": "Unknown date"
     },
     "history": {
       "title": "Ownership History",

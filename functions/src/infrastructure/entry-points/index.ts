@@ -25,6 +25,8 @@ export * from './report/dismiss-report';
 export * from './evidence/get-evidence-urls';
 export * from './fine/issue-fine';
 export * from './fine/pay-fine';
+export * from './fine/dispute-fine';
+export * from './fine/resolve-dispute';
 export * from './user/set-user-role';
 export * from './user/update-user-profile';
 export * from './car/add-car';

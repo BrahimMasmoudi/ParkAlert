@@ -28,6 +28,7 @@ vi.mock('firebase/firestore', () => ({
   }),
   where: (field: string, op: string, val: any) => ({ __where: [field, op, val] }),
   orderBy: (field: string, dir: string) => ({ __orderBy: [field, dir] }),
+  limit: (n: number) => ({ __limit: n }),
   query: (...args: any[]) => {
     const q = { __query: args };
     mockQueries.push(q);
@@ -96,12 +97,12 @@ describe('US2: Pinia Store Listener Role Gating', () => {
     expect(mockQueries[1].__query.some((part: any) => part.__where?.[0] === 'ownerId')).toBe(true);
   });
 
-  it('subscribes to pendingCars and allFines only when user is police', () => {
+  it('subscribes to pendingCars, allFines, and pendingDisputes only when user is police', () => {
     mockRole.value = 'police';
     useCarsStore();
     useFinesStore();
 
     const queriedCollections = mockQueries.map((q) => q.__query[0].__collection);
-    expect(queriedCollections).toEqual(['cars', 'cars', 'fines', 'fines']);
+    expect(queriedCollections).toEqual(['cars', 'cars', 'fines', 'fines', 'fines']);
   });
 });

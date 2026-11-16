@@ -1,10 +1,11 @@
 import { onCall, HttpsError } from 'firebase-functions/v2/https';
 import { ApproveCarDeletionUseCase } from '../../../application/usecases/car/approve-car-deletion';
-import { carRepository, transactionRunner, userRepository } from '../index';
+import { carRepository, fineRepository, transactionRunner, userRepository } from '../index';
 import { mapDomainErrorToHttpsError } from '../shared/error-mapper';
 
 const approveCarDeletionUseCase = new ApproveCarDeletionUseCase(
   carRepository,
+  fineRepository,
   userRepository,
   transactionRunner
 );

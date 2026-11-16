@@ -112,6 +112,7 @@
     "tabs": {
       "reports": "Signalements",
       "cars": "Véhicules",
+      "disputes": "Contestations",
       "audit": "Journal d'Audit"
     },
     "actions": {
@@ -186,11 +187,29 @@
       "placeholder": "ex : Photo floue ou véhicule non enregistré...",
       "confirm": "Confirmer la Clôture"
     },
+    "disputes": {
+      "title": "Contestations d'Amendes en Attente",
+      "no_disputes": "Aucune contestation en attente",
+      "owner_explanation": "Explication du Propriétaire",
+      "original_plate": "Plaque Initialement Signalée",
+      "issued_plate": "Plaque Verbalisée",
+      "cancel_fine": "Annuler l'Amende",
+      "dismiss_dispute": "Rejeter la Contestation",
+      "cancel_title": "Annuler l'Amende Contestée",
+      "cancel_description": "Confirmez la raison de l'annulation de cette amende (le signalement associé sera clôturé).",
+      "dismiss_title": "Rejeter la Contestation",
+      "dismiss_description": "Expliquez pourquoi la contestation est rejetée et l'amende reste due.",
+      "reason_placeholder": "Saisissez le motif de la décision (3 à 500 caractères)...",
+      "confirm_cancel": "Confirmer l'Annulation",
+      "confirm_dismiss": "Confirmer le Rejet",
+      "reason_length_error": "Le motif doit contenir entre 3 et 500 caractères."
+    },
     "audit": {
       "title": "Journal d'Audit des Amendes",
       "no_fines": "Aucune amende n'a encore été délivrée",
       "paid": "Payée",
-      "unpaid": "Non payée"
+      "unpaid": "Non payée",
+      "cancelled": "Annulée"
     }
   },
   "owner": {
@@ -245,9 +264,26 @@
       "empty_state_desc": "Vous n'avez aucune amende en attente. Félicitations pour le respect des règles de stationnement !",
       "unpaid_title": "Infractions Non Payées",
       "settled_title": "Dossiers Règlementés",
+      "cancelled_title": "Amendes Annulées",
       "pay_button": "Payer l'Amende",
       "receipt_issued": "Reçu Émis",
-      "reference": "Référence"
+      "reference": "Référence",
+      "view_evidence": "Voir les Preuves",
+      "evidence_modal_title": "Preuves de l'Infraction",
+      "no_evidence_legacy": "Aucune photo de preuve n'est associée à cette amende historique.",
+      "dispute_button": "Contester l'Amende",
+      "dispute_modal_title": "Contester l'Amende",
+      "dispute_modal_description": "Expliquez clairement pourquoi vous estimez que cette amende a été émise par erreur.",
+      "dispute_placeholder": "Expliquez la situation (3 à 500 caractères)...",
+      "dispute_reason_length_error": "L'explication doit contenir entre 3 et 500 caractères.",
+      "submit_dispute": "Envoyer la Contestation",
+      "under_review": "Contestation en Cours d'Examen",
+      "dispute_reason_label": "Votre Motif de Contestation",
+      "resolution_reason_label": "Décision de la Police",
+      "dispute_pending_badge": "Contestation en Attente",
+      "dispute_rejected_badge": "Contestation Rejetée",
+      "dispute_accepted_badge": "Contestation Acceptée",
+      "unknown_date": "Date inconnue"
     },
     "history": {
       "title": "Historique de Propriété",
