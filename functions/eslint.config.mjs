@@ -19,7 +19,7 @@ export default tseslint.config(
     },
   },
   {
-    files: ['*.config.mjs', 'migrations/**/*.ts'],
+    files: ['*.config.mjs', 'migrations/**/*.ts', 'tests/**/*.ts'],
     extends: [tseslint.configs.disableTypeChecked],
   },
   {

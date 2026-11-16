@@ -1,9 +1,10 @@
-export type CarStatus = 'activation_pending' | 'active' | 'rejected' | 'deletion_requested' | 'archived' | 'transfer_requested';
+export type CarStatus = 'activation_pending' | 'active' | 'rejected' | 'deletion_requested' | 'archived' | 'transfer_pending_owner' | 'transfer_pending_police';
 
 export interface Car {
   id: string;
   ownerId: string;
   plateNumber: string;
+  plateNumberNormalized: string;
   brand: string;
   model: string;
   color: string;
@@ -13,6 +14,7 @@ export interface Car {
   updatedAt?: Date | any;
   rejectionReason?: string | null;
   deletionRequestedAt?: Date | any | null;
+  preDeletionStatus?: 'active' | 'rejected' | null;
   archivedAt?: Date | any | null;
   archivedBy?: string | null;
   transferToOwnerId?: string | null;

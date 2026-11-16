@@ -1,8 +1,14 @@
 import { onCall, HttpsError } from 'firebase-functions/v2/https';
 import { RequestOwnershipTransferUseCase } from '../../../application/usecases/car/request-ownership-transfer';
-import { carRepository, userRepository } from '../index';
+import { carRepository, fineRepository, transactionRunner, userRepository } from '../index';
+import { mapDomainErrorToHttpsError } from '../shared/error-mapper';
 
-const requestOwnershipTransferUseCase = new RequestOwnershipTransferUseCase(carRepository, userRepository);
+const requestOwnershipTransferUseCase = new RequestOwnershipTransferUseCase(
+  carRepository,
+  fineRepository,
+  userRepository,
+  transactionRunner
+);
 
 export const requestOwnershipTransfer = onCall(
   { region: 'europe-west3', enforceAppCheck: true },
@@ -13,11 +19,11 @@ export const requestOwnershipTransfer = onCall(
 
     try {
       return await requestOwnershipTransferUseCase.execute({
-        userId: request.auth.uid,
-        ...request.data,
+        ...(request.data ?? {}),
+        receiverId: request.auth.uid,
       });
-    } catch (error: any) {
-      throw new HttpsError('internal', error.message);
+    } catch (error) {
+      throw mapDomainErrorToHttpsError(error);
     }
   }
 );

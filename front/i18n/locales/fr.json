@@ -136,7 +136,9 @@
         "active": "Actif",
         "activation_pending": "Activation en attente",
         "deletion_requested": "Suppression demandée",
-        "transfer_requested": "Transfert demandé",
+        "transfer_pending_owner": "Acceptation du propriétaire en attente",
+        "transfer_pending_police": "Approbation de la police en attente",
+        "archived": "Archivé",
         "rejected": "Rejeté"
       }
     },
@@ -182,7 +184,13 @@
       "rejection_reason": "Raison du rejet",
       "transfer_rejected": "Transfert rejeté",
       "carte_grise": "Carte Grise",
-      "view_doc": "Voir Doc"
+      "view_doc": "Voir Doc",
+      "incoming_transfer_title": "Demande de Transfert Entrante",
+      "incoming_transfer_desc": "Quelqu'un a demandé à prendre la propriété de ce véhicule. Acceptez UNIQUEMENT si vous vendez ou transférez le véhicule.",
+      "action_required": "Action Requise",
+      "proposed_new_owner": "Nouveau Propriétaire Proposé",
+      "acknowledge_button": "Accepter le Transfert",
+      "reject_transfer_button": "Rejeter la Demande"
     },
     "profile": {
       "edit_tooltip": "Modifier le Profil",
@@ -214,14 +222,40 @@
         "desc_new": "Enregistrement officiel du véhicule pour l'application du stationnement.",
         "desc_edit": "Mettez à jour les détails de votre véhicule pour réessayer l'activation.",
         "plate_label": "Plaque d'Immatriculation",
+        "plate_placeholder": "ex. AB-123-CD",
+        "change_plate": "Changer de plaque",
         "brand_label": "Marque du Véhicule",
         "model_label": "Modèle du Véhicule",
         "color_label": "Couleur du Véhicule",
         "carte_grise_label": "Carte Grise (Document Officiel)",
+        "transfer_carte_grise_label": "Téléchargez VOTRE Carte Grise pour le transfert",
         "tap_to_upload": "Appuyez pour télécharger la Carte Grise",
         "upload_required": "Requis pour la vérification par la police",
         "submit_new": "Soumettre l'Enregistrement",
-        "submit_edit": "Soumettre à Nouveau"
+        "submit_edit": "Soumettre à Nouveau",
+        "submit_transfer": "Demander le Transfert",
+        "transfer_eligible_hint": "Véhicule déjà enregistré. Demandez un transfert ci-dessous.",
+        "already_owned_error": "Vous avez déjà enregistré ce véhicule.",
+        "transfer_in_progress_error": "Un transfert est déjà en cours pour ce véhicule.",
+        "ineligible_plate_error": "Ce véhicule n'est pas éligible au transfert actuellement.",
+        "invalid_plate_format": "Format de plaque française invalide (ex. AB-123-CD)",
+        "invalid_plate_title": "Plaque invalide",
+        "missing_doc_title": "Document manquant",
+        "missing_doc_desc": "Veuillez télécharger la Carte Grise.",
+        "incomplete_form_title": "Formulaire incomplet",
+        "incomplete_form_desc": "Veuillez remplir tous les champs obligatoires.",
+        "transfer_blocked_title": "Transfert bloqué",
+        "transfer_blocked_unpaid": "Ce véhicule a des amendes impayées. Le propriétaire actuel doit les régler avant le transfert.",
+        "transfer_failed_title": "Échec du transfert",
+        "upload_failed_title": "Échec du téléchargement"
+      },
+      "reject_transfer": {
+        "title": "Rejeter la Demande de Transfert",
+        "description": "Veuillez fournir une raison pour rejeter cette demande de transfert.",
+        "reason_label": "Raison du rejet",
+        "placeholder": "Expliquez pourquoi vous rejetez cette demande...",
+        "reason_length_error": "La raison doit contenir entre 3 et 500 caractères.",
+        "confirm_button": "Rejeter le Transfert"
       },
       "delete_car": {
         "title": "Demander la Suppression",

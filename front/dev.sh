@@ -19,6 +19,11 @@ while ! nc -z localhost 8080 2>/dev/null; do
 done
 echo "✅ Emulators ready!"
 
+# Run migrations against emulators
+echo "⏳ Running migrations..."
+GCLOUD_PROJECT=park-alert-staging FIRESTORE_EMULATOR_HOST=127.0.0.1:8080 pnpm -C ../functions migrate
+echo "✅ Migrations applied."
+
 # Run Nuxt in the foreground. Ctrl-C stops only this.
 pnpm nuxi dev
 

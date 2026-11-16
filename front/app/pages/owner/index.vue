@@ -29,12 +29,10 @@
           <template #vehicles>
             <OrganismsOwnerVehiclesTab
               :cars="myCars"
-              :historical-cars="historicalCars"
               :loading="carsLoading"
               @add="isAddModalOpen = true"
               @delete="handleCarDeleteAction"
               @retry="handleCarRetryAction"
-              @transfer="handleCarTransferAction"
             />
           </template>
 
@@ -56,11 +54,6 @@
     <OrganismsOwnerEditProfileModal v-model:open="isEditModalOpen" />
     <OrganismsOwnerAddCarModal v-model:open="isAddModalOpen" :car-to-edit="carToEdit" />
     <OrganismsOwnerDeleteCarModal v-model:open="confirmDeleteModalOpen" :car-id="carToDelete" />
-    <OrganismsOwnerTransferCarModal
-      v-model:open="isTransferModalOpen"
-      :car="carToTransfer"
-      :owners="userStore.availableOwners"
-    />
   </UContainer>
 </template>
 
@@ -82,7 +75,7 @@ const carsStore = useCarsStore()
 const finesStore = useFinesStore()
 
 const { userProfile, profileLoading } = storeToRefs(userStore)
-const { myCars, carsLoading, historicalCars, historicalCarsLoading } = storeToRefs(carsStore)
+const { myCars, carsLoading } = storeToRefs(carsStore)
 const { myFines, finesLoading } = storeToRefs(finesStore)
 
 const tabs = computed(() => [
@@ -105,9 +98,6 @@ const isEditModalOpen = ref(false)
 const confirmDeleteModalOpen = ref(false)
 const carToDelete = ref<string | null>(null)
 const carToEdit = ref<any | null>(null)
-
-const isTransferModalOpen = ref(false)
-const carToTransfer = ref<any | null>(null)
 
 watch(isAddModalOpen, (newVal) => {
   if (!newVal) {
@@ -134,14 +124,6 @@ const handleCarRetryAction = (carId: string) => {
   if (car) {
     carToEdit.value = car
     isAddModalOpen.value = true
-  }
-}
-
-const handleCarTransferAction = (carId: string) => {
-  const car = myCars.value.find(c => c.id === carId)
-  if (car) {
-    carToTransfer.value = car
-    isTransferModalOpen.value = true
   }
 }
 </script>

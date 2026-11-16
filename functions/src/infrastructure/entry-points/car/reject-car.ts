@@ -1,8 +1,9 @@
 import { onCall, HttpsError } from 'firebase-functions/v2/https';
 import { RejectCarUseCase } from '../../../application/usecases/car/reject-car';
-import { carRepository } from '../index';
+import { carRepository, transactionRunner, userRepository } from '../index';
+import { mapDomainErrorToHttpsError } from '../shared/error-mapper';
 
-const rejectCarUseCase = new RejectCarUseCase(carRepository);
+const rejectCarUseCase = new RejectCarUseCase(carRepository, userRepository, transactionRunner);
 
 export const rejectCar = onCall(
   { region: 'europe-west3', enforceAppCheck: true },
@@ -13,11 +14,11 @@ export const rejectCar = onCall(
 
     try {
       return await rejectCarUseCase.execute({
+        ...(request.data ?? {}),
         actorId: request.auth.uid,
-        ...request.data,
       });
-    } catch (error: any) {
-      throw new HttpsError('internal', error.message);
+    } catch (error) {
+      throw mapDomainErrorToHttpsError(error);
     }
   }
 );

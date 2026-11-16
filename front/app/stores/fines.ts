@@ -42,6 +42,7 @@ const fineConverter = {
 
 export const useFinesStore = defineStore('fines', () => {
   const authStore = useAuthStore()
+  const userStore = useUserStore()
   const toast = useToast()
   const db = useFirestore()
 
@@ -113,10 +114,14 @@ export const useFinesStore = defineStore('fines', () => {
     }
   }
 
-  // ── Police: reactive list of ALL fines ─────────────────────────────────────
-  const allFinesQuery = query(
-    collection(db, 'fines').withConverter(fineConverter),
-    orderBy('issuedAt', 'desc'),
+  // ── Police: reactive list of ALL fines (role-gated) ────────────────────────
+  const allFinesQuery = computed(() =>
+    authStore.currentUser?.uid && userStore.role === 'police'
+      ? query(
+          collection(db, 'fines').withConverter(fineConverter),
+          orderBy('issuedAt', 'desc'),
+        )
+      : null,
   )
   const { data: allFines, pending: allFinesLoading } = useCollection(allFinesQuery, { ssrKey: 'allFines' })
 

@@ -53,6 +53,17 @@ jobs:
       - name: Build Firebase Functions
         run: cd functions && pnpm build
 
+      # Run Migrations
+      - name: '⚙️ Run Database Migrations'
+        run: |
+          cd functions
+          echo '${{ secrets.FIREBASE_SERVICE_ACCOUNT_PARK_ALERT_PROD }}' > service-account.json
+          pnpm migrate
+          rm service-account.json
+        env:
+          GCLOUD_PROJECT: my-park-alert
+          GOOGLE_APPLICATION_CREDENTIALS: ./service-account.json
+
       - name: '🚀 Deploy to Firebase'
         uses: w9jds/firebase-action@v15.10.1
         with:

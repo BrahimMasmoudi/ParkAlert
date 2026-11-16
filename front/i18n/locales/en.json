@@ -136,7 +136,9 @@
         "active": "Active",
         "activation_pending": "Activation Pending",
         "deletion_requested": "Deletion Requested",
-        "transfer_requested": "Transfer Requested",
+        "transfer_pending_owner": "Awaiting Owner Acceptance",
+        "transfer_pending_police": "Awaiting Police Approval",
+        "archived": "Archived",
         "rejected": "Rejected"
       }
     },
@@ -182,7 +184,13 @@
       "rejection_reason": "Rejection Reason",
       "transfer_rejected": "Transfer Rejected",
       "carte_grise": "Carte Grise",
-      "view_doc": "View Doc"
+      "view_doc": "View Doc",
+      "incoming_transfer_title": "Incoming Transfer Request",
+      "incoming_transfer_desc": "Someone has requested to take ownership of this vehicle. Acknowledge this ONLY if you are selling or transferring the vehicle.",
+      "action_required": "Action Required",
+      "proposed_new_owner": "Proposed New Owner",
+      "acknowledge_button": "Acknowledge Transfer",
+      "reject_transfer_button": "Reject Request"
     },
     "profile": {
       "edit_tooltip": "Edit Profile",
@@ -214,14 +222,40 @@
         "desc_new": "Official vehicle registration for parking enforcement.",
         "desc_edit": "Update your vehicle details to retry activation.",
         "plate_label": "License Plate Number",
+        "plate_placeholder": "e.g. AB-123-CD",
+        "change_plate": "Change Plate",
         "brand_label": "Vehicle Brand",
         "model_label": "Vehicle Model",
         "color_label": "Vehicle Color",
         "carte_grise_label": "Carte Grise (Official Document)",
+        "transfer_carte_grise_label": "Upload YOUR Carte Grise for transfer",
         "tap_to_upload": "Tap to upload Carte Grise",
         "upload_required": "Required for police verification",
         "submit_new": "Submit Registration",
-        "submit_edit": "Resubmit Registration"
+        "submit_edit": "Resubmit Registration",
+        "submit_transfer": "Request Transfer",
+        "transfer_eligible_hint": "Vehicle already registered. Request a transfer below.",
+        "already_owned_error": "You have already registered this vehicle.",
+        "transfer_in_progress_error": "A transfer is already in progress for this vehicle.",
+        "ineligible_plate_error": "This vehicle is not currently eligible for transfer.",
+        "invalid_plate_format": "Invalid French plate format (e.g. AB-123-CD)",
+        "invalid_plate_title": "Invalid Plate Number",
+        "missing_doc_title": "Missing Document",
+        "missing_doc_desc": "Please upload Carte Grise.",
+        "incomplete_form_title": "Incomplete Form",
+        "incomplete_form_desc": "Please fill all required fields.",
+        "transfer_blocked_title": "Transfer Blocked",
+        "transfer_blocked_unpaid": "This vehicle has unpaid fines. Please tell the current owner to pay them before transfer.",
+        "transfer_failed_title": "Transfer failed",
+        "upload_failed_title": "Upload failed"
+      },
+      "reject_transfer": {
+        "title": "Reject Transfer Request",
+        "description": "Please provide a reason for rejecting this ownership transfer request.",
+        "reason_label": "Rejection Reason",
+        "placeholder": "Explain why you are rejecting this request...",
+        "reason_length_error": "Reason must be between 3 and 500 characters.",
+        "confirm_button": "Reject Transfer"
       },
       "delete_car": {
         "title": "Request Deletion",

@@ -5,6 +5,7 @@ export interface Fine {
   reportId: string;
   ownerId: string;
   plateNumber: string;
+  plateNumberNormalized: string;
   amount: number;
   status: FineStatus;
   notes?: string;

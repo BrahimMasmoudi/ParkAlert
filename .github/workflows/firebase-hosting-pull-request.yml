@@ -82,6 +82,17 @@ jobs:
       - name: Build Backend (Functions)
         run: cd functions && pnpm build
 
+      # Run Migrations on Staging
+      - name: '⚙️ Run Database Migrations (Staging)'
+        run: |
+          cd functions
+          echo '${{ secrets.FIREBASE_SERVICE_ACCOUNT_PARK_ALERT_STAGING }}' > service-account.json
+          pnpm migrate
+          rm service-account.json
+        env:
+          GCLOUD_PROJECT: park-alert-staging
+          GOOGLE_APPLICATION_CREDENTIALS: ./service-account.json
+
       - name: '🚀 Deploy to Firebase'
         uses: w9jds/firebase-action@v15.10.1
         with:

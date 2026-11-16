@@ -1,8 +1,9 @@
 import { onCall, HttpsError } from 'firebase-functions/v2/https';
 import { RetryCarUseCase } from '../../../application/usecases/car/retry-car';
-import { carRepository } from '../index';
+import { carRepository, transactionRunner, userRepository } from '../index';
+import { mapDomainErrorToHttpsError } from '../shared/error-mapper';
 
-const retryCarUseCase = new RetryCarUseCase(carRepository);
+const retryCarUseCase = new RetryCarUseCase(carRepository, userRepository, transactionRunner);
 
 export const retryCar = onCall(
   { region: 'europe-west3', enforceAppCheck: true },
@@ -12,12 +13,18 @@ export const retryCar = onCall(
     }
 
     try {
+      const data = request.data ?? {};
       return await retryCarUseCase.execute({
+        carId: data.carId,
+        plateNumber: data.plateNumber,
+        brand: data.brand,
+        model: data.model,
+        color: data.color,
+        carteGriseUrl: data.carteGriseUrl,
         userId: request.auth.uid,
-        ...request.data,
       });
-    } catch (error: any) {
-      throw new HttpsError('internal', error.message);
+    } catch (error) {
+      throw mapDomainErrorToHttpsError(error);
     }
   }
 );

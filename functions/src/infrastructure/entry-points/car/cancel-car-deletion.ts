@@ -1,8 +1,13 @@
 import { onCall, HttpsError } from 'firebase-functions/v2/https';
 import { CancelCarDeletionUseCase } from '../../../application/usecases/car/cancel-car-deletion';
-import { carRepository } from '../index';
+import { carRepository, transactionRunner, userRepository } from '../index';
+import { mapDomainErrorToHttpsError } from '../shared/error-mapper';
 
-const cancelCarDeletionUseCase = new CancelCarDeletionUseCase(carRepository);
+const cancelCarDeletionUseCase = new CancelCarDeletionUseCase(
+  carRepository,
+  userRepository,
+  transactionRunner
+);
 
 export const cancelCarDeletion = onCall(
   { region: 'europe-west3', enforceAppCheck: true },
@@ -13,11 +18,11 @@ export const cancelCarDeletion = onCall(
 
     try {
       return await cancelCarDeletionUseCase.execute({
+        ...(request.data ?? {}),
         userId: request.auth.uid,
-        ...request.data,
       });
-    } catch (error: any) {
-      throw new HttpsError('internal', error.message);
+    } catch (error) {
+      throw mapDomainErrorToHttpsError(error);
     }
   }
 );

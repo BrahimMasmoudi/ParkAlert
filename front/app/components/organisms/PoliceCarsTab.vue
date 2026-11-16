@@ -135,8 +135,8 @@
         <template #ownerId-cell="{ row }">
           <AtomsUserName :user="userStore.usersCache[row.original.ownerId]" />
         </template>
-        <template #status-cell>
-          <UBadge color="primary" variant="soft">{{ $t('police.cars.status.transfer_requested') }}</UBadge>
+        <template #status-cell="{ row }">
+          <UBadge color="primary" variant="soft">{{ $t(`police.cars.status.${row.original.status}`) }}</UBadge>
         </template>
         <template #createdAt-cell="{ row }">
           <span class="text-sm text-slate-400">{{ new Date(row.original.createdAt).toLocaleString() }}</span>
@@ -144,13 +144,15 @@
         <template #carteGriseUrl-cell="{ row }">
           <UButton
             v-if="row.original.transferCarteGriseUrl || row.original.carteGriseUrl"
-            :to="row.original.transferCarteGriseUrl || row.original.carteGriseUrl"
-            target="_blank"
             size="xs"
             color="neutral"
             variant="soft"
             icon="lucide:external-link"
-          >{{ $t('common.view_document') }}</UButton>
+            :loading="isOpening(row.original.id, row.original.transferCarteGriseUrl ? 'pendingTransfer' : 'active')"
+            @click="openDocument(row.original.id, row.original.transferCarteGriseUrl ? 'pendingTransfer' : 'active', row.original.transferCarteGriseUrl || row.original.carteGriseUrl)"
+          >
+            {{ $t('common.view_document') }}
+          </UButton>
           <span v-else class="text-slate-500 italic text-sm">No doc</span>
         </template>
         <template #actions-cell="{ row }">
@@ -185,6 +187,7 @@
 <script setup lang="ts">
 import { useUserStore } from '~/stores/user'
 import { useCarsStore } from '~/stores/cars'
+import { useDocumentViewer } from '~/composables/useDocumentViewer'
 
 defineProps<{
   activations: any[]
@@ -199,4 +202,5 @@ defineEmits(['review', 'reject'])
 
 const userStore = useUserStore()
 const carsStore = useCarsStore()
+const { openDocument, isOpening } = useDocumentViewer()
 </script>
