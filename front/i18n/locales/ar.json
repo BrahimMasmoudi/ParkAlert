@@ -19,7 +19,12 @@
     "sign_out": "تسجيل الخروج",
     "continue": "متابعة",
     "close": "إغلاق",
-    "retry": "إعادة المحاولة"
+    "retry": "إعادة المحاولة",
+    "back": "رجوع",
+    "required": "إلزامي",
+    "optional": "اختياري",
+    "refresh_photos": "تحديث الصور",
+    "photo_unavailable": "الصورة غير متوفرة"
   },
   "roles": {
     "agent": "وكيل",
@@ -60,14 +65,37 @@
     "new_report": "بلاغ جديد",
     "new_report_subtitle": "انقر للإبلاغ عن مركبة متوقفة بشكل غير قانوني",
     "footer_info": "تتم معالجة البلاغات المقدمة من قبل ضباط الشرطة.",
+    "sent_reports": "البلاغات المرسلة",
+    "no_reports": "لم تقم بإرسال أي بلاغات بعد.",
+    "status": {
+      "pending": "قيد المراجعة",
+      "investigated": "تم إصدار مخالفة",
+      "resolved": "مغلق"
+    },
+    "edit_plate": {
+      "button": "تعديل اللوحة",
+      "title": "تعديل رقم لوحة البلاغ المعلق",
+      "photos_label": "صور الإثبات",
+      "plate_label": "رقم لوحة التسجيل"
+    },
     "steps": {
-      "photo": "الخطوة 1 — التقاط صورة",
+      "photo": "الخطوة 1 — التقاط صور الإثبات",
       "location": "الخطوة 2 — تحديد الموقع",
       "plate": "الخطوة 3 — إدخال رقم اللوحة"
     },
     "form": {
+      "photos_helper": "أرفق صورتين إلزاميتين (موقع المخالفة ولوحة المركبة) مع صورة ثالثة اختيارية.",
+      "slot_context_label": "الصورة 1 — موقع المخالفة",
+      "slot_plate_label": "الصورة 2 — لوحة التسجيل",
+      "slot_plate_reminder": "تذكير: تأكد من وضوح رقم لوحة التسجيل بالكامل.",
+      "slot_extra_label": "الصورة 3 — زاوية إضافية",
+      "retake_photo": "إعادة التقاط الصورة",
+      "compressing": "جار ضغط الصورة...",
+      "plate_preview_label": "تحقق عبر الصورة 2 (لوحة التسجيل):",
+      "photo_error_title": "صورة غير مدعومة",
+      "photo_error_desc": "يرجى اختيار صورة صالحة بصيغة JPEG أو PNG أو WebP.",
+      "photos_required_error": "صورتا موقع المخالفة ولوحة التسجيل مطلوبتان.",
       "tap_to_photo": "انقر لالتقاط / تحميل صورة",
-      "skip_photo": "تخطي الصورة",
       "capture_gps": "تحديد موقعي (GPS)",
       "recapture_gps": "إعادة تحديد الموقع",
       "address_placeholder": "اكتب العنوان الدقيق أو الإحداثيات",
@@ -88,6 +116,7 @@
     },
     "actions": {
       "issue_fine": "إصدار مخالفة",
+      "dismiss_report": "إغلاق البلاغ",
       "reject": "رفض الطلب",
       "approve": "موافقة",
       "approve_registration": "الموافقة على التسجيل",
@@ -111,12 +140,15 @@
       "no_document": "لم يتم تحميل أي وثيقة",
       "activation_request": "طلب تفعيل",
       "deletion_request": "طلب حذف",
-      "transfer_request": "طلب نقل ملكية"
+      "transfer_request": "طلب نقل ملكية",
+      "evidence_photos": "صور الإثبات",
+      "no_evidence": "لا توجد صور إثبات مرفقة."
     },
     "fine": {
       "title": "إصدار مخالفة",
       "description": "إنشاء مخالفة جديدة لمالك المركبة.",
       "target_vehicle": "المركبة المستهدفة",
+      "check_plate": "تحقق",
       "searching_owner": "جار البحث عن مالك المركبة...",
       "owner_found": "تم العثور على المالك",
       "no_owner_found": "لم يتم العثور على مالك لهذه اللوحة.",
@@ -147,6 +179,12 @@
       "description": "يرجى تقديم سبب للرفض.",
       "placeholder": "سبب الرفض...",
       "confirm": "تأكيد الرفض"
+    },
+    "dismiss": {
+      "title": "إغلاق البلاغ",
+      "description": "قدم سبباً لإغلاق هذا البلاغ دون إصدار مخالفة.",
+      "placeholder": "مثال: صورة اللوحة غير واضحة أو مركبة غير مسجلة...",
+      "confirm": "تأكيد الإغلاق"
     },
     "audit": {
       "title": "سجل تدقيق المخالفات",

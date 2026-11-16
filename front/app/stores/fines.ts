@@ -1,6 +1,8 @@
 import { collection, query, where, orderBy } from 'firebase/firestore'
 import { httpsCallable } from 'firebase/functions'
 import { useCollection, useFirestore } from 'vuefire'
+import { defineStore } from 'pinia'
+import { computed, ref } from 'vue'
 
 export interface Fine {
   id: string
@@ -35,9 +37,9 @@ const fineConverter = {
       amount: data.amount || 0,
       status: data.status || 'unpaid',
       issuedAt: getTimestampMillis(data.issuedAt),
-      notes: data.notes
+      notes: data.notes,
     }
-  }
+  },
 }
 
 export const useFinesStore = defineStore('fines', () => {
@@ -71,6 +73,7 @@ export const useFinesStore = defineStore('fines', () => {
     reportId: string
     ownerId: string
     plateNumber: string
+    expectedPlateNumber?: string
     amount: number
     notes?: string
   }) {

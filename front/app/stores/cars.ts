@@ -9,6 +9,7 @@ import { httpsCallable } from 'firebase/functions'
 import { useCollection, useFirestore } from 'vuefire'
 import { defineStore } from 'pinia'
 import { computed, ref } from 'vue'
+import { normalizePlate } from '~/composables/useVehicleValidation'
 
 export type CarStatus =
   | 'activation_pending'
@@ -343,15 +344,29 @@ export const useCarsStore = defineStore('cars', () => {
   }
 
   async function getCarByPlate(plateNumber: string) {
+    const normalized = normalizePlate(plateNumber)
+    if (!normalized) return null
+
     const q = query(
       collection(db, 'cars').withConverter(carConverter),
-      where('plateNumber', '==', plateNumber),
-      where('status', '==', 'active')
+      where('plateNumberNormalized', '==', normalized),
     )
-    const { getDocs } = await import('firebase/firestore')
+    const { getDocs, doc, getDoc } = await import('firebase/firestore')
     const snap = await getDocs(q)
-    if (snap.empty) return null
-    return snap.docs[0].data()
+    const eligible = snap.docs
+      .map(d => d.data())
+      .filter(car => car.status !== 'archived' && car.status !== 'rejected')
+
+    if (eligible.length > 0) {
+      return eligible.find(car => car.status === 'active') ?? eligible[0]
+    }
+    if (!snap.empty) return null
+
+    const legacySnap = await getDoc(doc(db, 'cars', normalized).withConverter(carConverter))
+    if (!legacySnap.exists()) return null
+    const legacyCar = legacySnap.data()
+    if (legacyCar.status === 'archived' || legacyCar.status === 'rejected') return null
+    return legacyCar
   }
 
   return {

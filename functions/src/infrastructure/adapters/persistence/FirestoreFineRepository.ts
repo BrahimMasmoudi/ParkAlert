@@ -10,12 +10,20 @@ export class FirestoreFineRepository implements FineRepository {
 
   async create(fine: Omit<Fine, 'id'>, txOrBatch?: TransactionContext | any): Promise<string> {
     const coll = this.connector.db.collection('fines');
-    const data = {
+    const serverTime = this.connector.getFieldValue().serverTimestamp();
+    const data: Record<string, any> = {
       ...fine,
       plateNumberNormalized: fine.plateNumberNormalized || normalizePlate(fine.plateNumber),
-      issuedAt: this.connector.getFieldValue().serverTimestamp(),
+      issuedAt: serverTime,
+      ...(fine.plateCorrectedAt !== undefined ? { plateCorrectedAt: serverTime } : {}),
     };
-    if (txOrBatch) {
+    const firestoreTx = asFirestoreTransaction(txOrBatch);
+    if (firestoreTx) {
+      const ref = coll.doc();
+      firestoreTx.set(ref, data);
+      return ref.id;
+    }
+    if (txOrBatch && typeof txOrBatch.set === 'function') {
       const ref = coll.doc();
       txOrBatch.set(ref, data);
       return ref.id;
@@ -34,12 +42,18 @@ export class FirestoreFineRepository implements FineRepository {
 
   async update(id: string, updates: Partial<Fine>, txOrBatch?: TransactionContext | any): Promise<void> {
     const ref = this.connector.db.collection('fines').doc(id);
-    const firestoreUpdates = {
+    const serverTime = this.connector.getFieldValue().serverTimestamp();
+    const firestoreUpdates: Record<string, any> = {
       ...updates,
-      ...(updates.status === 'paid' ? { paidAt: this.connector.getFieldValue().serverTimestamp() } : {}),
+      ...(updates.status === 'paid' ? { paidAt: serverTime } : {}),
+      ...(updates.disputedAt !== undefined ? { disputedAt: serverTime } : {}),
+      ...(updates.resolvedAt !== undefined ? { resolvedAt: serverTime } : {}),
     };
 
-    if (txOrBatch) {
+    const firestoreTx = asFirestoreTransaction(txOrBatch);
+    if (firestoreTx) {
+      firestoreTx.update(ref, firestoreUpdates);
+    } else if (txOrBatch && typeof txOrBatch.update === 'function') {
       txOrBatch.update(ref, firestoreUpdates);
     } else {
       await ref.update(firestoreUpdates);

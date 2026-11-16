@@ -1,8 +1,13 @@
 import { onCall, HttpsError } from 'firebase-functions/v2/https';
 import { CreateReportUseCase } from '../../../application/usecases/report/create-report';
-import { reportRepository, userRepository } from '../index';
+import { documentStoragePort, reportRepository, userRepository } from '../index';
+import { mapDomainErrorToHttpsError } from '../shared/error-mapper';
 
-const createReportUseCase = new CreateReportUseCase(reportRepository, userRepository);
+const createReportUseCase = new CreateReportUseCase(
+  reportRepository,
+  userRepository,
+  documentStoragePort
+);
 
 export const createReport = onCall(
   { region: 'europe-west3', enforceAppCheck: true },
@@ -13,11 +18,11 @@ export const createReport = onCall(
 
     try {
       return await createReportUseCase.execute({
+        ...(request.data ?? {}),
         agentId: request.auth.uid,
-        ...request.data,
       });
-    } catch (error: any) {
-      throw new HttpsError('internal', error.message);
+    } catch (error) {
+      throw mapDomainErrorToHttpsError(error);
     }
   }
 );

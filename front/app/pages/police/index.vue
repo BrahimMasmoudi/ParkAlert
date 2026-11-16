@@ -41,118 +41,158 @@
       </template>
     </UTabs>
 
-    <UModal v-model:open="isDetailOpen" :title="`${$t('agent.new_report')} - ${selected?.plateNumber}`">
+    <UModal
+      v-model:open="isReportModalOpen"
+      :title="`${$t('police.fine.title')} - ${selected?.plateNumber}`"
+      :description="$t('police.fine.description')"
+      :ui="{
+        content: 'bg-slate-900 border border-slate-700 shadow-2xl shadow-black/50 rounded-2xl overflow-hidden max-w-4xl sm:min-h-[36rem]',
+        header: 'py-4 sm:py-5 border-b border-slate-800',
+        body: 'p-5 sm:p-6'
+      }"
+    >
       <template #body>
-        <div v-if="selected" class="space-y-4">
-          <a
-            v-if="selected.photoUrl"
-            :href="selected.photoUrl"
-            target="_blank"
-            class="block group cursor-zoom-in relative"
-          >
-            <img
-              :src="selected.photoUrl"
-              class="w-full rounded-xl transition-all duration-300 group-hover:brightness-75 group-hover:scale-[1.01]"
-            >
-            <div
-              class="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
-            >
-              <UIcon name="i-lucide-maximize-2" class="w-8 h-8 text-white drop-shadow-lg" />
-            </div>
-          </a>
+        <div v-if="selected" class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <MoleculesEvidenceGallery
+            :items="evidenceItems"
+            :loading="loadingEvidence"
+            :empty-message="$t('police.review.no_evidence')"
+            @refresh="loadReportEvidence"
+          />
 
-          <UButton block color="error" @click="openIssuePane">
-            {{ $t('police.actions.issue_fine') }}
-          </UButton>
+          <div class="space-y-5">
+            <div class="bg-slate-950 p-4 rounded-xl border border-slate-800 space-y-3">
+              <p class="text-xs text-slate-500 font-bold uppercase tracking-wider">
+                {{ $t('police.fine.target_vehicle') }}
+              </p>
+
+              <div class="flex items-start gap-2">
+                <div class="flex-1">
+                  <UInput
+                    v-model="fineForm.plateNumber"
+                    size="xl"
+                    class="font-mono text-xl uppercase tracking-widest"
+                    :placeholder="$t('agent.form.plate_placeholder')"
+                    @input="scheduleOwnerLookup"
+                  />
+                  <p v-if="fineForm.plateNumber && !isFinePlateValid" class="text-red-400 text-xs mt-1">
+                    {{ $t('agent.form.invalid_plate') }}
+                  </p>
+                </div>
+                <UButton
+                  size="xl"
+                  color="neutral"
+                  variant="soft"
+                  :loading="fineForm.searching"
+                  :disabled="!isFinePlateValid"
+                  :label="$t('police.fine.check_plate')"
+                  @click="lookupOwner(fineForm.plateNumber)"
+                />
+              </div>
+
+              <div v-if="fineForm.searching" class="mt-2 flex items-center gap-2 text-slate-400 text-sm italic">
+                <UIcon name="i-lucide-loader-2" class="w-4 h-4 animate-spin" />
+                {{ $t('police.fine.searching_owner') }}
+              </div>
+
+              <div
+                v-else-if="fineForm.selectedOwner"
+                class="mt-3 pt-3 border-t border-slate-800/50 flex items-center gap-3"
+              >
+                <UAvatar
+                  :src="fineForm.selectedOwner.photoURL"
+                  :alt="fineForm.selectedOwner.fullName || fineForm.selectedOwner.name"
+                  size="sm"
+                />
+                <div class="min-w-0">
+                  <p class="text-xs text-slate-500 font-bold uppercase tracking-wider">
+                    {{ $t('police.fine.owner_found') }}
+                  </p>
+                  <p class="text-sm font-bold text-white truncate">
+                    {{ fineForm.selectedOwner.fullName || fineForm.selectedOwner.name }}
+                  </p>
+                  <p class="text-[10px] text-indigo-400 font-mono">
+                    {{ fineForm.selectedOwner.identityNumber }}
+                  </p>
+                </div>
+              </div>
+              <div
+                v-else
+                class="mt-2 p-3 bg-red-950/20 border border-red-900/30 rounded-lg text-xs text-red-400 flex items-center gap-2"
+              >
+                <UIcon name="lucide:alert-circle" class="w-4 h-4" />
+                {{ $t('police.fine.no_owner_found') }}
+              </div>
+            </div>
+
+            <UFormField :label="$t('police.fine.amount')">
+              <UInput
+                v-model="fineForm.amount"
+                type="number"
+                size="xl"
+                icon="i-lucide-circle-dollar-sign"
+              />
+            </UFormField>
+
+            <UFormField :label="$t('police.fine.notes')">
+              <UTextarea v-model="fineForm.notes" :placeholder="$t('police.fine.notes_placeholder')" size="xl" />
+            </UFormField>
+          </div>
+        </div>
+      </template>
+
+      <template #footer>
+        <div class="flex flex-wrap gap-3 justify-between w-full">
+          <UButton
+            :label="$t('police.actions.dismiss_report')"
+            color="warning"
+            variant="soft"
+            icon="i-lucide-x-circle"
+            @click="openDismissModal"
+          />
+          <div class="flex gap-3">
+            <UButton
+              :label="$t('common.cancel')"
+              color="neutral"
+              variant="ghost"
+              @click="isReportModalOpen = false"
+            />
+            <UButton
+              :label="$t('police.fine.confirm')"
+              color="error"
+              icon="i-lucide-check-circle"
+              class="font-bold px-6 shadow-lg shadow-red-500/20"
+              :loading="finesStore.acting"
+              :disabled="!fineForm.selectedOwner || !isFinePlateValid"
+              @click="confirmFine"
+            />
+          </div>
         </div>
       </template>
     </UModal>
 
     <UModal
-      v-model:open="isFineOpen"
-      :title="$t('police.fine.title')"
-      :description="$t('police.fine.description')"
-      :ui="{
-        content: 'bg-slate-900 border border-slate-700 shadow-2xl shadow-black/50 rounded-2xl overflow-hidden',
-        header: 'py-4 sm:py-5 border-b border-slate-800'
-      }"
+      v-model:open="isDismissModalOpen"
+      :title="$t('police.dismiss.title')"
+      :description="$t('police.dismiss.description')"
     >
       <template #body>
-        <div class="space-y-6">
-          <div v-if="selected" class="bg-slate-950 p-4 rounded-xl border border-slate-800">
-            <div class="flex items-center gap-4">
-              <div class="p-3 bg-slate-900 rounded-lg border border-slate-800">
-                <UIcon name="i-lucide-car" class="w-6 h-6 text-indigo-400" />
-              </div>
-              <div>
-                <p class="text-xs text-slate-500 font-bold uppercase tracking-wider">{{ $t('police.fine.target_vehicle')
-                }}</p>
-                <p class="font-mono text-xl font-black text-white tracking-widest">{{ selected.plateNumber }}</p>
-              </div>
-            </div>
-
-            <div v-if="fineForm.searching" class="mt-4 flex items-center gap-2 text-slate-400 text-sm italic">
-              <UIcon name="i-lucide-loader-2" class="w-4 h-4 animate-spin" />
-              {{ $t('police.fine.searching_owner') }}
-            </div>
-
-            <div
-              v-else-if="fineForm.selectedOwner"
-              class="mt-4 pt-4 border-t border-slate-800/50 flex items-center gap-3"
-            >
-              <UAvatar
-                :src="fineForm.selectedOwner.photoURL"
-                :alt="fineForm.selectedOwner.fullName || fineForm.selectedOwner.name"
-                size="sm"
-              />
-              <div class="min-w-0">
-                <p class="text-xs text-slate-500 font-bold uppercase tracking-wider">{{ $t('police.fine.owner_found') }}
-                </p>
-                <p class="text-sm font-bold text-white truncate">{{ fineForm.selectedOwner.fullName ||
-                  fineForm.selectedOwner.name }}</p>
-                <p class="text-[10px] text-indigo-400 font-mono">{{ fineForm.selectedOwner.identityNumber }}</p>
-              </div>
-            </div>
-            <div
-              v-else
-              class="mt-4 p-3 bg-red-950/20 border border-red-900/30 rounded-lg text-xs text-red-400 flex items-center gap-2"
-            >
-              <UIcon name="lucide:alert-circle" class="w-4 h-4" />
-              {{ $t('police.fine.no_owner_found') }}
-            </div>
-          </div>
-
-          <UFormField :label="$t('police.fine.amount')">
-            <UInput
-              v-model="fineForm.amount"
-              type="number"
-              size="xl"
-              icon="i-lucide-circle-dollar-sign"
-            />
-          </UFormField>
-
-          <UFormField :label="$t('police.fine.notes')">
-            <UTextarea v-model="fineForm.notes" :placeholder="$t('police.fine.notes_placeholder')" size="xl" />
-          </UFormField>
-        </div>
+        <UTextarea v-model="dismissReason" :placeholder="$t('police.dismiss.placeholder')" class="w-full" />
       </template>
-
       <template #footer>
-        <div class="flex gap-3 justify-end w-full">
+        <div class="flex gap-2 justify-end w-full">
           <UButton
             :label="$t('common.cancel')"
             color="neutral"
             variant="ghost"
-            @click="isFineOpen = false"
+            @click="isDismissModalOpen = false"
           />
           <UButton
-            :label="$t('police.fine.confirm')"
-            color="error"
-            icon="i-lucide-check-circle"
-            class="font-bold px-6 shadow-lg shadow-red-500/20"
-            :loading="finesStore.acting"
-            :disabled="!fineForm.selectedOwner"
-            @click="confirmFine"
+            :label="$t('police.dismiss.confirm')"
+            color="warning"
+            :loading="selected ? reportsStore.isActing(selected.id) : false"
+            :disabled="dismissReason.trim().length < 3"
+            @click="confirmDismiss"
           />
         </div>
       </template>
@@ -199,12 +239,13 @@ import { useReportsStore } from '~/stores/reports'
 import { useCarsStore } from '~/stores/cars'
 import { useUserStore } from '~/stores/user'
 import { useFinesStore } from '~/stores/fines'
+import type { EvidenceUrlItem } from '~/composables/useDocumentViewer'
 import type { Report } from '~/stores/reports'
 
 definePageMeta({
   title: 'police.title',
   role: 'police',
-  containerClass: 'max-w-7xl'
+  containerClass: 'max-w-7xl',
 })
 
 const { t } = useI18n()
@@ -212,14 +253,16 @@ const reportsStore = useReportsStore()
 const carsStore = useCarsStore()
 const userStore = useUserStore()
 const finesStore = useFinesStore()
+const { fetchEvidenceUrls, loadingEvidence } = useDocumentViewer()
+const { isFrenchPlateValid, formatFrenchPlate } = useVehicleValidation()
 
 const searchQuery = ref('')
 
-function filterList<T extends { plateNumber?: string, ownerId?: string }>(list: T[] | null) {
+function filterList<T extends { plateNumber?: string; ownerId?: string }>(list: T[] | null) {
   if (!list) return []
   if (!searchQuery.value.trim()) return list
   const q = searchQuery.value.toLowerCase()
-  return list.filter(item => {
+  return list.filter((item) => {
     const plateMatch = item.plateNumber?.toLowerCase().includes(q)
     const owner = item.ownerId ? userStore.usersCache[item.ownerId] : null
     const ownerMatch = owner?.fullName?.toLowerCase().includes(q) || owner?.name?.toLowerCase().includes(q)
@@ -250,9 +293,12 @@ watch(() => finesStore.allFines, (fines) => {
   fines.forEach(fine => userStore.fetchUser(fine.ownerId))
 }, { immediate: true })
 
-const selected = ref<(Report & { id: string }) | null>(null)
-const isDetailOpen = ref(false)
-const isFineOpen = ref(false)
+const selected = ref<Report | null>(null)
+const isReportModalOpen = ref(false)
+const isDismissModalOpen = ref(false)
+const dismissReason = ref('')
+const evidenceItems = ref<EvidenceUrlItem[]>([])
+
 const isRejectModalOpen = ref(false)
 const rejectionReason = ref('')
 const targetCarId = ref('')
@@ -285,10 +331,18 @@ function handleReviewReject() {
 }
 
 const fineForm = reactive({
+  plateNumber: '',
+  expectedPlateNumber: '',
   selectedOwner: null as any,
   searching: false,
   amount: 100,
-  notes: ''
+  notes: '',
+})
+
+const isFinePlateValid = computed(() => isFrenchPlateValid(fineForm.plateNumber.trim()))
+
+watch(() => fineForm.plateNumber, (val) => {
+  if (val) fineForm.plateNumber = formatFrenchPlate(val)
 })
 
 const tabs = computed(() => [
@@ -296,57 +350,106 @@ const tabs = computed(() => [
     label: t('police.tabs.cars'),
     icon: 'i-lucide-car-front',
     slot: 'cars',
-    badge: filteredActivationPending.value.length +
-      filteredDeletionPending.value.length +
-      filteredTransferPendingPolice.value.length
+    badge: filteredActivationPending.value.length
+      + filteredDeletionPending.value.length
+      + filteredTransferPendingPolice.value.length,
   },
   {
     label: t('police.tabs.reports'),
     icon: 'i-lucide-camera',
     slot: 'reports',
-    badge: filteredPendingReports.value.length
+    badge: filteredPendingReports.value.length,
   },
   {
     label: t('police.tabs.audit'),
     icon: 'i-lucide-history',
     slot: 'audit',
-    badge: filteredAllFines.value.length
-  }
+    badge: filteredAllFines.value.length,
+  },
 ])
 
-function openReport(report: Report & { id: string }) {
-  selected.value = report
-  isDetailOpen.value = true
+async function loadReportEvidence() {
+  if (!selected.value) return
+  try {
+    evidenceItems.value = await fetchEvidenceUrls('report', selected.value.id)
+  }
+  catch {
+    evidenceItems.value = []
+  }
 }
 
-async function openIssuePane() {
-  isDetailOpen.value = false
-  isFineOpen.value = true
-  if (selected.value) {
-    fineForm.searching = true
-    fineForm.selectedOwner = null
-    try {
-      const owner = await carsStore.getCarByPlate(selected.value.plateNumber)
-      if (owner) {
-        await userStore.fetchUser(owner.ownerId)
-        fineForm.selectedOwner = userStore.usersCache[owner.ownerId]
-      }
-    } finally {
+let lookupTimer: ReturnType<typeof setTimeout> | null = null
+let lookupNonce = 0
+
+function scheduleOwnerLookup() {
+  if (lookupTimer) clearTimeout(lookupTimer)
+  lookupTimer = setTimeout(() => {
+    if (isFinePlateValid.value) {
+      lookupOwner(fineForm.plateNumber)
+    }
+    else {
+      fineForm.selectedOwner = null
+    }
+  }, 300)
+}
+
+async function lookupOwner(plate: string) {
+  const currentNonce = ++lookupNonce
+  fineForm.searching = true
+  fineForm.selectedOwner = null
+  try {
+    const car = await carsStore.getCarByPlate(plate)
+    if (currentNonce !== lookupNonce) return
+    if (car) {
+      await userStore.fetchUser(car.ownerId)
+      if (currentNonce !== lookupNonce) return
+      fineForm.selectedOwner = userStore.usersCache[car.ownerId]
+    }
+  }
+  finally {
+    if (currentNonce === lookupNonce) {
       fineForm.searching = false
     }
   }
 }
 
+async function openReport(report: Report) {
+  selected.value = report
+  fineForm.plateNumber = report.plateNumber
+  fineForm.expectedPlateNumber = report.plateNumber
+  fineForm.selectedOwner = null
+  evidenceItems.value = []
+  isReportModalOpen.value = true
+  await Promise.all([
+    loadReportEvidence(),
+    lookupOwner(report.plateNumber),
+  ])
+}
+
 async function confirmFine() {
-  if (!selected.value || !fineForm.selectedOwner) return
+  if (!selected.value || !fineForm.selectedOwner || !isFinePlateValid.value) return
   await finesStore.issueFine({
     reportId: selected.value.id,
     ownerId: fineForm.selectedOwner.id,
-    plateNumber: selected.value.plateNumber,
+    plateNumber: fineForm.plateNumber.trim().toUpperCase(),
+    expectedPlateNumber: fineForm.expectedPlateNumber,
     amount: fineForm.amount,
-    notes: fineForm.notes
+    notes: fineForm.notes,
   })
-  isFineOpen.value = false
+  isReportModalOpen.value = false
+  selected.value = null
+}
+
+function openDismissModal() {
+  dismissReason.value = ''
+  isDismissModalOpen.value = true
+}
+
+async function confirmDismiss() {
+  if (!selected.value || dismissReason.value.trim().length < 3) return
+  await reportsStore.dismissReport(selected.value.id, dismissReason.value.trim())
+  isDismissModalOpen.value = false
+  isReportModalOpen.value = false
   selected.value = null
 }
 
@@ -370,7 +473,7 @@ const carColumns = [
   { accessorKey: 'ownerId', header: 'Owner' },
   { accessorKey: 'status', header: 'Status' },
   { accessorKey: 'createdAt', header: 'Requested' },
-  { id: 'actions', header: 'Actions' }
+  { id: 'actions', header: 'Actions' },
 ]
 
 const deleteColumns = [
@@ -379,7 +482,7 @@ const deleteColumns = [
   { accessorKey: 'ownerId', header: 'Owner' },
   { accessorKey: 'status', header: 'Status' },
   { accessorKey: 'createdAt', header: 'Requested' },
-  { id: 'actions', header: 'Actions' }
+  { id: 'actions', header: 'Actions' },
 ]
 
 const columns = [
@@ -387,7 +490,7 @@ const columns = [
   { accessorKey: 'address', header: 'Location' },
   { accessorKey: 'status', header: 'Status' },
   { accessorKey: 'timestamp', header: 'Time' },
-  { id: 'actions', header: 'Actions' }
+  { id: 'actions', header: 'Actions' },
 ]
 
 const auditColumns = [
@@ -395,6 +498,6 @@ const auditColumns = [
   { accessorKey: 'ownerId', header: 'Owner' },
   { accessorKey: 'amount', header: 'Amount' },
   { accessorKey: 'status', header: 'Status' },
-  { accessorKey: 'issuedAt', header: 'Date Issued' }
+  { accessorKey: 'issuedAt', header: 'Issued' },
 ]
 </script>

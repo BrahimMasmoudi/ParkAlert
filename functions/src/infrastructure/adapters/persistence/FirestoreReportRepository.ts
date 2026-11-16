@@ -24,11 +24,25 @@ export class FirestoreReportRepository implements ReportRepository {
   }
 
   async updateStatus(id: string, status: Report['status'], txOrBatch?: TransactionContext | any): Promise<void> {
+    await this.update(id, { status }, txOrBatch);
+  }
+
+  async update(id: string, updates: Partial<Report>, txOrBatch?: TransactionContext | any): Promise<void> {
     const ref = this.connector.db.collection('reports').doc(id);
-    if (txOrBatch) {
-      txOrBatch.update(ref, { status });
+    const serverTime = this.connector.getFieldValue().serverTimestamp();
+    const firestoreUpdates: Record<string, any> = {
+      ...updates,
+      ...(updates.plateCorrectedAt !== undefined ? { plateCorrectedAt: serverTime } : {}),
+      ...(updates.resolvedAt !== undefined ? { resolvedAt: serverTime } : {}),
+    };
+
+    const firestoreTx = asFirestoreTransaction(txOrBatch);
+    if (firestoreTx) {
+      firestoreTx.update(ref, firestoreUpdates);
+    } else if (txOrBatch && typeof txOrBatch.update === 'function') {
+      txOrBatch.update(ref, firestoreUpdates);
     } else {
-      await ref.update({ status });
+      await ref.update(firestoreUpdates);
     }
   }
 }

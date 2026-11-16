@@ -6,13 +6,15 @@ service firebase.storage {
       return request.auth != null;
     }
 
-    // Report photos: only authenticated agents can upload to their own folder; police can read
+    // Report photos: private read (served via getEvidenceUrls signed URLs); immutable once created
     match /reports/{agentId}/{fileName} {
-      allow read:  if isSecureRequest();
-      allow write: if isSecureRequest()
-                   && request.auth.uid == agentId
-                   && request.resource.size < 10 * 1024 * 1024  // 10 MB max
-                   && request.resource.contentType.matches('image/.*');
+      allow read:   if false;
+      allow create: if resource == null
+                    && isSecureRequest()
+                    && request.auth.uid == agentId
+                    && request.resource.size < 1572864 // 1.5 MB max
+                    && request.resource.contentType.matches('^image/(jpeg|png|webp)$');
+      allow update, delete: if false;
     }
 
     // Carte Grise uploads: direct reads disabled (served via backend getDocumentUrl signed URLs)

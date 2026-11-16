@@ -19,7 +19,12 @@
     "sign_out": "Sign out",
     "continue": "Continue",
     "close": "Close",
-    "retry": "Retry"
+    "retry": "Retry",
+    "back": "Back",
+    "required": "Required",
+    "optional": "Optional",
+    "refresh_photos": "Refresh Photos",
+    "photo_unavailable": "Photo unavailable"
   },
   "roles": {
     "agent": "Agent",
@@ -60,14 +65,37 @@
     "new_report": "New Report",
     "new_report_subtitle": "Tap to report an illegally parked vehicle",
     "footer_info": "Your submitted reports are processed by police officers.",
+    "sent_reports": "Submitted Reports",
+    "no_reports": "You have not submitted any reports yet.",
+    "status": {
+      "pending": "Pending Review",
+      "investigated": "Fine Issued",
+      "resolved": "Closed"
+    },
+    "edit_plate": {
+      "button": "Edit Plate",
+      "title": "Edit Pending Report Plate",
+      "photos_label": "Evidence Photos",
+      "plate_label": "License Plate Number"
+    },
     "steps": {
-      "photo": "Step 1 — Take a Photo",
+      "photo": "Step 1 — Take Evidence Photos",
       "location": "Step 2 — Capture Location",
       "plate": "Step 3 — Enter Plate Number"
     },
     "form": {
+      "photos_helper": "Attach 2 required photos (violation area and license plate) plus 1 optional angle.",
+      "slot_context_label": "Photo 1 — Violation Area",
+      "slot_plate_label": "Photo 2 — License Plate",
+      "slot_plate_reminder": "Reminder: make sure the full license plate number is clearly readable.",
+      "slot_extra_label": "Photo 3 — Additional Angle",
+      "retake_photo": "Retake photo",
+      "compressing": "Optimizing photo...",
+      "plate_preview_label": "Verify against Photo 2 (License Plate):",
+      "photo_error_title": "Unsupported photo",
+      "photo_error_desc": "Please choose a valid JPEG, PNG, or WebP photo.",
+      "photos_required_error": "Both violation area and license plate photos are required.",
       "tap_to_photo": "Tap to take / upload photo",
-      "skip_photo": "Skip photo",
       "capture_gps": "Capture My Location (GPS)",
       "recapture_gps": "Re-capture Location",
       "address_placeholder": "Write down the exact address or coordinates",
@@ -88,6 +116,7 @@
     },
     "actions": {
       "issue_fine": "Issue Fine",
+      "dismiss_report": "Dismiss Report",
       "reject": "Reject Request",
       "approve": "Approve",
       "approve_registration": "Approve Registration",
@@ -111,12 +140,15 @@
       "no_document": "No document uploaded",
       "activation_request": "Activation Request",
       "deletion_request": "Deletion Request",
-      "transfer_request": "Ownership Transfer Request"
+      "transfer_request": "Ownership Transfer Request",
+      "evidence_photos": "Evidence Photos",
+      "no_evidence": "No evidence photos attached."
     },
     "fine": {
       "title": "Issue Fine",
       "description": "Create a new fine for a vehicle owner.",
       "target_vehicle": "Target Vehicle",
+      "check_plate": "Check",
       "searching_owner": "Searching for vehicle owner...",
       "owner_found": "Owner Found",
       "no_owner_found": "No owner found for this plate.",
@@ -147,6 +179,12 @@
       "description": "Please provide a reason for the rejection.",
       "placeholder": "Reason for rejection...",
       "confirm": "Confirm Rejection"
+    },
+    "dismiss": {
+      "title": "Dismiss Report",
+      "description": "Provide a reason for closing this report without issuing a fine.",
+      "placeholder": "e.g. Blurry plate photo or unregistered vehicle...",
+      "confirm": "Confirm Dismissal"
     },
     "audit": {
       "title": "Fine Issuance Audit",
