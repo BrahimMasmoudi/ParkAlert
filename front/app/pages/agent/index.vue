@@ -82,57 +82,20 @@
     <UModal
       v-model:open="isEditOpen"
       :title="$t('agent.edit_plate.title')"
-      :ui="{ content: 'bg-slate-900 border border-slate-700' }"
+      :ui="{
+        content: 'bg-slate-900 border border-slate-700 max-w-2xl sm:min-h-[34rem]',
+        body: 'p-5 sm:p-6'
+      }"
     >
       <template #body>
         <div v-if="editingReport" class="space-y-4">
-          <div class="flex items-center justify-between">
-            <span class="text-xs font-semibold uppercase tracking-wider text-slate-400">
-              {{ $t('agent.edit_plate.photos_label') }}
-            </span>
-            <UButton
-              size="xs"
-              variant="ghost"
-              color="neutral"
-              icon="i-lucide-refresh-cw"
-              :loading="loadingEvidence"
-              :label="$t('common.refresh_photos')"
-              @click="loadEditingEvidence"
-            />
-          </div>
-
-          <div v-if="loadingEvidence" class="py-6 flex justify-center text-slate-400">
-            <UIcon name="i-lucide-loader-2" class="w-6 h-6 animate-spin" />
-          </div>
-
-          <div v-else-if="evidenceItems.length > 0" class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <div
-              v-for="item in evidenceItems"
-              :key="item.slot"
-              class="bg-slate-950 border border-slate-800 rounded-xl overflow-hidden"
-            >
-              <div class="px-2.5 py-1 bg-slate-900 text-[11px] font-semibold text-slate-300">
-                {{ slotTitle(item.slot) }}
-              </div>
-              <img
-                v-if="item.url && !brokenSlots[item.slot]"
-                :src="item.url"
-                class="w-full h-36 object-cover"
-                :alt="slotTitle(item.slot)"
-                @error="brokenSlots[item.slot] = true"
-              >
-              <div v-else class="h-36 flex flex-col items-center justify-center gap-2 p-3 text-center text-xs text-slate-400">
-                <span>{{ $t('common.photo_unavailable') }}</span>
-                <UButton
-                  size="xs"
-                  variant="soft"
-                  color="warning"
-                  :label="$t('common.refresh_photos')"
-                  @click="loadEditingEvidence"
-                />
-              </div>
-            </div>
-          </div>
+          <MoleculesEvidenceGallery
+            :items="evidenceItems"
+            :loading="loadingEvidence"
+            :title="$t('agent.edit_plate.photos_label')"
+            :empty-message="$t('police.review.no_evidence')"
+            @refresh="loadEditingEvidence"
+          />
 
           <UFormField :label="$t('agent.edit_plate.plate_label')">
             <UInput
@@ -170,9 +133,9 @@
 
 <script setup lang="ts">
 import type { EvidenceUrlItem } from '~/composables/useDocumentViewer'
-import type { Report, ReportPhotoSlot } from '~/stores/reports'
+import type { Report } from '~/stores/reports'
 
-const { t, locale } = useI18n()
+const { locale } = useI18n()
 
 definePageMeta({
   ssr: false,
@@ -190,7 +153,6 @@ const isEditOpen = ref(false)
 const editingReport = ref<Report | null>(null)
 const editedPlate = ref('')
 const evidenceItems = ref<EvidenceUrlItem[]>([])
-const brokenSlots = ref<Record<string, boolean>>({})
 
 const sortedAgentReports = computed(() =>
   [...(reportsStore.agentReports ?? [])].sort((a, b) => b.timestamp - a.timestamp),
@@ -208,12 +170,6 @@ function statusColor(status: Report['status']) {
   return 'neutral'
 }
 
-function slotTitle(slot: ReportPhotoSlot) {
-  if (slot === 'context') return t('agent.form.slot_context_label')
-  if (slot === 'plate') return t('agent.form.slot_plate_label')
-  return t('agent.form.slot_extra_label')
-}
-
 function formatDate(ts: number) {
   if (!ts) return ''
   return new Date(ts).toLocaleString(locale.value)
@@ -221,7 +177,6 @@ function formatDate(ts: number) {
 
 async function loadEditingEvidence() {
   if (!editingReport.value) return
-  brokenSlots.value = {}
   try {
     evidenceItems.value = await fetchEvidenceUrls('report', editingReport.value.id)
   }

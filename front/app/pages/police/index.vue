@@ -46,75 +46,19 @@
       :title="`${$t('police.fine.title')} - ${selected?.plateNumber}`"
       :description="$t('police.fine.description')"
       :ui="{
-        content: 'bg-slate-900 border border-slate-700 shadow-2xl shadow-black/50 rounded-2xl overflow-hidden max-w-4xl',
-        header: 'py-4 sm:py-5 border-b border-slate-800'
+        content: 'bg-slate-900 border border-slate-700 shadow-2xl shadow-black/50 rounded-2xl overflow-hidden max-w-4xl sm:min-h-[36rem]',
+        header: 'py-4 sm:py-5 border-b border-slate-800',
+        body: 'p-5 sm:p-6'
       }"
     >
       <template #body>
         <div v-if="selected" class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <div class="space-y-3">
-            <div class="flex items-center justify-between">
-              <p class="text-xs font-bold uppercase tracking-wider text-slate-400">
-                {{ $t('police.review.evidence_photos') }}
-              </p>
-              <UButton
-                size="xs"
-                variant="ghost"
-                color="neutral"
-                icon="i-lucide-refresh-cw"
-                :loading="loadingEvidence"
-                :label="$t('common.refresh_photos')"
-                @click="loadReportEvidence"
-              />
-            </div>
-
-            <div v-if="loadingEvidence" class="py-10 flex justify-center text-slate-400">
-              <UIcon name="i-lucide-loader-2" class="w-6 h-6 animate-spin" />
-            </div>
-
-            <div v-else-if="orderedEvidenceItems.length === 0" class="p-6 bg-slate-950 border border-slate-800 rounded-xl text-center text-xs text-slate-400">
-              {{ $t('police.review.no_evidence') }}
-            </div>
-
-            <div v-else class="space-y-3">
-              <div
-                v-for="item in orderedEvidenceItems"
-                :key="item.slot"
-                class="bg-slate-950 border rounded-xl overflow-hidden"
-                :class="item.slot === 'plate' ? 'border-amber-500/70' : 'border-slate-800'"
-              >
-                <div class="px-3 py-1.5 bg-slate-900 flex items-center justify-between text-xs font-semibold text-slate-300">
-                  <span>{{ slotTitle(item.slot) }}</span>
-                  <a
-                    v-if="item.url && !brokenSlots[item.slot]"
-                    :href="item.url"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    class="text-indigo-400 hover:text-indigo-300 flex items-center gap-1"
-                  >
-                    <UIcon name="i-lucide-maximize-2" class="w-3.5 h-3.5" />
-                  </a>
-                </div>
-                <img
-                  v-if="item.url && !brokenSlots[item.slot]"
-                  :src="item.url"
-                  class="w-full max-h-56 object-contain bg-black"
-                  :alt="slotTitle(item.slot)"
-                  @error="brokenSlots[item.slot] = true"
-                >
-                <div v-else class="h-36 flex flex-col items-center justify-center gap-2 p-3 text-center text-xs text-slate-400">
-                  <span>{{ $t('common.photo_unavailable') }}</span>
-                  <UButton
-                    size="xs"
-                    variant="soft"
-                    color="warning"
-                    :label="$t('common.refresh_photos')"
-                    @click="loadReportEvidence"
-                  />
-                </div>
-              </div>
-            </div>
-          </div>
+          <MoleculesEvidenceGallery
+            :items="evidenceItems"
+            :loading="loadingEvidence"
+            :empty-message="$t('police.review.no_evidence')"
+            @refresh="loadReportEvidence"
+          />
 
           <div class="space-y-5">
             <div class="bg-slate-950 p-4 rounded-xl border border-slate-800 space-y-3">
@@ -296,7 +240,7 @@ import { useCarsStore } from '~/stores/cars'
 import { useUserStore } from '~/stores/user'
 import { useFinesStore } from '~/stores/fines'
 import type { EvidenceUrlItem } from '~/composables/useDocumentViewer'
-import type { Report, ReportPhotoSlot } from '~/stores/reports'
+import type { Report } from '~/stores/reports'
 
 definePageMeta({
   title: 'police.title',
@@ -354,7 +298,6 @@ const isReportModalOpen = ref(false)
 const isDismissModalOpen = ref(false)
 const dismissReason = ref('')
 const evidenceItems = ref<EvidenceUrlItem[]>([])
-const brokenSlots = ref<Record<string, boolean>>({})
 
 const isRejectModalOpen = ref(false)
 const rejectionReason = ref('')
@@ -402,11 +345,6 @@ watch(() => fineForm.plateNumber, (val) => {
   if (val) fineForm.plateNumber = formatFrenchPlate(val)
 })
 
-const orderedEvidenceItems = computed(() => {
-  const rank: Record<ReportPhotoSlot, number> = { plate: 0, context: 1, extra: 2 }
-  return [...evidenceItems.value].sort((a, b) => rank[a.slot] - rank[b.slot])
-})
-
 const tabs = computed(() => [
   {
     label: t('police.tabs.cars'),
@@ -430,15 +368,8 @@ const tabs = computed(() => [
   },
 ])
 
-function slotTitle(slot: ReportPhotoSlot) {
-  if (slot === 'context') return t('agent.form.slot_context_label')
-  if (slot === 'plate') return t('agent.form.slot_plate_label')
-  return t('agent.form.slot_extra_label')
-}
-
 async function loadReportEvidence() {
   if (!selected.value) return
-  brokenSlots.value = {}
   try {
     evidenceItems.value = await fetchEvidenceUrls('report', selected.value.id)
   }
