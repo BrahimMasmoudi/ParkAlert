@@ -1,8 +1,11 @@
-import { collection, query, where, orderBy } from 'firebase/firestore'
+import { collection, query, where, orderBy, limit } from 'firebase/firestore'
 import { httpsCallable } from 'firebase/functions'
 import { useCollection, useFirestore } from 'vuefire'
 import { defineStore } from 'pinia'
 import { computed, ref } from 'vue'
+import type { ReportPhoto } from '~/stores/reports'
+
+export type DisputeStatus = 'none' | 'pending' | 'accepted' | 'rejected'
 
 export interface Fine {
   id: string
@@ -10,9 +13,16 @@ export interface Fine {
   ownerId: string
   plateNumber: string
   amount: number
-  status: 'unpaid' | 'paid'
+  status: 'unpaid' | 'paid' | 'cancelled'
   issuedAt: number
   notes?: string
+  evidencePhotos?: ReportPhoto[]
+  originalPlateNumber?: string
+  disputeStatus?: DisputeStatus
+  disputeReason?: string
+  disputedAt?: number
+  resolutionReason?: string
+  resolvedAt?: number
 }
 
 function getTimestampMillis(ts: any): number {
@@ -23,22 +33,33 @@ function getTimestampMillis(ts: any): number {
   return new Date(ts).getTime()
 }
 
+export function normalizeFineFromFirestore(id: string, data: Record<string, any>): Fine {
+  return {
+    id,
+    reportId: data.reportId || '',
+    ownerId: data.ownerId || '',
+    plateNumber: data.plateNumber || '',
+    amount: data.amount || 0,
+    status: data.status || 'unpaid',
+    issuedAt: getTimestampMillis(data.issuedAt),
+    notes: data.notes,
+    evidencePhotos: Array.isArray(data.evidencePhotos) ? data.evidencePhotos : undefined,
+    originalPlateNumber: data.originalPlateNumber,
+    disputeStatus: data.disputeStatus,
+    disputeReason: data.disputeReason,
+    disputedAt: data.disputedAt ? getTimestampMillis(data.disputedAt) : undefined,
+    resolutionReason: data.resolutionReason,
+    resolvedAt: data.resolvedAt ? getTimestampMillis(data.resolvedAt) : undefined,
+  }
+}
+
 const fineConverter = {
   toFirestore(fine: Fine) {
     return fine
   },
   fromFirestore(snapshot: any, options: any): Fine {
     const data = snapshot.data(options)
-    return {
-      id: snapshot.id,
-      reportId: data.reportId || '',
-      ownerId: data.ownerId || '',
-      plateNumber: data.plateNumber || '',
-      amount: data.amount || 0,
-      status: data.status || 'unpaid',
-      issuedAt: getTimestampMillis(data.issuedAt),
-      notes: data.notes,
-    }
+    return normalizeFineFromFirestore(snapshot.id, data)
   },
 }
 
@@ -83,7 +104,7 @@ export const useFinesStore = defineStore('fines', () => {
       await httpsCallable($functions, 'issueFine')(payload)
       toast.add({
         title: 'Fine issued!',
-        description: `€${payload.amount} fine issued for plate ${payload.plateNumber}.`,
+        description: `TND ${payload.amount} fine issued for plate ${payload.plateNumber}.`,
         color: 'success',
       })
     }
@@ -117,6 +138,53 @@ export const useFinesStore = defineStore('fines', () => {
     }
   }
 
+  /**
+   * Owner: submits a dispute explanation on an unpaid fine via Cloud Function.
+   */
+  async function disputeFine(fineId: string, reason: string) {
+    acting.value = true
+    try {
+      const { $functions } = useNuxtApp()
+      await httpsCallable($functions, 'disputeFine')({ fineId, reason })
+      toast.add({ title: 'Dispute submitted', color: 'success' })
+    }
+    catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : 'Failed to submit dispute'
+      toast.add({ title: 'Error', description: msg, color: 'error' })
+      throw e
+    }
+    finally {
+      acting.value = false
+    }
+  }
+
+  /**
+   * Police: resolves a pending dispute via cancel_fine or dismiss_dispute.
+   */
+  async function resolveDispute(
+    fineId: string,
+    action: 'cancel_fine' | 'dismiss_dispute',
+    reason: string,
+  ) {
+    acting.value = true
+    try {
+      const { $functions } = useNuxtApp()
+      await httpsCallable($functions, 'resolveDispute')({ fineId, action, reason })
+      toast.add({
+        title: action === 'cancel_fine' ? 'Fine cancelled' : 'Dispute dismissed',
+        color: 'success',
+      })
+    }
+    catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : 'Failed to resolve dispute'
+      toast.add({ title: 'Error', description: msg, color: 'error' })
+      throw e
+    }
+    finally {
+      acting.value = false
+    }
+  }
+
   // ── Police: reactive list of ALL fines (role-gated) ────────────────────────
   const allFinesQuery = computed(() =>
     authStore.currentUser?.uid && userStore.role === 'police'
@@ -128,14 +196,34 @@ export const useFinesStore = defineStore('fines', () => {
   )
   const { data: allFines, pending: allFinesLoading } = useCollection(allFinesQuery, { ssrKey: 'allFines' })
 
+  // ── Police: indexed pending disputes query (role-gated) ────────────────────
+  const pendingDisputesQuery = computed(() =>
+    authStore.currentUser?.uid && userStore.role === 'police'
+      ? query(
+          collection(db, 'fines').withConverter(fineConverter),
+          where('disputeStatus', '==', 'pending'),
+          orderBy('disputedAt', 'desc'),
+          limit(50),
+        )
+      : null,
+  )
+  const { data: pendingDisputes, pending: pendingDisputesLoading } = useCollection(
+    pendingDisputesQuery,
+    { ssrKey: 'pendingDisputes' },
+  )
+
   return {
     myFines,
     finesLoading,
     allFines,
     allFinesLoading,
+    pendingDisputes,
+    pendingDisputesLoading,
     hasUnpaidFines,
     acting,
     issueFine,
     payFine,
+    disputeFine,
+    resolveDispute,
   }
 })

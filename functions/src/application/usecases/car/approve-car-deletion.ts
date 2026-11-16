@@ -1,4 +1,5 @@
 import { CarRepository } from '../../../domain/repositories/car.repository';
+import { FineRepository } from '../../../domain/repositories/fine.repository';
 import { UserRepository } from '../../../domain/repositories/user.repository';
 import { TransactionRunner } from '../../../domain/repositories/transaction.port';
 import { DomainError } from '../../../domain/errors/domain.error';
@@ -6,6 +7,7 @@ import { DomainError } from '../../../domain/errors/domain.error';
 export class ApproveCarDeletionUseCase {
   constructor(
     private readonly carRepository: CarRepository,
+    private readonly fineRepository: FineRepository,
     private readonly userRepository: UserRepository,
     private readonly transactionRunner: TransactionRunner
   ) {}
@@ -28,6 +30,11 @@ export class ApproveCarDeletionUseCase {
       }
       if (car.status !== 'deletion_requested') {
         throw new DomainError('FAILED_PRECONDITION', 'Car not pending deletion');
+      }
+
+      const hasUnpaidFines = await this.fineRepository.hasUnpaidFines(car.ownerId, car.plateNumber, tx);
+      if (hasUnpaidFines) {
+        throw new DomainError('FAILED_PRECONDITION', 'Cannot approve deletion for a vehicle with unpaid fines');
       }
 
       await this.carRepository.update(

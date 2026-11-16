@@ -3,76 +3,289 @@
     <div class="p-5 flex items-start justify-between gap-4">
       <div class="flex items-center gap-4">
         <div class="p-3 rounded-xl bg-slate-950 border border-slate-800 group-hover:bg-slate-800 transition-colors">
-          <UIcon 
-            :name="fine.status === 'unpaid' ? 'i-lucide-alert-triangle' : 'i-lucide-check-circle'" 
-            class="w-6 h-6" 
-            :class="fine.status === 'unpaid' ? 'text-red-500' : 'text-green-500'" 
+          <UIcon
+            :name="statusIcon"
+            class="w-6 h-6"
+            :class="statusIconClass"
           />
         </div>
         <div>
           <h3 class="text-lg font-bold text-white tracking-tight">{{ fine.plateNumber }}</h3>
-          <p class="text-xs text-slate-500 font-mono tracking-widest uppercase mt-0.5">{{ $t('owner.fines.reference') }}: #{{ fine.id.slice(-6).toUpperCase() }}</p>
+          <p class="text-xs text-slate-500 font-mono tracking-widest uppercase mt-0.5">
+            {{ $t('owner.fines.reference') }}: #{{ fine.id.slice(-6).toUpperCase() }}
+          </p>
         </div>
       </div>
-      
-      <div class="text-right">
+
+      <div class="text-right space-y-1.5">
         <p class="text-2xl font-black text-white leading-none">TND {{ fine.amount }}</p>
-        <UBadge 
-          :color="fine.status === 'unpaid' ? 'error' : 'success'" 
-          variant="subtle" 
-          size="xs" 
-          class="mt-2 font-bold uppercase tracking-wider px-2 py-0.5"
-        >
-          {{ $t(`police.audit.${fine.status}`) || fine.status }}
-        </UBadge>
+        <div class="flex items-center justify-end gap-1.5 flex-wrap">
+          <UBadge
+            :color="statusBadgeColor"
+            variant="subtle"
+            size="xs"
+            class="font-bold uppercase tracking-wider px-2 py-0.5"
+          >
+            {{ $t(`police.audit.${fine.status}`) || fine.status }}
+          </UBadge>
+          <UBadge
+            v-if="fine.disputeStatus && fine.disputeStatus !== 'none'"
+            :color="disputeBadgeColor"
+            variant="soft"
+            size="xs"
+            class="font-bold uppercase tracking-wider px-2 py-0.5"
+          >
+            {{ disputeBadgeLabel }}
+          </UBadge>
+        </div>
       </div>
     </div>
 
-    <div v-if="fine.notes" class="px-5 pb-4">
-      <div class="bg-slate-950/50 border border-slate-800/50 rounded-lg p-3">
+    <div v-if="fine.notes || fine.disputeReason || fine.resolutionReason" class="px-5 pb-4 space-y-2">
+      <div v-if="fine.notes" class="bg-slate-950/50 border border-slate-800/50 rounded-lg p-3">
         <p class="text-[11px] text-slate-400 italic leading-relaxed">"{{ fine.notes }}"</p>
       </div>
+      <div
+        v-if="fine.disputeReason"
+        class="bg-slate-950/60 border border-amber-500/20 rounded-lg p-3 text-xs text-slate-300"
+      >
+        <span class="font-bold uppercase tracking-wider text-[10px] text-amber-400 block mb-1">
+          {{ $t('owner.fines.dispute_reason_label') }}
+        </span>
+        {{ fine.disputeReason }}
+      </div>
+      <div
+        v-if="fine.resolutionReason"
+        class="bg-slate-950/60 border border-slate-700/60 rounded-lg p-3 text-xs text-slate-300"
+      >
+        <span class="font-bold uppercase tracking-wider text-[10px] text-slate-400 block mb-1">
+          {{ $t('owner.fines.resolution_reason_label') }}
+        </span>
+        {{ fine.resolutionReason }}
+      </div>
     </div>
 
-    <div class="px-5 py-3 bg-slate-950 border-t border-slate-800 flex items-center justify-between">
+    <div class="px-5 py-3 bg-slate-950 border-t border-slate-800 flex items-center justify-between flex-wrap gap-3">
       <div class="flex items-center gap-2 text-slate-500">
         <UIcon name="i-lucide-calendar" class="w-4 h-4" />
         <span class="text-[10px] font-medium">{{ formatDate(fine.issuedAt) }}</span>
       </div>
-      
-      <UButton
-        v-if="fine.status === 'unpaid'"
-        :label="$t('owner.fines.pay_button')"
-        color="primary"
-        size="sm"
-        icon="i-lucide-credit-card"
-        class="font-bold shadow-lg shadow-indigo-500/20 px-4"
-        :loading="finesStore.acting"
-        @click="finesStore.payFine(fine.id)"
-      />
-      <div v-else class="flex items-center gap-1.5 text-green-500 font-bold text-[10px] uppercase tracking-widest">
-        <UIcon name="i-lucide-verified" class="w-3.5 h-3.5" />
-        {{ $t('owner.fines.receipt_issued') }}
+
+      <div class="flex items-center gap-2 flex-wrap">
+        <UButton
+          v-if="fine.status !== 'cancelled'"
+          :label="$t('owner.fines.view_evidence')"
+          color="neutral"
+          variant="soft"
+          size="sm"
+          icon="i-lucide-camera"
+          @click="openEvidenceModal"
+        />
+
+        <UButton
+          v-if="canDispute"
+          :label="$t('owner.fines.dispute_button')"
+          color="warning"
+          variant="soft"
+          size="sm"
+          icon="i-lucide-message-square-warning"
+          :loading="finesStore.acting"
+          @click="openDisputeModal"
+        />
+
+        <UButton
+          v-if="fine.status === 'unpaid' && fine.disputeStatus !== 'pending'"
+          :label="$t('owner.fines.pay_button')"
+          color="primary"
+          size="sm"
+          icon="i-lucide-credit-card"
+          class="font-bold shadow-lg shadow-indigo-500/20 px-4"
+          :loading="finesStore.acting"
+          @click="finesStore.payFine(fine.id)"
+        />
+        <span
+          v-else-if="fine.status === 'unpaid' && fine.disputeStatus === 'pending'"
+          class="text-amber-400 font-bold text-[10px] uppercase tracking-widest px-2"
+        >
+          {{ $t('owner.fines.under_review') }}
+        </span>
+        <div
+          v-else-if="fine.status === 'paid'"
+          class="flex items-center gap-1.5 text-green-500 font-bold text-[10px] uppercase tracking-widest"
+        >
+          <UIcon name="i-lucide-verified" class="w-3.5 h-3.5" />
+          {{ $t('owner.fines.receipt_issued') }}
+        </div>
+        <div
+          v-else
+          class="flex items-center gap-1.5 text-slate-400 font-bold text-[10px] uppercase tracking-widest"
+        >
+          <UIcon name="i-lucide-ban" class="w-3.5 h-3.5" />
+          {{ $t('police.audit.cancelled') }}
+        </div>
       </div>
     </div>
+
+    <UModal
+      v-model:open="isEvidenceOpen"
+      :title="`${$t('owner.fines.evidence_modal_title')} - ${fine.plateNumber}`"
+      :ui="{
+        content: 'bg-slate-900 border border-slate-700 shadow-2xl rounded-2xl overflow-hidden max-w-2xl sm:min-h-[34rem]',
+        header: 'py-4 border-b border-slate-800',
+        body: 'p-5 sm:p-6',
+      }"
+    >
+      <template #body>
+        <MoleculesEvidenceGallery
+          :items="evidenceItems"
+          :loading="loadingEvidence"
+          :empty-message="$t('owner.fines.no_evidence_legacy')"
+          @refresh="loadEvidence"
+        />
+      </template>
+      <template #footer>
+        <div class="flex justify-end w-full">
+          <UButton
+            :label="$t('common.close')"
+            color="neutral"
+            variant="ghost"
+            @click="isEvidenceOpen = false"
+          />
+        </div>
+      </template>
+    </UModal>
+
+    <UModal
+      v-model:open="isDisputeOpen"
+      :title="$t('owner.fines.dispute_modal_title')"
+      :description="$t('owner.fines.dispute_modal_description')"
+    >
+      <template #body>
+        <div class="space-y-3">
+          <UTextarea
+            v-model="disputeReason"
+            :placeholder="$t('owner.fines.dispute_placeholder')"
+            :rows="4"
+            class="w-full"
+          />
+          <p v-if="disputeReasonError" class="text-xs text-red-400">
+            {{ disputeReasonError }}
+          </p>
+        </div>
+      </template>
+      <template #footer>
+        <div class="flex gap-2 justify-end w-full">
+          <UButton
+            :label="$t('common.cancel')"
+            color="neutral"
+            variant="ghost"
+            @click="isDisputeOpen = false"
+          />
+          <UButton
+            :label="$t('owner.fines.submit_dispute')"
+            color="warning"
+            :loading="finesStore.acting"
+            :disabled="Boolean(disputeReasonError)"
+            @click="submitDispute"
+          />
+        </div>
+      </template>
+    </UModal>
   </div>
 </template>
 
 <script setup lang="ts">
+import type { EvidenceUrlItem } from '~/composables/useDocumentViewer'
 import type { Fine } from '~/stores/fines'
 
 const props = defineProps<{
   fine: Fine
 }>()
 
+const { locale, t } = useI18n()
 const finesStore = useFinesStore()
+const { fetchEvidenceUrls, loadingEvidence } = useDocumentViewer()
+
+const isEvidenceOpen = ref(false)
+const evidenceItems = ref<EvidenceUrlItem[]>([])
+const isDisputeOpen = ref(false)
+const disputeReason = ref('')
+
+const canDispute = computed(
+  () => props.fine.status === 'unpaid' && (props.fine.disputeStatus ?? 'none') === 'none',
+)
+
+const statusIcon = computed(() => {
+  if (props.fine.status === 'paid') return 'i-lucide-check-circle'
+  if (props.fine.status === 'cancelled') return 'i-lucide-ban'
+  return 'i-lucide-alert-triangle'
+})
+
+const statusIconClass = computed(() => {
+  if (props.fine.status === 'paid') return 'text-green-500'
+  if (props.fine.status === 'cancelled') return 'text-slate-400'
+  return 'text-red-500'
+})
+
+const statusBadgeColor = computed(() => {
+  if (props.fine.status === 'paid') return 'success'
+  if (props.fine.status === 'cancelled') return 'neutral'
+  return 'error'
+})
+
+const disputeBadgeColor = computed(() => {
+  if (props.fine.disputeStatus === 'pending') return 'warning'
+  if (props.fine.disputeStatus === 'rejected') return 'error'
+  return 'neutral'
+})
+
+const disputeBadgeLabel = computed(() => {
+  if (props.fine.disputeStatus === 'pending') return t('owner.fines.dispute_pending_badge')
+  if (props.fine.disputeStatus === 'rejected') return t('owner.fines.dispute_rejected_badge')
+  if (props.fine.disputeStatus === 'accepted') return t('owner.fines.dispute_accepted_badge')
+  return ''
+})
+
+const disputeReasonError = computed(() => {
+  const len = disputeReason.value.trim().length
+  if (len < 3 || len > 500) {
+    return t('owner.fines.dispute_reason_length_error')
+  }
+  return ''
+})
+
+async function loadEvidence() {
+  try {
+    evidenceItems.value = await fetchEvidenceUrls('fine', props.fine.id)
+  }
+  catch {
+    evidenceItems.value = []
+  }
+}
+
+async function openEvidenceModal() {
+  evidenceItems.value = []
+  isEvidenceOpen.value = true
+  await loadEvidence()
+}
+
+function openDisputeModal() {
+  disputeReason.value = ''
+  isDisputeOpen.value = true
+}
+
+async function submitDispute() {
+  if (disputeReasonError.value) return
+  await finesStore.disputeFine(props.fine.id, disputeReason.value.trim())
+  isDisputeOpen.value = false
+}
 
 function formatDate(timestamp: number) {
-  if (!timestamp) return 'Unknown date'
-  return new Date(timestamp).toLocaleDateString('en-US', {
+  if (!timestamp) return t('owner.fines.unknown_date')
+  return new Date(timestamp).toLocaleDateString(locale.value || 'en-US', {
     month: 'short',
     day: 'numeric',
-    year: 'numeric'
+    year: 'numeric',
   })
 }
 </script>

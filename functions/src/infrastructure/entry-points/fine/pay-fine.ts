@@ -1,8 +1,19 @@
 import { onCall, HttpsError } from 'firebase-functions/v2/https';
 import { PayFineUseCase } from '../../../application/usecases/fine/pay-fine';
-import { fineRepository, reportRepository, connector } from '../index';
+import {
+  enforcementAuditPort,
+  fineRepository,
+  reportRepository,
+  transactionRunner,
+} from '../index';
+import { mapDomainErrorToHttpsError } from '../shared/error-mapper';
 
-const payFineUseCase = new PayFineUseCase(fineRepository, reportRepository);
+const payFineUseCase = new PayFineUseCase(
+  fineRepository,
+  reportRepository,
+  enforcementAuditPort,
+  transactionRunner
+);
 
 export const payFine = onCall(
   { region: 'europe-west3', enforceAppCheck: true },
@@ -11,17 +22,13 @@ export const payFine = onCall(
       throw new HttpsError('unauthenticated', 'Must be signed in');
     }
 
-    const batch = connector.getBatch();
     try {
-      const result = await payFineUseCase.execute({
+      return await payFineUseCase.execute({
+        ...(request.data ?? {}),
         userId: request.auth.uid,
-        ...request.data,
-        batch,
       });
-      await batch.commit();
-      return result;
-    } catch (error: any) {
-      throw new HttpsError('internal', error.message);
+    } catch (error) {
+      throw mapDomainErrorToHttpsError(error);
     }
   }
 );

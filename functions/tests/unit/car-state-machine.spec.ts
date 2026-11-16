@@ -175,8 +175,8 @@ describe('US4: State Machine & Eligibility Matrix', () => {
 
   it('allows requestCarDeletion only from active/rejected and restores preDeletionStatus on cancel', async () => {
     for (const status of ALL_STATUSES) {
-      const { cars, carRepo, userRepo } = setup(status);
-      const reqDel = new RequestCarDeletionUseCase(carRepo, userRepo, fakeRunner);
+      const { cars, carRepo, userRepo, fineRepo } = setup(status);
+      const reqDel = new RequestCarDeletionUseCase(carRepo, fineRepo, userRepo, fakeRunner);
       const cancelDel = new CancelCarDeletionUseCase(carRepo, userRepo, fakeRunner);
       const res = reqDel.execute({ carId: 'AB123CD', userId: 'owner-a' });
       if (status === 'active' || status === 'rejected') {

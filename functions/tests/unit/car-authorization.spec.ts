@@ -151,7 +151,7 @@ describe('US1: Car & Transfer Authorization, Role Enforcement, and Field Whiteli
     const reqTransfer = new RequestOwnershipTransferUseCase(carRepo, fineRepo, userRepo, fakeRunner);
     const ack = new AcknowledgeTransferUseCase(carRepo, userRepo, fakeRunner);
     const checkPlate = new CheckPlateAvailabilityUseCase(carRepo, userRepo);
-    const reqDel = new RequestCarDeletionUseCase(carRepo, userRepo, fakeRunner);
+    const reqDel = new RequestCarDeletionUseCase(carRepo, fineRepo, userRepo, fakeRunner);
     const cancelDel = new CancelCarDeletionUseCase(carRepo, userRepo, fakeRunner);
 
     await expect(reqTransfer.execute({ plateNumber: 'AB-123-CD', receiverId: 'police-1', carteGriseUrl: 'transfers/police-1/a.pdf' })).rejects.toMatchObject({ code: 'PERMISSION_DENIED' });
