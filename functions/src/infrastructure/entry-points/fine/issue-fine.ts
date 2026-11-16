@@ -1,8 +1,21 @@
 import { onCall, HttpsError } from 'firebase-functions/v2/https';
 import { IssueFineUseCase } from '../../../application/usecases/fine/issue-fine';
-import { fineRepository, reportRepository, userRepository, connector } from '../index';
+import {
+  carRepository,
+  fineRepository,
+  reportRepository,
+  transactionRunner,
+  userRepository,
+} from '../index';
+import { mapDomainErrorToHttpsError } from '../shared/error-mapper';
 
-const issueFineUseCase = new IssueFineUseCase(reportRepository, fineRepository, userRepository);
+const issueFineUseCase = new IssueFineUseCase(
+  reportRepository,
+  fineRepository,
+  userRepository,
+  carRepository,
+  transactionRunner
+);
 
 export const issueFine = onCall(
   { region: 'europe-west3', enforceAppCheck: true },
@@ -11,17 +24,13 @@ export const issueFine = onCall(
       throw new HttpsError('unauthenticated', 'Must be signed in');
     }
 
-    const batch = connector.getBatch();
     try {
-      const result = await issueFineUseCase.execute({
+      return await issueFineUseCase.execute({
+        ...(request.data ?? {}),
         issuedBy: request.auth.uid,
-        ...request.data,
-        batch,
       });
-      await batch.commit();
-      return result;
-    } catch (error: any) {
-      throw new HttpsError('internal', error.message);
+    } catch (error) {
+      throw mapDomainErrorToHttpsError(error);
     }
   }
 );

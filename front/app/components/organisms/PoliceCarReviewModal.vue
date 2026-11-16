@@ -96,9 +96,15 @@
           </p>
 
           <div v-if="carteGriseToShow" class="space-y-3">
-            <a :href="carteGriseToShow" target="_blank" class="block group cursor-zoom-in relative">
+            <a
+              v-if="resolvedDocUrl"
+              :href="resolvedDocUrl"
+              target="_blank"
+              rel="noopener noreferrer"
+              class="block group cursor-zoom-in relative"
+            >
               <img
-                :src="carteGriseToShow"
+                :src="resolvedDocUrl"
                 class="w-full rounded-lg border border-slate-700 object-contain max-h-64 transition-all duration-300 group-hover:brightness-75"
                 @error="($event.target as HTMLImageElement).parentElement!.style.display = 'none'"
               >
@@ -109,12 +115,12 @@
               </div>
             </a>
             <UButton
-              :to="carteGriseToShow"
-              target="_blank"
               color="neutral"
               variant="soft"
               icon="lucide:external-link"
               class="w-full justify-center"
+              :loading="car ? isOpening(car.id, documentKind) : false"
+              @click="car && openDocument(car.id, documentKind, carteGriseToShow)"
             >
               {{ $t('police.review.open_document') }}
             </UButton>
@@ -162,6 +168,7 @@
 <script setup lang="ts">
 import { useUserStore } from '~/stores/user'
 import { useCarsStore } from '~/stores/cars'
+import { useDocumentViewer } from '~/composables/useDocumentViewer'
 
 const { t } = useI18n()
 const props = defineProps<{
@@ -178,6 +185,7 @@ const emit = defineEmits<{
 const isOpen = defineModel<boolean>('open', { required: true })
 const userStore = useUserStore()
 const carsStore = useCarsStore()
+const { resolveDocumentUrl, openDocument, isOpening } = useDocumentViewer()
 
 const modeConfig = computed(() => {
   switch (props.mode) {
@@ -219,6 +227,28 @@ const modeConfig = computed(() => {
 const carteGriseToShow = computed(() => {
   if (!props.car) return null
   return props.car.transferCarteGriseUrl || props.car.carteGriseUrl || null
+})
+
+const documentKind = computed<'active' | 'pendingTransfer'>(() =>
+  props.mode === 'transfer' && props.car?.transferCarteGriseUrl ? 'pendingTransfer' : 'active'
+)
+
+const resolvedDocUrl = ref<string | null>(null)
+watchEffect(async () => {
+  if (!isOpen.value || !props.car?.id || !carteGriseToShow.value) {
+    resolvedDocUrl.value = null
+    return
+  }
+  try {
+    resolvedDocUrl.value = await resolveDocumentUrl(
+      props.car.id,
+      documentKind.value,
+      carteGriseToShow.value
+    )
+  }
+  catch {
+    resolvedDocUrl.value = null
+  }
 })
 
 const previousOwner = computed(() =>

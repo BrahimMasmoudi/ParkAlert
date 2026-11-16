@@ -1,8 +1,9 @@
 import { Fine } from '../entities/fine.entity';
+import { TransactionContext } from './transaction.port';
 
 export interface FineRepository {
-  create(fine: Omit<Fine, 'id'>, batch?: any): Promise<string>;
-  getById(id: string): Promise<Fine | null>;
-  update(id: string, updates: Partial<Fine>, batch?: any): Promise<void>;
-  hasUnpaidFines(ownerId: string, plateNumber: string): Promise<boolean>;
+  create(fine: Omit<Fine, 'id'>, txOrBatch?: TransactionContext | any): Promise<string>;
+  getById(id: string, tx?: TransactionContext): Promise<Fine | null>;
+  update(id: string, updates: Partial<Fine>, txOrBatch?: TransactionContext | any): Promise<void>;
+  hasUnpaidFines(ownerId: string, plateNumber: string, tx?: TransactionContext): Promise<boolean>;
 }

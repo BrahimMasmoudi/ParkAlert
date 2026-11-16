@@ -1,8 +1,9 @@
 import { onCall, HttpsError } from 'firebase-functions/v2/https';
 import { CheckPlateAvailabilityUseCase } from '../../../application/usecases/car/check-plate';
-import { carRepository } from '../index';
+import { carRepository, userRepository } from '../index';
+import { mapDomainErrorToHttpsError } from '../shared/error-mapper';
 
-const checkPlateAvailabilityUseCase = new CheckPlateAvailabilityUseCase(carRepository);
+const checkPlateAvailabilityUseCase = new CheckPlateAvailabilityUseCase(carRepository, userRepository);
 
 export const checkPlate = onCall(
   { region: 'europe-west3', enforceAppCheck: true },
@@ -12,9 +13,12 @@ export const checkPlate = onCall(
     }
 
     try {
-      return await checkPlateAvailabilityUseCase.execute(request.data.plateNumber);
-    } catch (error: any) {
-      throw new HttpsError('internal', error.message);
+      return await checkPlateAvailabilityUseCase.execute({
+        plateNumber: request.data?.plateNumber,
+        callerId: request.auth.uid,
+      });
+    } catch (error) {
+      throw mapDomainErrorToHttpsError(error);
     }
   }
 );

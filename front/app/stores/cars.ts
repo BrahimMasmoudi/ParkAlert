@@ -3,7 +3,7 @@ import { collection, query, where } from 'firebase/firestore'
 import type {
   QueryDocumentSnapshot,
   SnapshotOptions,
-  DocumentData
+  DocumentData,
 } from 'firebase/firestore'
 import { httpsCallable } from 'firebase/functions'
 import { useCollection, useFirestore } from 'vuefire'
@@ -14,7 +14,7 @@ export type CarStatus =
   | 'activation_pending'
   | 'deletion_requested'
   | 'active'
-  | 'deleted'
+  | 'archived'
   | 'rejected'
   | 'transfer_pending_owner'
   | 'transfer_pending_police'
@@ -23,16 +23,28 @@ export const carStatusMapper: Record<CarStatus, string> = {
   activation_pending: 'Activation Pending',
   deletion_requested: 'Deletion Pending',
   active: 'Active',
-  deleted: 'Deleted',
+  archived: 'Archived',
   rejected: 'Rejected',
   transfer_pending_owner: 'Awaiting Owner Acceptance',
-  transfer_pending_police: 'Awaiting Police Approval'
+  transfer_pending_police: 'Awaiting Police Approval',
+}
+
+export type PlateIneligibilityReason =
+  | 'OWNED_BY_CALLER'
+  | 'INELIGIBLE_STATUS'
+  | 'TRANSFER_IN_PROGRESS'
+
+export interface CheckPlateResult {
+  available: boolean
+  eligibleForTransfer: boolean
+  reason?: PlateIneligibilityReason
 }
 
 export interface Car {
   id: string
   ownerId: string
   plateNumber: string
+  plateNumberNormalized?: string
   brand: string
   model: string
   color: string
@@ -68,6 +80,7 @@ const carConverter = {
       id: snapshot.id,
       ownerId: data.ownerId || '',
       plateNumber: data.plateNumber || '',
+      plateNumberNormalized: data.plateNumberNormalized,
       brand: data.brand || '',
       model: data.model || '',
       color: data.color || '',
@@ -77,13 +90,14 @@ const carConverter = {
       rejectionReason: data.rejectionReason,
       transferRejectionReason: data.transferRejectionReason,
       transferToOwnerId: data.transferToOwnerId,
-      transferCarteGriseUrl: data.transferCarteGriseUrl
+      transferCarteGriseUrl: data.transferCarteGriseUrl,
     }
-  }
+  },
 }
 
 export const useCarsStore = defineStore('cars', () => {
   const authStore = useAuthStore()
+  const userStore = useUserStore()
   const db = useFirestore()
   const toast = useToast()
 
@@ -97,7 +111,8 @@ export const useCarsStore = defineStore('cars', () => {
     loadingIds.value.add(id)
     try {
       return await fn()
-    } finally {
+    }
+    finally {
       loadingIds.value.delete(id)
     }
   }
@@ -116,45 +131,33 @@ export const useCarsStore = defineStore('cars', () => {
 
   const {
     data: myCars,
-    pending: carsLoading
+    pending: carsLoading,
   } = useCollection(carsRef, {
-    ssrKey: 'ownerCars'
+    ssrKey: 'ownerCars',
   })
 
   /**
-   * HISTORICAL CARS
+   * POLICE PENDING ACTIONS (role-gated to avoid permission-denied listener errors on Owner Dashboard)
    */
-  const historicalCarsRef = computed(() => {
-    if (!authStore.currentUser?.uid) return null
+  const pendingCarsRef = computed(() => {
+    if (!authStore.currentUser?.uid || userStore.role !== 'police') return null
 
     return query(
       collection(db, 'cars').withConverter(carConverter),
-      where('ownershipHistory', 'array-contains', authStore.currentUser.uid)
+      where('status', 'in', [
+        'activation_pending',
+        'deletion_requested',
+        'transfer_pending_owner',
+        'transfer_pending_police',
+      ])
     )
   })
-
-  const {
-    data: historicalCars,
-    pending: historicalCarsLoading
-  } = useCollection(historicalCarsRef, {
-    ssrKey: 'historicalCars'
-  })
-
-  /**
-   * POLICE PENDING ACTIONS
-   */
-  const pendingCarsRef = computed(() =>
-    query(
-      collection(db, 'cars').withConverter(carConverter),
-      where('status', 'in', ['activation_pending', 'deletion_requested', 'transfer_pending_owner', 'transfer_pending_police'])
-    )
-  )
 
   const {
     data: pendingCars,
-    pending: pendingCarsLoading
+    pending: pendingCarsLoading,
   } = useCollection(pendingCarsRef, {
-    ssrKey: 'pendingCars'
+    ssrKey: 'pendingCars',
   })
 
   const activationPendingCars = computed(() =>
@@ -199,14 +202,14 @@ export const useCarsStore = defineStore('cars', () => {
 
       toast.add({
         title: 'Car added successfully',
-        color: 'success'
+        color: 'success',
       })
     })
   }
 
   async function retryCar(payload: {
     carId: string
-    plateNumber: string
+    plateNumber?: string
     brand: string
     model: string
     color: string
@@ -217,14 +220,22 @@ export const useCarsStore = defineStore('cars', () => {
 
       toast.add({
         title: 'Registration resubmitted',
-        color: 'success'
+        color: 'success',
       })
     })
   }
 
-  async function checkPlate(plateNumber: string) {
+  async function checkPlate(plateNumber: string): Promise<CheckPlateResult> {
     const res = await callFn('checkPlate', { plateNumber })
-    return res.data as { available: boolean, status?: CarStatus }
+    return res.data as CheckPlateResult
+  }
+
+  async function getDocumentUrl(
+    carId: string,
+    documentKind: 'active' | 'pendingTransfer'
+  ): Promise<string> {
+    const res = await callFn('getDocumentUrl', { carId, documentKind })
+    return (res.data as { url: string }).url
   }
 
   async function requestOwnershipTransfer(payload: {
@@ -237,7 +248,7 @@ export const useCarsStore = defineStore('cars', () => {
       toast.add({
         title: 'Transfer requested',
         description: 'The current owner has been notified to accept the transfer.',
-        color: 'success'
+        color: 'success',
       })
     })
   }
@@ -249,7 +260,7 @@ export const useCarsStore = defineStore('cars', () => {
       toast.add({
         title: 'Transfer acknowledged',
         description: 'Now waiting for police final approval.',
-        color: 'success'
+        color: 'success',
       })
     })
   }
@@ -260,7 +271,7 @@ export const useCarsStore = defineStore('cars', () => {
 
       toast.add({
         title: 'Car approved',
-        color: 'success'
+        color: 'success',
       })
     })
   }
@@ -271,7 +282,7 @@ export const useCarsStore = defineStore('cars', () => {
 
       toast.add({
         title: 'Car rejected',
-        color: 'error'
+        color: 'error',
       })
     })
   }
@@ -282,7 +293,7 @@ export const useCarsStore = defineStore('cars', () => {
 
       toast.add({
         title: 'Transfer approved',
-        color: 'success'
+        color: 'success',
       })
     })
   }
@@ -293,7 +304,7 @@ export const useCarsStore = defineStore('cars', () => {
 
       toast.add({
         title: 'Transfer rejected',
-        color: 'success'
+        color: 'success',
       })
     })
   }
@@ -304,18 +315,18 @@ export const useCarsStore = defineStore('cars', () => {
 
       toast.add({
         title: 'Deletion approved',
-        color: 'success'
+        color: 'success',
       })
     })
   }
-  // ADD this method inside your store
+
   async function requestDeletion(carId: string) {
     return withLoading(carId, async () => {
       await callFn('requestCarDeletion', { carId })
 
       toast.add({
         title: 'Deletion requested',
-        color: 'warning'
+        color: 'warning',
       })
     })
   }
@@ -326,7 +337,7 @@ export const useCarsStore = defineStore('cars', () => {
 
       toast.add({
         title: 'Deletion cancelled',
-        color: 'warning'
+        color: 'warning',
       })
     })
   }
@@ -352,11 +363,10 @@ export const useCarsStore = defineStore('cars', () => {
     deletionPendingCars,
     transferPendingOwnerCars,
     transferPendingPoliceCars,
-    historicalCars,
-    historicalCarsLoading,
     isLoading,
     addCar,
     checkPlate,
+    getDocumentUrl,
     retryCar,
     requestOwnershipTransfer,
     acknowledgeTransfer,
@@ -367,6 +377,6 @@ export const useCarsStore = defineStore('cars', () => {
     approveDeletion,
     requestDeletion,
     cancelCarDeletion,
-    getCarByPlate
+    getCarByPlate,
   }
 })

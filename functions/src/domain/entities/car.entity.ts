@@ -14,6 +14,7 @@ export interface Car {
   updatedAt?: Date | any;
   rejectionReason?: string | null;
   deletionRequestedAt?: Date | any | null;
+  preDeletionStatus?: 'active' | 'rejected' | null;
   archivedAt?: Date | any | null;
   archivedBy?: string | null;
   transferToOwnerId?: string | null;

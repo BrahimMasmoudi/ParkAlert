@@ -1,34 +1,72 @@
 import { CarRepository } from '../../../domain/repositories/car.repository';
+import { UserRepository } from '../../../domain/repositories/user.repository';
+import { TransactionRunner } from '../../../domain/repositories/transaction.port';
+import { DomainError } from '../../../domain/errors/domain.error';
+import { validateRejectionReason } from '../../../domain/value-objects/plate';
 
 export class RejectTransferUseCase {
-  constructor(private readonly carRepository: CarRepository) { }
+  constructor(
+    private readonly carRepository: CarRepository,
+    private readonly userRepository: UserRepository,
+    private readonly transactionRunner: TransactionRunner
+  ) {}
 
   async execute(request: { carId: string; reason: string; actorId: string }) {
     const { carId, reason, actorId } = request;
-    if (!carId) throw new Error('carId is required');
-    if (!reason || reason.trim() === '') throw new Error('reason is required');
-
-    const car = await this.carRepository.getById(carId);
-    if (!car) throw new Error('Car not found');
-    if (!['transfer_pending_owner', 'transfer_pending_police'].includes(car.status)) {
-      throw new Error('Car is not pending transfer');
+    if (!carId || !actorId) {
+      throw new DomainError('INVALID_ARGUMENT', 'carId and actorId are required');
     }
 
-    await this.carRepository.update(carId, {
-      status: 'active',
-      transferRejectionReason: reason,
-      transferToOwnerId: null,
-      transferCarteGriseUrl: null,
-    });
+    const trimmedReason = validateRejectionReason(reason);
 
-    await this.carRepository.addAuditLog({
-      carId,
-      actorId,
-      action: 'TRANSFER_REJECTED',
-      details: reason,
-      timestamp: new Date(),
-    });
+    return this.transactionRunner.run(async (tx) => {
+      const actor = await this.userRepository.getById(actorId, tx);
+      if (!actor) {
+        throw new DomainError('PERMISSION_DENIED', 'Unauthorized user');
+      }
 
-    return { ok: true };
+      const car = await this.carRepository.getById(carId, tx);
+      if (!car) {
+        throw new DomainError('NOT_FOUND', 'Car not found');
+      }
+
+      if (car.status === 'transfer_pending_owner') {
+        if (actor.role !== 'owner' || car.ownerId !== actorId) {
+          throw new DomainError('PERMISSION_DENIED', 'Only the current vehicle owner can reject at this stage');
+        }
+      } else if (car.status === 'transfer_pending_police') {
+        if (actor.role !== 'police') {
+          throw new DomainError('PERMISSION_DENIED', 'Only police can reject a transfer awaiting police approval');
+        }
+      } else {
+        throw new DomainError('FAILED_PRECONDITION', 'Car is not pending transfer');
+      }
+
+      await this.carRepository.update(
+        carId,
+        {
+          status: 'active',
+          transferRejectionReason: trimmedReason,
+          transferToOwnerId: null,
+          transferCarteGriseUrl: null,
+          transferRequestedAt: null,
+        },
+        tx
+      );
+
+      await this.carRepository.addAuditLog(
+        {
+          carId,
+          actorId,
+          action: 'TRANSFER_REJECTED',
+          details: trimmedReason,
+          reason: trimmedReason,
+          timestamp: new Date(),
+        },
+        tx
+      );
+
+      return { ok: true };
+    });
   }
 }

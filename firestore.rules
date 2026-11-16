@@ -40,13 +40,10 @@ service cloud.firestore {
     }
 
     match /cars/{carId} {
-      // Owners can read their own cars OR cars they previously owned (ownershipHistory); Police can read all
+      // Only police or the current owner can read; previous owners (ownershipHistory) have no access
       allow read: if isSecureRequest() && (
         getUserData().role == 'police' ||
-        (getUserData().role == 'owner' && (
-          resource.data.ownerId == request.auth.uid ||
-          request.auth.uid in resource.data.ownershipHistory
-        ))
+        (getUserData().role == 'owner' && resource.data.ownerId == request.auth.uid)
       );
       allow write: if false;
     }

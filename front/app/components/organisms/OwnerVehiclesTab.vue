@@ -21,7 +21,10 @@
 
       <LoadingSkeleton v-if="loading" :count="2" class="h-48 mb-4" />
 
-      <div v-else-if="!cars?.length" class="flex flex-col items-center justify-center py-20 bg-slate-900 border border-slate-800 border-dashed rounded-2xl">
+      <div
+        v-else-if="!cars?.length"
+        class="flex flex-col items-center justify-center py-20 bg-slate-900 border border-slate-800 border-dashed rounded-2xl"
+      >
         <div class="p-4 bg-slate-800 rounded-full mb-4">
           <UIcon name="lucide:car-front" class="w-8 h-8 text-slate-400" />
         </div>
@@ -44,28 +47,6 @@
           :car="car"
           @delete="$emit('delete', car.id)"
           @retry="$emit('retry', car.id)"
-          @transfer="$emit('transfer', car.id)"
-        />
-      </div>
-    </div>
-
-    <div v-if="historicalCars?.length" class="mt-12 pt-8 border-t border-slate-800">
-      <div class="flex items-center gap-3 mb-6">
-        <div class="p-2 bg-slate-800 rounded-lg">
-          <UIcon name="lucide:history" class="w-5 h-5 text-slate-400" />
-        </div>
-        <div>
-          <h2 class="text-xl font-bold tracking-tight text-white">{{ $t('owner.history.title') }}</h2>
-          <p class="text-xs text-slate-500 mt-0.5">{{ $t('owner.history.subtitle') }}</p>
-        </div>
-      </div>
-      
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
-        <MoleculesOwnerCarCard
-          v-for="car in historicalCars"
-          :key="car.id"
-          :car="car"
-          :readonly="true"
         />
       </div>
     </div>
@@ -75,9 +56,8 @@
 <script setup lang="ts">
 defineProps<{
   cars: any[]
-  historicalCars: any[]
   loading: boolean
 }>()
 
-defineEmits(['add', 'delete', 'retry', 'transfer'])
+defineEmits(['add', 'delete', 'retry'])
 </script>

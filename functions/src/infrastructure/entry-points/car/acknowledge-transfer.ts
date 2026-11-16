@@ -1,8 +1,13 @@
 import { onCall, HttpsError } from 'firebase-functions/v2/https';
 import { AcknowledgeTransferUseCase } from '../../../application/usecases/car/acknowledge-transfer';
-import { carRepository } from '../index';
+import { carRepository, transactionRunner, userRepository } from '../index';
+import { mapDomainErrorToHttpsError } from '../shared/error-mapper';
 
-const acknowledgeTransferUseCase = new AcknowledgeTransferUseCase(carRepository);
+const acknowledgeTransferUseCase = new AcknowledgeTransferUseCase(
+  carRepository,
+  userRepository,
+  transactionRunner
+);
 
 export const acknowledgeTransfer = onCall(
   { region: 'europe-west3', enforceAppCheck: true },
@@ -13,11 +18,11 @@ export const acknowledgeTransfer = onCall(
 
     try {
       return await acknowledgeTransferUseCase.execute({
+        ...(request.data ?? {}),
         ownerId: request.auth.uid,
-        ...request.data,
       });
-    } catch (error: any) {
-      throw new HttpsError('internal', error.message);
+    } catch (error) {
+      throw mapDomainErrorToHttpsError(error);
     }
   }
 );

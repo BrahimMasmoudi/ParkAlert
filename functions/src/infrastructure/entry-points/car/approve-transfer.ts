@@ -1,8 +1,14 @@
 import { onCall, HttpsError } from 'firebase-functions/v2/https';
 import { ApproveTransferUseCase } from '../../../application/usecases/car/approve-transfer';
-import { carRepository, fineRepository } from '../index';
+import { carRepository, fineRepository, transactionRunner, userRepository } from '../index';
+import { mapDomainErrorToHttpsError } from '../shared/error-mapper';
 
-const approveTransferUseCase = new ApproveTransferUseCase(carRepository, fineRepository);
+const approveTransferUseCase = new ApproveTransferUseCase(
+  carRepository,
+  fineRepository,
+  userRepository,
+  transactionRunner
+);
 
 export const approveTransfer = onCall(
   { region: 'europe-west3', enforceAppCheck: true },
@@ -13,11 +19,11 @@ export const approveTransfer = onCall(
 
     try {
       return await approveTransferUseCase.execute({
+        ...(request.data ?? {}),
         actorId: request.auth.uid,
-        ...request.data,
       });
-    } catch (error: any) {
-      throw new HttpsError('internal', error.message);
+    } catch (error) {
+      throw mapDomainErrorToHttpsError(error);
     }
   }
 );

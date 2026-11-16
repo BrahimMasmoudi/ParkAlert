@@ -1,41 +1,55 @@
 import { CarRepository } from '../../../domain/repositories/car.repository';
 import { Car, CarAuditLog } from '../../../domain/entities/car.entity';
+import { TransactionContext } from '../../../domain/repositories/transaction.port';
+import { normalizePlate } from '../../../domain/value-objects/plate';
 import { FirestoreConnector } from '../../connectors/FirestoreConnector';
+import { asFirestoreTransaction } from './FirestoreTransactionRunner';
 
 export class FirestoreCarRepository implements CarRepository {
-  constructor(private readonly connector: FirestoreConnector) { }
+  constructor(private readonly connector: FirestoreConnector) {}
 
-  async create(car: Car): Promise<void> {
-    await this.connector.db.collection('cars').doc(car.id).set({
+  async create(car: Car, tx?: TransactionContext): Promise<void> {
+    const ref = this.connector.db.collection('cars').doc(car.id);
+    const data = {
       ...car,
       createdAt: this.connector.getFieldValue().serverTimestamp(),
-    });
+    };
+    const firestoreTx = asFirestoreTransaction(tx);
+    if (firestoreTx) {
+      firestoreTx.create(ref, data);
+    } else {
+      await ref.create(data);
+    }
   }
 
-  async getById(id: string): Promise<Car | null> {
-    const doc = await this.connector.db.collection('cars').doc(id).get();
+  async getById(id: string, tx?: TransactionContext): Promise<Car | null> {
+    const ref = this.connector.db.collection('cars').doc(id);
+    const firestoreTx = asFirestoreTransaction(tx);
+    const doc = firestoreTx ? await firestoreTx.get(ref) : await ref.get();
     if (!doc.exists) return null;
     return doc.data() as Car;
   }
 
-  async getByPlateNumber(plateNumber: string): Promise<Car | null> {
-    const normalized = plateNumber.toUpperCase().replace(/[^A-Z0-9]/g, '');
-    const snapshot = await this.connector.db.collection('cars')
+  async getByPlateNumber(plateNumber: string, tx?: TransactionContext): Promise<Car | null> {
+    const normalized = normalizePlate(plateNumber);
+    const plateQuery = this.connector.db
+      .collection('cars')
       .where('plateNumberNormalized', '==', normalized)
-      .limit(1)
-      .get();
-    
+      .limit(1);
+    const firestoreTx = asFirestoreTransaction(tx);
+    const snapshot = firestoreTx ? await firestoreTx.get(plateQuery) : await plateQuery.get();
+
     if (snapshot.empty) {
       // Fallback to exact match on ID for backward compatibility
-      return this.getById(normalized);
+      return this.getById(normalized, tx);
     }
     return snapshot.docs[0].data() as Car;
   }
 
-  async update(id: string, updates: Partial<Car>): Promise<void> {
-    const firestoreUpdates: any = { ...updates };
+  async update(id: string, updates: Partial<Car>, tx?: TransactionContext): Promise<void> {
+    const firestoreUpdates: Record<string, any> = { ...updates };
 
-    Object.keys(firestoreUpdates).forEach(key => {
+    Object.keys(firestoreUpdates).forEach((key) => {
       if (firestoreUpdates[key] === null) {
         firestoreUpdates[key] = this.connector.getFieldValue().delete();
       }
@@ -43,14 +57,27 @@ export class FirestoreCarRepository implements CarRepository {
 
     firestoreUpdates.updatedAt = this.connector.getFieldValue().serverTimestamp();
 
-    await this.connector.db.collection('cars').doc(id).update(firestoreUpdates);
+    const ref = this.connector.db.collection('cars').doc(id);
+    const firestoreTx = asFirestoreTransaction(tx);
+    if (firestoreTx) {
+      firestoreTx.update(ref, firestoreUpdates);
+    } else {
+      await ref.update(firestoreUpdates);
+    }
   }
 
-  async addAuditLog(log: Omit<CarAuditLog, 'id'>): Promise<void> {
-    await this.connector.db.collection('car_audit_logs').add({
+  async addAuditLog(log: Omit<CarAuditLog, 'id'>, tx?: TransactionContext): Promise<void> {
+    const ref = this.connector.db.collection('car_audit_logs').doc();
+    const data = {
       ...log,
       timestamp: this.connector.getFieldValue().serverTimestamp(),
-    });
+    };
+    const firestoreTx = asFirestoreTransaction(tx);
+    if (firestoreTx) {
+      firestoreTx.create(ref, data);
+    } else {
+      await ref.set(data);
+    }
   }
 
   generateId(): string {

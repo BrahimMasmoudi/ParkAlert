@@ -1,0 +1,93 @@
+import { afterAll, beforeEach, describe, expect, it } from 'vitest';
+import { getApps, initializeApp } from 'firebase-admin/app';
+import { getFirestore } from 'firebase-admin/firestore';
+import { migrate as migrateV2 } from '../../migrations/v2__plate_as_id';
+import { migrate as migrateV3 } from '../../migrations/v3__backfill_fines_and_audit_logs';
+
+process.env.FIRESTORE_EMULATOR_HOST = process.env.FIRESTORE_EMULATOR_HOST || '127.0.0.1:8080';
+
+const app = getApps().length ? getApps()[0] : initializeApp({ projectId: 'parkalert-migration-test' });
+const db = getFirestore(app);
+
+async function clearCollection(name: string) {
+  const snap = await db.collection(name).get();
+  if (snap.empty) return;
+  const batch = db.batch();
+  snap.docs.forEach((d) => batch.delete(d.ref));
+  await batch.commit();
+}
+
+describe('US3: v2 and v3 Migrations', () => {
+  beforeEach(async () => {
+    await Promise.all([
+      clearCollection('cars'),
+      clearCollection('fines'),
+      clearCollection('car_audit_logs'),
+      clearCollection('migration_conflicts'),
+    ]);
+  });
+
+  afterAll(async () => {
+    await Promise.all([
+      clearCollection('cars'),
+      clearCollection('fines'),
+      clearCollection('car_audit_logs'),
+      clearCollection('migration_conflicts'),
+    ]);
+  });
+
+  it('v2 migrates legacy IDs, updates car_audit_logs, and logs collisions without overwriting', async () => {
+    await db.collection('cars').doc('legacy-1').set({
+      id: 'legacy-1',
+      ownerId: 'owner-a',
+      plateNumber: 'AB-123-CD',
+      status: 'active',
+    });
+    await db.collection('car_audit_logs').doc('log-1').set({
+      carId: 'legacy-1',
+      actorId: 'owner-a',
+      action: 'APPROVED',
+    });
+
+    await db.collection('cars').doc('CD456EF').set({
+      id: 'CD456EF',
+      ownerId: 'owner-existing',
+      plateNumber: 'CD-456-EF',
+      plateNumberNormalized: 'CD456EF',
+      status: 'active',
+    });
+    await db.collection('cars').doc('legacy-collision').set({
+      id: 'legacy-collision',
+      ownerId: 'owner-intruder',
+      plateNumber: 'CD-456-EF',
+      status: 'active',
+    });
+
+    await migrateV2({ firestore: db } as any);
+
+    expect((await db.collection('cars').doc('AB123CD').get()).exists).toBe(true);
+    expect((await db.collection('cars').doc('legacy-1').get()).exists).toBe(false);
+    expect((await db.collection('car_audit_logs').doc('log-1').get()).data()?.carId).toBe('AB123CD');
+
+    expect((await db.collection('cars').doc('CD456EF').get()).data()?.ownerId).toBe('owner-existing');
+    const conflicts = await db.collection('migration_conflicts').get();
+    expect(conflicts.size).toBe(1);
+    expect(conflicts.docs[0].data().reason).toBe('CROSS_OWNER_DUPLICATE_PLATE');
+  });
+
+  it('v3 backfills fines.plateNumberNormalized idempotently', async () => {
+    await db.collection('fines').doc('fine-legacy').set({
+      ownerId: 'owner-a',
+      plateNumber: 'EF-789-GH',
+      status: 'unpaid',
+      amount: 35,
+    });
+
+    await migrateV3({ firestore: db } as any);
+    expect((await db.collection('fines').doc('fine-legacy').get()).data()?.plateNumberNormalized).toBe('EF789GH');
+
+    // Re-running v3 is idempotent
+    await migrateV3({ firestore: db } as any);
+    expect((await db.collection('fines').doc('fine-legacy').get()).data()?.plateNumberNormalized).toBe('EF789GH');
+  });
+});

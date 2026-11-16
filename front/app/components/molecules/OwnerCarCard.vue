@@ -62,7 +62,7 @@
         </UTooltip>
 
         <UTooltip
-          v-else-if="car.status !== 'deleted' && car.status !== 'deletion_requested' && car.status !== 'transfer_pending_owner' && car.status !== 'transfer_pending_police'"
+          v-else-if="car.status !== 'archived' && car.status !== 'deletion_requested' && car.status !== 'transfer_pending_owner' && car.status !== 'transfer_pending_police'"
           :text="$t('owner.car.delete_tooltip')"
         >
           <UButton
@@ -78,7 +78,8 @@
 
     <div class="p-5 grid grid-cols-2 gap-6 bg-slate-900">
       <div>
-        <p class="text-[10px] text-slate-500 font-bold uppercase tracking-widest mb-1">{{ $t('owner.car.brand_model') }}
+        <p class="text-[10px] text-slate-500 font-bold uppercase tracking-widest mb-1">
+          {{ $t('owner.car.brand_model') }}
         </p>
         <p class="text-sm text-slate-200 font-medium capitalize">{{ car.brand }} {{ car.model }}</p>
       </div>
@@ -134,7 +135,8 @@
                 variant="soft"
                 size="xs"
                 class="font-bold"
-              >{{ $t('owner.car.action_required') }}
+              >
+                {{ $t('owner.car.action_required') }}
               </UBadge>
               <UIcon
                 name="lucide:chevron-down"
@@ -152,8 +154,9 @@
 
               <!-- Requester Info Card -->
               <div class="bg-slate-950/50 rounded-lg p-4 mb-6 border border-indigo-500/10">
-                <p class="text-[10px] text-indigo-400 font-bold uppercase tracking-widest mb-3">{{
-                  $t('owner.car.proposed_new_owner') }}</p>
+                <p class="text-[10px] text-indigo-400 font-bold uppercase tracking-widest mb-3">
+                  {{ $t('owner.car.proposed_new_owner') }}
+                </p>
                 <div class="flex items-center gap-4">
                   <UAvatar
                     :src="requester?.photoURL"
@@ -162,8 +165,9 @@
                     class="ring-2 ring-indigo-500/20 flex-shrink-0"
                   />
                   <div class="min-w-0 flex-1">
-                    <p class="text-slate-100 font-bold truncate">{{ requester?.fullName || requester?.name ||
-                      'Loading...' }}</p>
+                    <p class="text-slate-100 font-bold truncate">
+                      {{ requester?.fullName || requester?.name || $t('common.loading') }}
+                    </p>
                     <div class="flex flex-col gap-1 mt-1">
                       <p v-if="requester?.email" class="text-xs text-slate-400 flex items-center gap-1.5 min-w-0">
                         <UIcon name="lucide:mail" class="w-3 h-3 flex-shrink-0" />
@@ -189,7 +193,7 @@
                   icon="lucide:x-circle"
                   class="flex-1 justify-center font-semibold"
                   :loading="carsStore.isLoading(`${car.id}-reject`)"
-                  @click="carsStore.rejectTransfer(car.id)"
+                  @click="openRejectTransferModal"
                 >
                   {{ $t('owner.car.reject_transfer_button') }}
                 </UButton>
@@ -204,7 +208,6 @@
                 >
                   {{ $t('owner.car.acknowledge_button') }}
                 </UButton>
-
               </div>
             </div>
           </div>
@@ -231,34 +234,78 @@
     <div class="px-5 py-3 bg-slate-950 border-t border-slate-800 flex items-center justify-between">
       <div class="flex items-center gap-2">
         <UIcon name="lucide:file-text" class="w-4 h-4 text-slate-500" />
-        <span class="text-xs text-slate-400 font-medium uppercase tracking-wider">{{ $t('owner.car.carte_grise')
-        }}</span>
+        <span class="text-xs text-slate-400 font-medium uppercase tracking-wider">
+          {{ $t('owner.car.carte_grise') }}
+        </span>
       </div>
       <UButton
-        :to="car.carteGriseUrl"
-        target="_blank"
         color="primary"
         variant="link"
         icon="lucide:external-link"
         :label="$t('owner.car.view_doc')"
+        :loading="isOpening(car.id, 'active')"
         :padded="false"
         class="text-indigo-400 hover:text-indigo-300 font-medium text-sm"
+        @click="openDocument(car.id, 'active', car.carteGriseUrl)"
       />
     </div>
+
+    <!-- Owner Transfer Rejection Reason Modal -->
+    <UModal
+      v-model:open="isRejectModalOpen"
+      :title="$t('owner.modals.reject_transfer.title')"
+      :description="$t('owner.modals.reject_transfer.description')"
+    >
+      <template #body>
+        <UFormField
+          :label="$t('owner.modals.reject_transfer.reason_label')"
+          :error="rejectionReasonError"
+          required
+        >
+          <UTextarea
+            v-model="rejectionReasonInput"
+            :placeholder="$t('owner.modals.reject_transfer.placeholder')"
+            :rows="3"
+            class="w-full"
+          />
+        </UFormField>
+      </template>
+      <template #footer>
+        <div class="flex justify-end gap-3 w-full">
+          <UButton
+            :label="$t('common.cancel')"
+            color="neutral"
+            variant="soft"
+            @click="isRejectModalOpen = false"
+          />
+          <UButton
+            :label="$t('owner.modals.reject_transfer.confirm_button')"
+            color="error"
+            :disabled="!isRejectionReasonValid"
+            :loading="carsStore.isLoading(`${car.id}-reject`)"
+            @click="submitRejectTransfer"
+          />
+        </div>
+      </template>
+    </UModal>
   </UCard>
 </template>
 
 <script setup lang="ts">
 import type { CarStatus } from '~/stores/cars'
 import { useCarsStore } from '~/stores/cars'
+import { useDocumentViewer } from '~/composables/useDocumentViewer'
+import { normalizePlate } from '~/composables/useVehicleValidation'
 
+const { t } = useI18n()
 const carsStore = useCarsStore()
+const { openDocument, isOpening } = useDocumentViewer()
 
 const { car } = defineProps<{
   car: {
     id: string
     plateNumber: string
-    status: CarStatus | 'deletion_requested'
+    status: CarStatus
     brand: string
     model: string
     color: string
@@ -273,7 +320,6 @@ const { car } = defineProps<{
 defineEmits<{
   (e: 'delete', id: string): void
   (e: 'retry', id: string): void
-  (e: 'transfer', id: string): void
 }>()
 
 const userStore = useUserStore()
@@ -287,6 +333,37 @@ watchEffect(async () => {
 
 const finesStore = useFinesStore()
 const unpaidFinesCount = computed(() => {
-  return finesStore.myFines?.filter(f => f.plateNumber === car.plateNumber && f.status === 'unpaid').length || 0
+  const targetPlate = normalizePlate(car.plateNumber)
+  return finesStore.myFines?.filter(
+    f => normalizePlate(f.plateNumber) === targetPlate && f.status === 'unpaid'
+  ).length || 0
 })
+
+const isRejectModalOpen = ref(false)
+const rejectionReasonInput = ref('')
+
+const trimmedRejectionReason = computed(() => rejectionReasonInput.value.trim())
+const isRejectionReasonValid = computed(() => {
+  const len = trimmedRejectionReason.value.length
+  return len >= 3 && len <= 500
+})
+const rejectionReasonError = computed(() => {
+  if (!rejectionReasonInput.value) return ''
+  if (!isRejectionReasonValid.value) {
+    return t('owner.modals.reject_transfer.reason_length_error')
+  }
+  return ''
+})
+
+function openRejectTransferModal() {
+  rejectionReasonInput.value = ''
+  isRejectModalOpen.value = true
+}
+
+async function submitRejectTransfer() {
+  if (!isRejectionReasonValid.value) return
+  await carsStore.rejectTransfer(car.id, trimmedRejectionReason.value)
+  isRejectModalOpen.value = false
+  rejectionReasonInput.value = ''
+}
 </script>
