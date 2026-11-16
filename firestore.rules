@@ -47,5 +47,10 @@ service cloud.firestore {
       );
       allow write: if false;
     }
+
+    match /enforcement_audit_logs/{logId} {
+      // Server-only immutable audit logs written by Admin SDK transactions
+      allow read, write: if false;
+    }
   }
 }

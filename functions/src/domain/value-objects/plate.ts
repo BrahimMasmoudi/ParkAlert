@@ -1,5 +1,7 @@
 import { DomainError } from '../errors/domain.error';
 
+const FRENCH_PLATE_NORMALIZED_REGEX = /^(?:[A-Z]{2}\d{3}[A-Z]{2}|\d{1,4}[A-Z]{2,3}\d{2,3})$/;
+
 /**
  * Normalizes a license plate into an uppercase alphanumeric identifier.
  */
@@ -8,11 +10,20 @@ export function normalizePlate(plateNumber: string): string {
 }
 
 /**
+ * Validates that a license plate matches supported SIV or FNI formats after normalization.
+ */
+export function isValidPlateFormat(plateNumber: string): boolean {
+  if (typeof plateNumber !== 'string') return false;
+  const normalized = normalizePlate(plateNumber);
+  return FRENCH_PLATE_NORMALIZED_REGEX.test(normalized);
+}
+
+/**
  * Validates that a Storage path belongs cleanly to the caller's authorized upload prefix.
  */
 function isValidScopedStoragePath(
   path: unknown,
-  prefix: 'carteGrise' | 'transfers',
+  prefix: 'carteGrise' | 'transfers' | 'reports',
   callerUid: string
 ): path is string {
   if (typeof path !== 'string' || path.trim() === '' || !callerUid) {
@@ -47,6 +58,13 @@ export function isValidRegistrationPath(path: unknown, callerUid: string): path 
  */
 export function isValidTransferPath(path: unknown, callerUid: string): path is string {
   return isValidScopedStoragePath(path, 'transfers', callerUid);
+}
+
+/**
+ * Validates that a report evidence photo path belongs to `reports/<callerUid>/<file>`.
+ */
+export function isValidReportPath(path: unknown, callerUid: string): path is string {
+  return isValidScopedStoragePath(path, 'reports', callerUid);
 }
 
 /**

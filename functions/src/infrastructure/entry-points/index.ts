@@ -5,12 +5,14 @@ import { FirestoreUserRepository } from '../adapters/persistence/FirestoreUserRe
 import { FirestoreFineRepository } from '../adapters/persistence/FirestoreFineRepository';
 import { FirestoreCarRepository } from '../adapters/persistence/FirestoreCarRepository';
 import { FirestoreTransactionRunner } from '../adapters/persistence/FirestoreTransactionRunner';
+import { EnforcementAuditHelper } from '../adapters/persistence/EnforcementAuditHelper';
 import { StorageSignedUrlAdapter } from '../adapters/storage/StorageSignedUrlAdapter';
 
 const db = getFirestore();
 export const connector = new FirestoreConnector(db);
 export const transactionRunner = new FirestoreTransactionRunner(connector);
 export const documentStoragePort = new StorageSignedUrlAdapter();
+export const enforcementAuditPort = new EnforcementAuditHelper(connector);
 
 export const userRepository = new FirestoreUserRepository(connector);
 export const reportRepository = new FirestoreReportRepository(connector);
@@ -18,6 +20,9 @@ export const fineRepository = new FirestoreFineRepository(connector);
 export const carRepository = new FirestoreCarRepository(connector);
 
 export * from './report/create-report';
+export * from './report/update-report-plate';
+export * from './report/dismiss-report';
+export * from './evidence/get-evidence-urls';
 export * from './fine/issue-fine';
 export * from './fine/pay-fine';
 export * from './user/set-user-role';

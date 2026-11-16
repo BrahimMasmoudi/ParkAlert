@@ -1,17 +1,27 @@
 import { ref } from 'vue'
+import { httpsCallable } from 'firebase/functions'
 import { useCarsStore } from '~/stores/cars'
+import type { ReportPhotoSlot } from '~/stores/reports'
 
 export type DocumentKind = 'active' | 'pendingTransfer'
+
+export interface EvidenceUrlItem {
+  slot: ReportPhotoSlot
+  url: string | null
+  expiresAt: number | null
+  error?: 'not_found'
+}
 
 export const useDocumentViewer = () => {
   const carsStore = useCarsStore()
   const toast = useToast()
   const loadingDoc = ref<string | null>(null)
+  const loadingEvidence = ref(false)
 
   async function resolveDocumentUrl(
     carId: string,
     documentKind: DocumentKind,
-    rawPath?: string | null
+    rawPath?: string | null,
   ): Promise<string | null> {
     if (!rawPath) return null
     if (
@@ -27,7 +37,7 @@ export const useDocumentViewer = () => {
   async function openDocument(
     carId: string,
     documentKind: DocumentKind,
-    rawPath?: string | null
+    rawPath?: string | null,
   ): Promise<void> {
     if (!rawPath) return
     const key = `${carId}-${documentKind}`
@@ -56,9 +66,38 @@ export const useDocumentViewer = () => {
     return loadingDoc.value === `${carId}-${documentKind}`
   }
 
+  async function fetchEvidenceUrls(
+    targetType: 'report' | 'fine',
+    targetId: string,
+  ): Promise<EvidenceUrlItem[]> {
+    loadingEvidence.value = true
+    try {
+      const { $functions } = useNuxtApp()
+      const fn = httpsCallable<
+        { targetType: 'report' | 'fine'; targetId: string },
+        { ok: boolean; items: EvidenceUrlItem[] }
+      >($functions, 'getEvidenceUrls')
+      const res = await fn({ targetType, targetId })
+      return res.data?.items ?? []
+    }
+    catch (error: any) {
+      toast.add({
+        title: 'Evidence unavailable',
+        description: error?.message || 'Unable to load evidence photos',
+        color: 'error',
+      })
+      throw error
+    }
+    finally {
+      loadingEvidence.value = false
+    }
+  }
+
   return {
     resolveDocumentUrl,
     openDocument,
     isOpening,
+    fetchEvidenceUrls,
+    loadingEvidence,
   }
 }

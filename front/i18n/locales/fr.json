@@ -19,7 +19,12 @@
     "sign_out": "Déconnexion",
     "continue": "Continuer",
     "close": "Fermer",
-    "retry": "Réessayer"
+    "retry": "Réessayer",
+    "back": "Retour",
+    "required": "Requis",
+    "optional": "Optionnel",
+    "refresh_photos": "Actualiser les photos",
+    "photo_unavailable": "Photo indisponible"
   },
   "roles": {
     "agent": "Agent",
@@ -60,14 +65,37 @@
     "new_report": "Nouveau Signalement",
     "new_report_subtitle": "Appuyez pour signaler un véhicule mal stationné",
     "footer_info": "Vos signalements sont traités par des officiers de police.",
+    "sent_reports": "Signalements Envoyés",
+    "no_reports": "Vous n'avez encore envoyé aucun signalement.",
+    "status": {
+      "pending": "En attente",
+      "investigated": "Amende délivrée",
+      "resolved": "Clôturé"
+    },
+    "edit_plate": {
+      "button": "Modifier la plaque",
+      "title": "Modifier la plaque du signalement",
+      "photos_label": "Photos de preuve",
+      "plate_label": "Numéro d'immatriculation"
+    },
     "steps": {
-      "photo": "Étape 1 — Prendre une Photo",
+      "photo": "Étape 1 — Prendre les Photos",
       "location": "Étape 2 — Localisation",
       "plate": "Étape 3 — Numéro de Plaque"
     },
     "form": {
+      "photos_helper": "Ajoutez 2 photos obligatoires (zone d'infraction et plaque) plus 1 angle optionnel.",
+      "slot_context_label": "Photo 1 — Zone d'infraction",
+      "slot_plate_label": "Photo 2 — Plaque d'immatriculation",
+      "slot_plate_reminder": "Rappel : assurez-vous que le numéro d'immatriculation soit bien lisible.",
+      "slot_extra_label": "Photo 3 — Angle supplémentaire",
+      "retake_photo": "Reprendre la photo",
+      "compressing": "Optimisation de la photo...",
+      "plate_preview_label": "Vérifiez avec la Photo 2 (Plaque) :",
+      "photo_error_title": "Photo non prise en charge",
+      "photo_error_desc": "Veuillez choisir une image JPEG, PNG ou WebP valide.",
+      "photos_required_error": "Les photos de la zone d'infraction et de la plaque sont obligatoires.",
       "tap_to_photo": "Appuyez pour prendre / charger une photo",
-      "skip_photo": "Passer la photo",
       "capture_gps": "Ma position actuelle (GPS)",
       "recapture_gps": "Recalculer la position",
       "address_placeholder": "Saisissez l'adresse exacte ou les coordonnées",
@@ -88,6 +116,7 @@
     },
     "actions": {
       "issue_fine": "Délivrer une Amende",
+      "dismiss_report": "Classer sans suite",
       "reject": "Rejeter la Demande",
       "approve": "Approuver",
       "approve_registration": "Approuver l'Enregistrement",
@@ -111,12 +140,15 @@
       "no_document": "Aucun document téléchargé",
       "activation_request": "Demande d'Activation",
       "deletion_request": "Demande de Suppression",
-      "transfer_request": "Demande de Transfert de Propriété"
+      "transfer_request": "Demande de Transfert de Propriété",
+      "evidence_photos": "Photos de Preuve",
+      "no_evidence": "Aucune photo de preuve jointe."
     },
     "fine": {
       "title": "Délivrer une Amende",
       "description": "Créer une nouvelle amende pour le propriétaire.",
       "target_vehicle": "Véhicule Ciblé",
+      "check_plate": "Vérifier",
       "searching_owner": "Recherche du propriétaire...",
       "owner_found": "Propriétaire Trouvé",
       "no_owner_found": "Aucun propriétaire trouvé pour cette plaque.",
@@ -147,6 +179,12 @@
       "description": "Veuillez fournir une raison pour le rejet.",
       "placeholder": "Raison du rejet...",
       "confirm": "Confirmer le Rejet"
+    },
+    "dismiss": {
+      "title": "Classer le Signalement",
+      "description": "Indiquez pourquoi ce signalement est clôturé sans amende.",
+      "placeholder": "ex : Photo floue ou véhicule non enregistré...",
+      "confirm": "Confirmer la Clôture"
     },
     "audit": {
       "title": "Journal d'Audit des Amendes",

@@ -2,6 +2,7 @@ import { onCall, HttpsError } from 'firebase-functions/v2/https';
 import { IssueFineUseCase } from '../../../application/usecases/fine/issue-fine';
 import {
   carRepository,
+  enforcementAuditPort,
   fineRepository,
   reportRepository,
   transactionRunner,
@@ -14,7 +15,8 @@ const issueFineUseCase = new IssueFineUseCase(
   fineRepository,
   userRepository,
   carRepository,
-  transactionRunner
+  transactionRunner,
+  enforcementAuditPort
 );
 
 export const issueFine = onCall(

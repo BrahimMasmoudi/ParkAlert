@@ -34,16 +34,28 @@ export class FirestoreCarRepository implements CarRepository {
     const normalized = normalizePlate(plateNumber);
     const plateQuery = this.connector.db
       .collection('cars')
-      .where('plateNumberNormalized', '==', normalized)
-      .limit(1);
+      .where('plateNumberNormalized', '==', normalized);
     const firestoreTx = asFirestoreTransaction(tx);
     const snapshot = firestoreTx ? await firestoreTx.get(plateQuery) : await plateQuery.get();
 
-    if (snapshot.empty) {
-      // Fallback to exact match on ID for backward compatibility
-      return this.getById(normalized, tx);
+    const eligible = snapshot.docs
+      .map((doc) => doc.data() as Car)
+      .filter((car) => car.status !== 'archived' && car.status !== 'rejected');
+
+    if (eligible.length > 0) {
+      return eligible.find((car) => car.status === 'active') ?? eligible[0];
     }
-    return snapshot.docs[0].data() as Car;
+
+    if (!snapshot.empty) {
+      return null;
+    }
+
+    // Fallback to exact match on ID for legacy cars lacking plateNumberNormalized
+    const fallbackCar = await this.getById(normalized, tx);
+    if (!fallbackCar || fallbackCar.status === 'archived' || fallbackCar.status === 'rejected') {
+      return null;
+    }
+    return fallbackCar;
   }
 
   async update(id: string, updates: Partial<Car>, tx?: TransactionContext): Promise<void> {
