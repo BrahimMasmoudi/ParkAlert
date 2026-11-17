@@ -4,66 +4,54 @@
     prevent-close
     :title="$t('owner.modals.edit_profile.title')"
     :description="$t('owner.modals.edit_profile.description')"
-    :ui="{
-      content: 'bg-slate-900 border border-slate-700 shadow-2xl shadow-black/50 rounded-2xl overflow-hidden',
-      header: 'py-4 sm:py-5 border-b border-slate-800'
-    }"
   >
     <template #body>
       <form class="space-y-5" @submit.prevent="submitUpdate">
         <UFormField
           :label="$t('owner.modals.edit_profile.full_name')"
           required
-          :ui="{ label: { base: 'text-slate-300 font-medium tracking-wide text-sm mb-2' } }"
         >
           <UInput
             v-model="formState.fullName"
             placeholder="John Doe"
             size="xl"
             class="w-full"
-            :ui="{ base: 'w-full bg-slate-950 border-slate-700 focus:ring-indigo-500 shadow-inner' }"
           />
         </UFormField>
 
         <UFormField
           :label="$t('owner.modals.edit_profile.identity_number')"
           required
-          :ui="{ label: { base: 'text-slate-300 font-medium tracking-wide text-sm mb-2' } }"
         >
           <UInput
             v-model="formState.identityNumber"
             placeholder="AB123456"
             size="xl"
             class="w-full"
-            :ui="{ base: 'w-full bg-slate-950 border-slate-700 focus:ring-indigo-500 shadow-inner' }"
           />
         </UFormField>
 
         <UFormField
           :label="$t('owner.modals.edit_profile.birth_date')"
           required
-          :ui="{ label: { base: 'text-slate-300 font-medium tracking-wide text-sm mb-2' } }"
         >
           <UInput
             v-model="formState.birthDate"
             type="date"
             size="xl"
             class="w-full"
-            :ui="{ base: 'w-full bg-slate-950 border-slate-700 focus:ring-indigo-500 shadow-inner' }"
           />
         </UFormField>
 
         <UFormField
           :label="$t('owner.modals.edit_profile.phone')"
           required
-          :ui="{ label: { base: 'text-slate-300 font-medium tracking-wide text-sm mb-2' } }"
         >
           <UInput
             v-model="formState.phone"
             placeholder="+33 6 12 34 56 78"
             size="xl"
             class="w-full"
-            :ui="{ base: 'w-full bg-slate-950 border-slate-700 focus:ring-indigo-500 shadow-inner' }"
           />
         </UFormField>
       </form>
@@ -76,7 +64,7 @@
           color="neutral"
           variant="ghost"
           size="xl"
-          class="flex-1 sm:flex-none justify-center hover:bg-slate-800"
+          class="flex-1 sm:flex-none justify-center"
           :disabled="saving"
           @click="isOpen = false"
         />
@@ -85,7 +73,7 @@
           :label="$t('owner.modals.edit_profile.save_button')"
           color="primary"
           size="xl"
-          class="flex-1 sm:flex-none justify-center font-bold shadow-lg shadow-indigo-500/25"
+          class="flex-1 sm:flex-none justify-center font-bold shadow-lg"
           :loading="saving"
           @click="submitUpdate"
         />

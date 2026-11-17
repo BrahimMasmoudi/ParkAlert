@@ -4,10 +4,6 @@
     prevent-close
     :title="carToEdit ? $t('owner.modals.add_car.title_edit') : $t('owner.modals.add_car.title_new')"
     :description="carToEdit ? $t('owner.modals.add_car.desc_edit') : $t('owner.modals.add_car.desc_new')"
-    :ui="{
-      content: 'bg-slate-900 border border-slate-700 shadow-2xl shadow-black/50 rounded-2xl overflow-hidden',
-      header: 'py-4 sm:py-5 border-b border-slate-800'
-    }"
   >
     <template #body>
       <form class="grid grid-cols-1 sm:grid-cols-2 gap-6" @submit.prevent="handleSubmit">
@@ -16,16 +12,15 @@
           required
           :error="plateError"
           :help="transferMessage"
-          :ui="{ label: { base: 'text-slate-300 font-medium tracking-wide text-sm mb-2' } }"
         >
           <UInput
             v-model="formState.plateNumber"
+            dir="ltr"
             :placeholder="$t('owner.modals.add_car.plate_placeholder')"
-            class="font-mono text-lg uppercase tracking-wider"
+            class="font-mono text-lg uppercase tracking-wider w-full"
             size="xl"
             :loading="isCheckingPlate"
             :disabled="isTransferMode || Boolean(props.carToEdit)"
-            :ui="{ base: 'bg-slate-950 border-slate-700 focus:ring-indigo-500 focus:border-indigo-500 shadow-inner' }"
           />
         </UFormField>
 
@@ -45,42 +40,36 @@
           <UFormField
             :label="$t('owner.modals.add_car.brand_label')"
             required
-            :ui="{ label: { base: 'text-slate-300 font-medium tracking-wide text-sm mb-2' } }"
           >
             <UInput
               v-model="formState.brand"
               placeholder="e.g. Renault"
-              class="text-lg"
+              class="text-lg w-full"
               size="xl"
-              :ui="{ base: 'bg-slate-950 border-slate-700 focus:ring-indigo-500 shadow-inner' }"
             />
           </UFormField>
 
           <UFormField
             :label="$t('owner.modals.add_car.model_label')"
             required
-            :ui="{ label: { base: 'text-slate-300 font-medium tracking-wide text-sm mb-2' } }"
           >
             <UInput
               v-model="formState.model"
               placeholder="e.g. Clio"
-              class="text-lg"
+              class="text-lg w-full"
               size="xl"
-              :ui="{ base: 'bg-slate-950 border-slate-700 focus:ring-indigo-500 shadow-inner' }"
             />
           </UFormField>
 
           <UFormField
             :label="$t('owner.modals.add_car.color_label')"
             required
-            :ui="{ label: { base: 'text-slate-300 font-medium tracking-wide text-sm mb-2' } }"
           >
             <UInput
               v-model="formState.color"
               placeholder="e.g. Black"
-              class="text-lg"
+              class="text-lg w-full"
               size="xl"
-              :ui="{ base: 'bg-slate-950 border-slate-700 focus:ring-indigo-500 shadow-inner' }"
             />
           </UFormField>
         </template>
@@ -89,26 +78,25 @@
           class="sm:col-span-2"
           :label="isTransferMode ? $t('owner.modals.add_car.transfer_carte_grise_label') : $t('owner.modals.add_car.carte_grise_label')"
           required
-          :ui="{ label: { base: 'text-slate-300 font-medium tracking-wide text-sm mb-2' } }"
         >
           <label
-            class="w-full cursor-pointer bg-slate-950 border-2 border-dashed rounded-xl px-4 py-6 flex flex-col items-center justify-center gap-3 transition-all duration-200 group"
-            :class="selectedFile ? 'border-indigo-500 bg-indigo-500/5' : 'border-slate-700 hover:border-slate-500 hover:bg-slate-800'"
+            class="w-full cursor-pointer bg-elevated border-2 border-dashed rounded-xl px-4 py-6 flex flex-col items-center justify-center gap-3 transition-all duration-200 group"
+            :class="selectedFile ? 'border-primary bg-primary/5' : 'border-default hover:border-primary/60 hover:bg-muted'"
           >
             <div
               class="p-3 rounded-full transition-colors"
-              :class="selectedFile ? 'bg-indigo-500/20 text-indigo-400' : 'bg-slate-800 text-slate-400 group-hover:text-white'"
+              :class="selectedFile ? 'bg-primary/15 text-primary' : 'bg-muted text-muted group-hover:text-highlighted'"
             >
               <UIcon name="lucide:upload-cloud" class="w-6 h-6" />
             </div>
             <div class="text-center">
               <span
                 class="text-base font-semibold transition-colors"
-                :class="selectedFile ? 'text-indigo-300' : 'text-slate-200'"
+                :class="selectedFile ? 'text-primary' : 'text-highlighted'"
               >
                 {{ selectedFile ? selectedFile.name : $t('owner.modals.add_car.tap_to_upload') }}
               </span>
-              <p class="text-sm text-slate-500 mt-1">{{ $t('owner.modals.add_car.upload_required') }}</p>
+              <p class="text-sm text-muted mt-1">{{ $t('owner.modals.add_car.upload_required') }}</p>
             </div>
             <input
               type="file"
@@ -136,7 +124,7 @@
           :label="isTransferMode ? $t('owner.modals.add_car.submit_transfer') : (carToEdit ? $t('owner.modals.add_car.submit_edit') : $t('owner.modals.add_car.submit_new'))"
           color="primary"
           size="xl"
-          class="flex-1 sm:flex-none justify-center font-bold shadow-lg shadow-indigo-500/25"
+          class="flex-1 sm:flex-none justify-center font-bold shadow-lg"
           :loading="uploadLoading"
           :disabled="!isFormValid"
           @click="handleSubmit"

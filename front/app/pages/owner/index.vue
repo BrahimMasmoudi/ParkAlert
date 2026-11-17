@@ -3,8 +3,8 @@
     <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
       <div class="lg:col-span-4 space-y-6 lg:sticky lg:top-8">
         <section>
-          <h2 class="text-lg font-bold text-white mb-4 tracking-tight flex items-center gap-2">
-            <UIcon name="lucide:user" class="w-5 h-5 text-indigo-400" />
+          <h2 class="text-lg font-bold text-highlighted mb-4 tracking-tight flex items-center gap-2">
+            <UIcon name="lucide:user" class="w-5 h-5 text-primary" />
             {{ $t('owner.personal_info') }}
           </h2>
           <LoadingSkeleton v-if="profileLoading" :count="1" class="h-64" />
@@ -21,8 +21,8 @@
           :items="tabs"
           class="w-full"
           :ui="{
-            list: 'bg-slate-900 border border-slate-800 p-1 mb-8',
-            indicator: 'bg-indigo-600',
+            list: 'bg-elevated border border-default p-1 mb-8',
+            indicator: 'bg-primary',
             trigger: 'font-bold uppercase tracking-widest text-xs py-3'
           }"
         >
@@ -47,7 +47,7 @@
       icon="lucide:plus"
       size="xl"
       color="primary"
-      class="fixed bottom-6 right-6 shadow-xl shadow-indigo-500/20 rounded-full w-14 h-14 flex sm:hidden items-center justify-center transition-transform hover:scale-105 z-40"
+      class="fixed bottom-6 end-6 shadow-xl rounded-full w-14 h-14 flex sm:hidden items-center justify-center transition-transform hover:scale-105 z-40"
       @click="isAddModalOpen = true"
     />
 
