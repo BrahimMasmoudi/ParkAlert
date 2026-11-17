@@ -28,9 +28,9 @@
     "vuefire": "^3.2.3"
   },
   "devDependencies": {
-    "@nuxt/eslint": "^1.9.0",
+    "@nuxt/eslint": "^1.17.0",
     "concurrently": "^10.0.7",
-    "eslint": "^9.35.0",
+    "eslint": "^10.15.0",
     "firebase-tools": "^15.36.0",
     "husky": "^9.1.7",
     "lint-staged": "^17.6.1",
