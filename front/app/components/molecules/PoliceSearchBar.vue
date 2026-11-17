@@ -5,8 +5,7 @@
       icon="i-lucide-search"
       size="xl"
       :placeholder="placeholder || $t('police.search_placeholder')"
-      class="max-w-md shadow-inner w-full"
-      :ui="{ base: 'bg-slate-900 border-slate-800 focus:ring-indigo-500' }"
+      class="max-w-md w-full"
     />
   </div>
 </template>

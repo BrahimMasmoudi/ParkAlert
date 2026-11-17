@@ -29,6 +29,12 @@ describe('US5: Locale Parity & Plate Normalization', () => {
     expect(arKeys).not.toContain('police.cars.status.transfer_requested');
     expect(arKeys).toContain('owner.modals.add_car.submit_transfer');
     expect(arKeys).toContain('owner.modals.reject_transfer.confirm_button');
+    expect(arKeys).toContain('theme.aria_label');
+    expect(arKeys).toContain('theme.system');
+    expect(arKeys).toContain('theme.light');
+    expect(arKeys).toContain('theme.dark');
+    expect(arKeys).toContain('common.language_aria');
+    expect(arKeys).toContain('common.sign_out_aria');
   });
 
   it('normalizes and validates French plates consistently', () => {

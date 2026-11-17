@@ -1,29 +1,29 @@
 <template>
-  <UModal v-model:open="isOpen" :title="$t('agent.new_report')" :ui="{ content: 'bg-slate-900 border border-slate-700' }">
+  <UModal v-model:open="isOpen" :title="$t('agent.new_report')">
     <template #body>
       <div class="flex items-center gap-2 mb-6">
         <div
           v-for="s in 3"
           :key="s"
           class="flex-1 h-1.5 rounded-full transition-colors duration-300"
-          :class="s <= step ? 'bg-amber-500' : 'bg-slate-700'"
+          :class="s <= step ? 'bg-amber-600 dark:bg-amber-500' : 'bg-muted'"
         />
       </div>
 
       <div v-if="step === 1" class="space-y-4">
-        <p class="font-semibold text-white text-lg">{{ $t('agent.steps.photo') }}</p>
-        <p class="text-xs text-slate-400">{{ $t('agent.form.photos_helper') }}</p>
+        <p class="font-semibold text-highlighted text-lg">{{ $t('agent.steps.photo') }}</p>
+        <p class="text-xs text-muted">{{ $t('agent.form.photos_helper') }}</p>
 
         <div class="space-y-3">
           <div
             v-for="slotCfg in slotConfigs"
             :key="slotCfg.slot"
-            class="bg-slate-800/70 border rounded-2xl p-3 space-y-2"
-            :class="slotCfg.slot === 'plate' ? 'border-amber-500/60' : 'border-slate-700'"
+            class="bg-elevated border rounded-2xl p-3 space-y-2"
+            :class="slotCfg.slot === 'plate' ? 'border-amber-500/70' : 'border-default'"
           >
             <div class="flex items-center justify-between gap-2">
               <div class="flex items-center gap-2 min-w-0">
-                <span class="text-sm font-semibold text-white truncate">{{ slotCfg.label }}</span>
+                <span class="text-sm font-semibold text-highlighted truncate">{{ slotCfg.label }}</span>
                 <UBadge
                   :color="slotCfg.required ? 'warning' : 'neutral'"
                   variant="subtle"
@@ -42,13 +42,13 @@
               />
             </div>
 
-            <p v-if="slotCfg.reminder" class="text-xs text-amber-300 flex items-center gap-1.5">
+            <p v-if="slotCfg.reminder" class="text-xs text-amber-700 dark:text-amber-300 flex items-center gap-1.5">
               <UIcon name="i-lucide-alert-circle" class="w-4 h-4 shrink-0" />
               <span>{{ slotCfg.reminder }}</span>
             </p>
 
             <label
-              class="block w-full aspect-video bg-slate-900 border-2 border-dashed border-slate-600 rounded-xl flex flex-col items-center justify-center gap-2 cursor-pointer hover:border-amber-500 transition-colors overflow-hidden relative"
+              class="block w-full aspect-video bg-default border-2 border-dashed border-default rounded-xl flex flex-col items-center justify-center gap-2 cursor-pointer hover:border-amber-500 transition-colors overflow-hidden relative"
             >
               <img
                 v-if="slotState[slotCfg.slot].preview"
@@ -58,14 +58,14 @@
               >
               <div
                 v-else-if="slotState[slotCfg.slot].compressing"
-                class="flex flex-col items-center gap-2 text-amber-400"
+                class="flex flex-col items-center gap-2 text-amber-700 dark:text-amber-400"
               >
                 <UIcon name="i-lucide-loader-2" class="w-7 h-7 animate-spin" />
                 <span class="text-xs">{{ $t('agent.form.compressing') }}</span>
               </div>
               <template v-else>
-                <UIcon name="lucide:camera" class="w-8 h-8 text-slate-400" />
-                <span class="text-slate-400 text-xs">{{ $t('agent.form.tap_to_photo') }}</span>
+                <UIcon name="lucide:camera" class="w-8 h-8 text-muted" />
+                <span class="text-muted text-xs">{{ $t('agent.form.tap_to_photo') }}</span>
               </template>
               <input
                 :id="`photo-input-${slotCfg.slot}`"
@@ -78,7 +78,7 @@
             </label>
 
             <div v-if="slotState[slotCfg.slot].preview" class="flex justify-end">
-              <label class="text-xs text-amber-400 hover:text-amber-300 cursor-pointer font-medium">
+              <label class="text-xs text-amber-700 dark:text-amber-400 hover:opacity-80 cursor-pointer font-medium">
                 {{ $t('agent.form.retake_photo') }}
                 <input
                   type="file"
@@ -96,7 +96,7 @@
           block
           size="lg"
           :disabled="!hasRequiredPhotos || isAnyCompressing"
-          class="bg-amber-500 hover:bg-amber-400 text-white font-semibold"
+          class="bg-amber-700 hover:bg-amber-600 text-white font-semibold"
           @click="step = 2"
         >
           {{ $t('common.next') }}
@@ -104,7 +104,7 @@
       </div>
 
       <div v-else-if="step === 2" class="space-y-4">
-        <p class="font-semibold text-white text-lg">{{ $t('agent.steps.location') }}</p>
+        <p class="font-semibold text-highlighted text-lg">{{ $t('agent.steps.location') }}</p>
 
         <UButton
           id="capture-location-btn"
@@ -114,14 +114,14 @@
           class="bg-blue-600 hover:bg-blue-500 text-white font-semibold"
           @click="captureLocation"
         >
-          <UIcon name="lucide:crosshair" class="w-5 h-5 mr-2" />
+          <UIcon name="lucide:crosshair" class="w-5 h-5 me-2" />
           {{ location ? $t('agent.form.recapture_gps') : $t('agent.form.capture_gps') }}
         </UButton>
 
         <div class="relative flex items-center py-2">
-          <div class="flex-grow border-t border-slate-700" />
-          <span class="flex-shrink-0 mx-4 text-slate-500 text-sm">{{ $t('common.or') }}</span>
-          <div class="flex-grow border-t border-slate-700" />
+          <div class="flex-grow border-t border-default" />
+          <span class="flex-shrink-0 mx-4 text-dimmed text-sm">{{ $t('common.or') }}</span>
+          <div class="flex-grow border-t border-default" />
         </div>
 
         <UTextarea
@@ -129,7 +129,6 @@
           :placeholder="$t('agent.form.address_placeholder')"
           :rows="2"
           class="w-full"
-          :ui="{ base: 'bg-slate-800 text-white border-slate-600 focus:border-amber-500' }"
         />
 
         <div class="flex gap-2">
@@ -145,7 +144,7 @@
           <UButton
             size="lg"
             :disabled="!location && !locationAddress.trim()"
-            class="flex-1 bg-amber-500 hover:bg-amber-400 text-white font-semibold"
+            class="flex-1 bg-amber-700 hover:bg-amber-600 text-white font-semibold"
             @click="step = 3"
           >
             {{ $t('common.next') }}
@@ -154,13 +153,13 @@
       </div>
 
       <div v-else-if="step === 3" class="space-y-4">
-        <p class="font-semibold text-white text-lg">{{ $t('agent.steps.plate') }}</p>
+        <p class="font-semibold text-highlighted text-lg">{{ $t('agent.steps.plate') }}</p>
 
-        <div v-if="slotState.plate.preview" class="bg-slate-800 border border-slate-700 rounded-xl p-2">
-          <p class="text-[11px] text-amber-300 font-medium mb-1.5">{{ $t('agent.form.plate_preview_label') }}</p>
+        <div v-if="slotState.plate.preview" class="bg-elevated border border-default rounded-xl p-2">
+          <p class="text-[11px] text-amber-700 dark:text-amber-300 font-medium mb-1.5">{{ $t('agent.form.plate_preview_label') }}</p>
           <img
             :src="slotState.plate.preview"
-            class="w-full max-h-40 object-contain rounded-lg bg-slate-950"
+            class="w-full max-h-40 object-contain rounded-lg bg-black"
             alt="Plate preview"
           >
         </div>
@@ -168,13 +167,14 @@
         <UInput
           id="plate-input"
           v-model="plateNumber"
+          dir="ltr"
           :placeholder="$t('agent.form.plate_placeholder')"
           size="xl"
           :color="plateNumber && !isPlateValid ? 'error' : 'neutral'"
-          class="text-center font-mono text-2xl uppercase tracking-widest"
+          class="text-center font-mono text-2xl uppercase tracking-widest w-full"
           autofocus
         />
-        <p v-if="plateNumber && !isPlateValid" class="text-red-400 text-sm text-center">
+        <p v-if="plateNumber && !isPlateValid" class="text-red-700 dark:text-red-400 text-sm text-center">
           {{ $t('agent.form.invalid_plate') }}
         </p>
 
@@ -194,7 +194,7 @@
             size="lg"
             :loading="uploading || reportsStore.submitting"
             :disabled="!isPlateValid"
-            class="flex-1 bg-amber-500 hover:bg-amber-400 text-white font-bold disabled:opacity-50"
+            class="flex-1 bg-amber-700 hover:bg-amber-600 text-white font-bold disabled:opacity-50"
             @click="submitReport"
           >
             {{ $t('agent.form.submit_report') }}

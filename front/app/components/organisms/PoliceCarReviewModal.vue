@@ -3,69 +3,68 @@
     v-model:open="isOpen"
     :title="modeConfig.title"
     :ui="{
-      content: 'bg-slate-900 border border-slate-700 shadow-2xl rounded-2xl overflow-hidden max-w-2xl',
-      header: 'py-4 sm:py-5 border-b border-slate-800',
+      content: 'max-w-2xl',
     }"
   >
     <template #body>
       <div v-if="car" class="space-y-6">
-        <div class="bg-slate-950 rounded-xl border border-slate-800 p-5">
-          <p class="text-[10px] text-slate-500 font-bold uppercase tracking-widest mb-3 flex items-center gap-1.5">
+        <div class="bg-elevated rounded-xl border border-default p-5">
+          <p class="text-[10px] text-dimmed font-bold uppercase tracking-widest mb-3 flex items-center gap-1.5">
             <UIcon name="lucide:car-front" class="w-3.5 h-3.5" />
             {{ $t('police.review.vehicle_details') }}
           </p>
           <div class="grid grid-cols-2 sm:grid-cols-3 gap-4">
             <div>
-              <p class="text-[10px] text-slate-500 uppercase tracking-wider mb-1">{{ $t('police.review.plate') }}</p>
-              <p class="font-mono text-lg font-bold text-amber-400 tracking-widest">{{ car.plateNumber }}</p>
+              <p class="text-[10px] text-dimmed uppercase tracking-wider mb-1">{{ $t('police.review.plate') }}</p>
+              <p dir="ltr" class="font-mono text-lg font-bold text-amber-700 dark:text-amber-400 tracking-widest">{{ car.plateNumber }}</p>
             </div>
             <div>
-              <p class="text-[10px] text-slate-500 uppercase tracking-wider mb-1">{{ $t('police.review.brand_model') }}
+              <p class="text-[10px] text-dimmed uppercase tracking-wider mb-1">{{ $t('police.review.brand_model') }}
               </p>
-              <p class="text-sm text-slate-200 font-medium capitalize">{{ car.brand }} {{ car.model }}</p>
+              <p class="text-sm text-default font-medium capitalize">{{ car.brand }} {{ car.model }}</p>
             </div>
             <div>
-              <p class="text-[10px] text-slate-500 uppercase tracking-wider mb-1">{{ $t('police.review.color') }}</p>
-              <p class="text-sm text-slate-200 font-medium capitalize">{{ car.color }}</p>
+              <p class="text-[10px] text-dimmed uppercase tracking-wider mb-1">{{ $t('police.review.color') }}</p>
+              <p class="text-sm text-default font-medium capitalize">{{ car.color }}</p>
             </div>
             <div>
-              <p class="text-[10px] text-slate-500 uppercase tracking-wider mb-1">{{ $t('police.review.requested') }}
+              <p class="text-[10px] text-dimmed uppercase tracking-wider mb-1">{{ $t('police.review.requested') }}
               </p>
-              <p class="text-sm text-slate-400">{{ new Date(car.createdAt).toLocaleString() }}</p>
+              <p class="text-sm text-muted">{{ new Date(car.createdAt).toLocaleString() }}</p>
             </div>
           </div>
         </div>
 
-        <div v-if="mode === 'transfer'" class="bg-slate-950 rounded-xl border border-slate-800 p-5">
-          <p class="text-[10px] text-slate-500 font-bold uppercase tracking-widest mb-3 flex items-center gap-1.5">
+        <div v-if="mode === 'transfer'" class="bg-elevated rounded-xl border border-default p-5">
+          <p class="text-[10px] text-dimmed font-bold uppercase tracking-widest mb-3 flex items-center gap-1.5">
             <UIcon name="lucide:arrow-right-left" class="w-3.5 h-3.5" />
             {{ $t('police.review.ownership_transfer') }}
           </p>
           <div class="flex items-center gap-4">
-            <div class="flex-1 bg-slate-900 rounded-lg p-3 border border-slate-800">
-              <p class="text-[10px] text-slate-500 uppercase tracking-wider mb-1">{{ $t('police.review.current_owner')
+            <div class="flex-1 bg-default rounded-lg p-3 border border-default">
+              <p class="text-[10px] text-dimmed uppercase tracking-wider mb-1">{{ $t('police.review.current_owner')
               }}</p>
-              <p class="text-sm font-semibold text-white">
+              <p class="text-sm font-semibold text-highlighted">
                 {{ previousOwner?.fullName || previousOwner?.name || car.ownerId }}
               </p>
-              <p class="text-xs text-slate-500 mt-0.5">{{ previousOwner?.email || '—' }}</p>
+              <p class="text-xs text-muted mt-0.5">{{ previousOwner?.email || '—' }}</p>
             </div>
 
-            <UIcon name="lucide:arrow-right" class="w-5 h-5 text-slate-500 shrink-0" />
+            <UIcon name="lucide:arrow-right" class="w-5 h-5 text-muted shrink-0 rtl:rotate-180" />
 
-            <div class="flex-1 bg-indigo-950/40 rounded-lg p-3 border border-indigo-900/50">
-              <p class="text-[10px] text-indigo-400 uppercase tracking-wider mb-1">{{ $t('police.review.new_owner') }}
+            <div class="flex-1 bg-primary/10 rounded-lg p-3 border border-primary/25">
+              <p class="text-[10px] text-primary uppercase tracking-wider mb-1">{{ $t('police.review.new_owner') }}
               </p>
-              <p class="text-sm font-semibold text-white">
+              <p class="text-sm font-semibold text-highlighted">
                 {{ newOwner?.fullName || newOwner?.name || car.transferToOwnerId || '—' }}
               </p>
-              <p class="text-xs text-slate-500 mt-0.5">{{ newOwner?.email || '—' }}</p>
+              <p class="text-xs text-muted mt-0.5">{{ newOwner?.email || '—' }}</p>
             </div>
           </div>
         </div>
 
-        <div v-else class="bg-slate-950 rounded-xl border border-slate-800 p-5">
-          <p class="text-[10px] text-slate-500 font-bold uppercase tracking-widest mb-3 flex items-center gap-1.5">
+        <div v-else class="bg-elevated rounded-xl border border-default p-5">
+          <p class="text-[10px] text-dimmed font-bold uppercase tracking-widest mb-3 flex items-center gap-1.5">
             <UIcon name="lucide:user" class="w-3.5 h-3.5" />
             {{ $t('police.review.owner') }}
           </p>
@@ -73,24 +72,24 @@
             <img
               v-if="previousOwner.photoURL"
               :src="previousOwner.photoURL"
-              class="w-9 h-9 rounded-full object-cover ring-2 ring-slate-700"
+              class="w-9 h-9 rounded-full object-cover ring-2 ring-default"
             >
             <div
               v-else
-              class="w-9 h-9 rounded-full bg-slate-800 flex items-center justify-center ring-2 ring-slate-700"
+              class="w-9 h-9 rounded-full bg-muted flex items-center justify-center ring-2 ring-default"
             >
-              <UIcon name="lucide:user" class="w-4 h-4 text-slate-500" />
+              <UIcon name="lucide:user" class="w-4 h-4 text-muted" />
             </div>
             <div>
-              <p class="text-sm font-semibold text-white">{{ previousOwner?.fullName || previousOwner?.name }}</p>
-              <p class="text-xs text-slate-500">{{ previousOwner?.email }}</p>
+              <p class="text-sm font-semibold text-highlighted">{{ previousOwner?.fullName || previousOwner?.name }}</p>
+              <p class="text-xs text-muted">{{ previousOwner?.email }}</p>
             </div>
           </div>
-          <p v-else class="text-sm text-slate-400">{{ car.ownerId }}</p>
+          <p v-else class="text-sm text-muted">{{ car.ownerId }}</p>
         </div>
 
-        <div class="bg-slate-950 rounded-xl border border-slate-800 p-5">
-          <p class="text-[10px] text-slate-500 font-bold uppercase tracking-widest mb-3 flex items-center gap-1.5">
+        <div class="bg-elevated rounded-xl border border-default p-5">
+          <p class="text-[10px] text-dimmed font-bold uppercase tracking-widest mb-3 flex items-center gap-1.5">
             <UIcon name="lucide:file-text" class="w-3.5 h-3.5" />
             {{ mode === 'transfer' ? $t('police.review.new_carte_grise') : $t('police.review.carte_grise') }}
           </p>
@@ -105,7 +104,7 @@
             >
               <img
                 :src="resolvedDocUrl"
-                class="w-full rounded-lg border border-slate-700 object-contain max-h-64 transition-all duration-300 group-hover:brightness-75"
+                class="w-full rounded-lg border border-default object-contain max-h-64 transition-all duration-300 group-hover:brightness-75"
                 @error="($event.target as HTMLImageElement).parentElement!.style.display = 'none'"
               >
               <div
@@ -126,7 +125,7 @@
             </UButton>
           </div>
 
-          <div v-else class="flex items-center gap-2 text-slate-500 text-sm">
+          <div v-else class="flex items-center gap-2 text-muted text-sm">
             <UIcon name="lucide:file-x" class="w-4 h-4" />
             {{ $t('police.review.no_document') }}
           </div>
