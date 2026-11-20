@@ -45,6 +45,8 @@ export class GetEvidenceUrlsUseCase {
 
     let photos: ReportPhoto[] = [];
 
+    const callerRoles = Array.isArray(caller.roles) ? caller.roles : [];
+
     if (targetType === 'report') {
       const report = await this.reportRepository.getById(targetId);
       if (!report) {
@@ -52,7 +54,8 @@ export class GetEvidenceUrlsUseCase {
       }
 
       const isAuthorized =
-        caller.role === 'police' || (caller.role === 'agent' && report.agentId === callerId);
+        callerRoles.includes('police') ||
+        (callerRoles.includes('agent') && report.agentId === callerId);
       if (!isAuthorized) {
         throw new DomainError('PERMISSION_DENIED', 'Not authorized to access report evidence');
       }
@@ -68,9 +71,9 @@ export class GetEvidenceUrlsUseCase {
         throw new DomainError('NOT_FOUND', 'Fine not found');
       }
 
-      const isPolice = caller.role === 'police';
+      const isPolice = callerRoles.includes('police');
       const isAuthorizedOwner =
-        caller.role === 'owner' && fine.ownerId === callerId && fine.status !== 'cancelled';
+        callerRoles.includes('owner') && fine.ownerId === callerId && fine.status !== 'cancelled';
 
       if (!isPolice && !isAuthorizedOwner) {
         throw new DomainError('PERMISSION_DENIED', 'Not authorized to access fine evidence');

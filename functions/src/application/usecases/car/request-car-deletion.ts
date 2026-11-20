@@ -3,6 +3,7 @@ import { FineRepository } from '../../../domain/repositories/fine.repository';
 import { UserRepository } from '../../../domain/repositories/user.repository';
 import { TransactionRunner } from '../../../domain/repositories/transaction.port';
 import { DomainError } from '../../../domain/errors/domain.error';
+import { assertHasRole } from '../shared/user-authorization';
 
 export class RequestCarDeletionUseCase {
   constructor(
@@ -20,9 +21,7 @@ export class RequestCarDeletionUseCase {
 
     return this.transactionRunner.run(async (tx) => {
       const user = await this.userRepository.getById(userId, tx);
-      if (!user || user.role !== 'owner') {
-        throw new DomainError('PERMISSION_DENIED', 'Only owners can request car deletion');
-      }
+      assertHasRole(user, 'owner', 'Only owners can request car deletion');
 
       const car = await this.carRepository.getById(carId, tx);
       if (!car) {

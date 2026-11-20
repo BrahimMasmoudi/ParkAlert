@@ -4,6 +4,7 @@ import { UserRepository } from '../../../domain/repositories/user.repository';
 import { TransactionRunner } from '../../../domain/repositories/transaction.port';
 import { DomainError } from '../../../domain/errors/domain.error';
 import { normalizePlate } from '../../../domain/value-objects/plate';
+import { assertHasRole, assertNotSelfEnforcement } from '../shared/user-authorization';
 
 export interface ApproveTransferRequest {
   carId: string;
@@ -26,14 +27,16 @@ export class ApproveTransferUseCase {
 
     return this.transactionRunner.run(async (tx) => {
       const actor = await this.userRepository.getById(actorId, tx);
-      if (!actor || actor.role !== 'police') {
-        throw new DomainError('PERMISSION_DENIED', 'Only police can approve ownership transfers');
-      }
+      assertHasRole(actor, 'police', 'Only police can approve ownership transfers');
 
       const car = await this.carRepository.getById(carId, tx);
       if (!car) {
         throw new DomainError('NOT_FOUND', 'Car not found');
       }
+      assertNotSelfEnforcement(actorId, [car.ownerId, car.transferToOwnerId], {
+        targetType: 'car_transfer',
+        targetId: carId,
+      });
 
       if (car.status !== 'transfer_pending_police') {
         throw new DomainError('FAILED_PRECONDITION', 'Car is not pending police approval for transfer');

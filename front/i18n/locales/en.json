@@ -37,12 +37,20 @@
   "roles": {
     "agent": "Agent",
     "police": "Police",
-    "owner": "Citizen"
+    "owner": "Car Owner"
+  },
+  "header": {
+    "switch_role": "Switch workspace"
+  },
+  "select_role": {
+    "title": "Choose a workspace",
+    "subtitle": "Your account has access to multiple workspaces. Pick where to start."
   },
   "onboarding": {
     "welcome": "Welcome, {name}",
     "subtitle": "Select your role to access your personalised dashboard.",
     "continue": "Continue as {role}",
+    "dual_role_notice": "Police and Parking Agent accounts also include personal Car Owner features. Your initial selection is permanent.",
     "roles": {
       "agent": {
         "label": "Parking Agent",
@@ -114,6 +122,7 @@
   },
   "police": {
     "title": "Police Portal",
+    "self_enforcement_notice": "Self-enforcement disabled: you cannot take police action on your own vehicle or fine.",
     "search_placeholder": "Search by plate, agent, or location...",
     "pending_reports": "Pending Reports",
     "no_reports": "No pending reports",

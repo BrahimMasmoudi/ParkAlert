@@ -44,7 +44,10 @@ describe('ResolveDisputeUseCase', () => {
       }),
     };
     const userRepository = {
-      getById: vi.fn(async () => ({ uid: 'pol-2', role: options?.role ?? 'police' })),
+      getById: vi.fn(async () => ({
+        uid: 'pol-2',
+        roles: options?.role === 'owner' ? ['owner'] : ['police', 'owner'],
+      })),
       update: vi.fn(),
     };
     const enforcementAuditPort = { addAuditLog: vi.fn().mockResolvedValue(undefined) };
@@ -134,5 +137,45 @@ describe('ResolveDisputeUseCase', () => {
         actorId: 'owner-1',
       })
     ).rejects.toMatchObject({ code: 'PERMISSION_DENIED' });
+  });
+
+  it('blocks police self-enforcement when resolving a dispute on their own fine', async () => {
+    const { useCase, reportRepository } = setup();
+    // Make pol-2 the fine owner in the test setup
+    const fineRepository = {
+      create: vi.fn(),
+      getById: vi.fn().mockResolvedValue({
+        id: 'fine-self',
+        reportId: 'rep-1',
+        ownerId: 'pol-2',
+        plateNumber: 'AB-123-CD',
+        plateNumberNormalized: 'AB123CD',
+        amount: 50,
+        status: 'unpaid',
+        disputeStatus: 'pending',
+        issuedBy: 'pol-1',
+        issuedAt: new Date(),
+      }),
+      update: vi.fn(),
+      hasUnpaidFines: vi.fn(),
+    };
+    const selfUseCase = new ResolveDisputeUseCase(
+      fineRepository as any,
+      reportRepository as any,
+      { getById: vi.fn(async () => ({ uid: 'pol-2', roles: ['police', 'owner'] })), update: vi.fn() } as any,
+      { addAuditLog: vi.fn() },
+      fakeRunner
+    );
+
+    await expect(
+      selfUseCase.execute({
+        fineId: 'fine-self',
+        action: 'cancel_fine',
+        reason: 'Self-enforcement attempt',
+        actorId: 'pol-2',
+      })
+    ).rejects.toMatchObject({ code: 'PERMISSION_DENIED' });
+    expect(fineRepository.update).not.toHaveBeenCalled();
+    expect(useCase).toBeDefined();
   });
 });

@@ -6,9 +6,10 @@ import { UserRepository } from '../../src/domain/repositories/user.repository';
 import { CheckPlateAvailabilityUseCase } from '../../src/application/usecases/car/check-plate';
 
 const users = new Map<string, User>([
-  ['owner-a', { uid: 'owner-a', role: 'owner', name: 'A', email: 'a@test.com', createdAt: new Date() }],
-  ['owner-b', { uid: 'owner-b', role: 'owner', name: 'B', email: 'b@test.com', createdAt: new Date() }],
-  ['agent-1', { uid: 'agent-1', role: 'agent', name: 'Ag', email: 'ag@test.com', createdAt: new Date() }],
+  ['owner-a', { uid: 'owner-a', roles: ['owner'], name: 'A', email: 'a@test.com', createdAt: new Date() }],
+  ['owner-b', { uid: 'owner-b', roles: ['owner'], name: 'B', email: 'b@test.com', createdAt: new Date() }],
+  ['police-1', { uid: 'police-1', roles: ['police', 'owner'], name: 'Po', email: 'p@test.com', createdAt: new Date() }],
+  ['no-owner', { uid: 'no-owner', roles: [], name: 'No', email: 'no@test.com', createdAt: new Date() }],
 ]);
 
 describe('US5: CheckPlateAvailabilityUseCase privacy & caller-relative eligibility', () => {
@@ -94,7 +95,12 @@ describe('US5: CheckPlateAvailabilityUseCase privacy & caller-relative eligibili
       reason: 'TRANSFER_IN_PROGRESS',
     });
 
-    await expect(uc.execute({ plateNumber: 'AC-TIVE-01', callerId: 'agent-1' })).rejects.toMatchObject({
+    await expect(uc.execute({ plateNumber: 'AC-TIVE-01', callerId: 'police-1' })).resolves.toEqual({
+      available: false,
+      eligibleForTransfer: true,
+    });
+
+    await expect(uc.execute({ plateNumber: 'AC-TIVE-01', callerId: 'no-owner' })).rejects.toMatchObject({
       code: 'PERMISSION_DENIED',
     });
   });

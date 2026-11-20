@@ -2,6 +2,7 @@ import { CarRepository } from '../../../domain/repositories/car.repository';
 import { UserRepository } from '../../../domain/repositories/user.repository';
 import { TransactionRunner } from '../../../domain/repositories/transaction.port';
 import { DomainError } from '../../../domain/errors/domain.error';
+import { assertHasRole } from '../shared/user-authorization';
 
 export class AcknowledgeTransferUseCase {
   constructor(
@@ -18,9 +19,7 @@ export class AcknowledgeTransferUseCase {
 
     return this.transactionRunner.run(async (tx) => {
       const user = await this.userRepository.getById(ownerId, tx);
-      if (!user || user.role !== 'owner') {
-        throw new DomainError('PERMISSION_DENIED', 'Only owners can acknowledge a transfer');
-      }
+      assertHasRole(user, 'owner', 'Only owners can acknowledge a transfer');
 
       const car = await this.carRepository.getById(carId, tx);
       if (!car) {

@@ -49,9 +49,9 @@ function setup(initialStatus: CarStatus, overrides: Partial<Car> = {}) {
   ]);
 
   const users = new Map<string, User>([
-    ['owner-a', { uid: 'owner-a', role: 'owner', name: 'A', email: 'a@test.com', createdAt: new Date() }],
-    ['owner-b', { uid: 'owner-b', role: 'owner', name: 'B', email: 'b@test.com', createdAt: new Date() }],
-    ['police-1', { uid: 'police-1', role: 'police', name: 'P', email: 'p@test.com', createdAt: new Date() }],
+    ['owner-a', { uid: 'owner-a', roles: ['owner'], name: 'A', email: 'a@test.com', createdAt: new Date() }],
+    ['owner-b', { uid: 'owner-b', roles: ['owner'], name: 'B', email: 'b@test.com', createdAt: new Date() }],
+    ['police-1', { uid: 'police-1', roles: ['police', 'owner'], name: 'P', email: 'p@test.com', createdAt: new Date() }],
   ]);
 
   const audits: Omit<CarAuditLog, 'id'>[] = [];
@@ -64,6 +64,9 @@ function setup(initialStatus: CarStatus, overrides: Partial<Car> = {}) {
     },
     async getByPlateNumber() {
       return cars.get('AB123CD') ? { ...cars.get('AB123CD')! } : null;
+    },
+    async getAllByPlateNumber() {
+      return cars.get('AB123CD') ? [{ ...cars.get('AB123CD')! }] : [];
     },
     async update(id, updates) {
       const next = { ...cars.get(id)!, ...updates };

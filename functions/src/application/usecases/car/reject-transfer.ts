@@ -3,6 +3,7 @@ import { UserRepository } from '../../../domain/repositories/user.repository';
 import { TransactionRunner } from '../../../domain/repositories/transaction.port';
 import { DomainError } from '../../../domain/errors/domain.error';
 import { validateRejectionReason } from '../../../domain/value-objects/plate';
+import { assertHasRole, assertNotSelfEnforcement } from '../shared/user-authorization';
 
 export class RejectTransferUseCase {
   constructor(
@@ -31,13 +32,16 @@ export class RejectTransferUseCase {
       }
 
       if (car.status === 'transfer_pending_owner') {
-        if (actor.role !== 'owner' || car.ownerId !== actorId) {
+        assertHasRole(actor, 'owner', 'Only the current vehicle owner can reject at this stage');
+        if (car.ownerId !== actorId) {
           throw new DomainError('PERMISSION_DENIED', 'Only the current vehicle owner can reject at this stage');
         }
       } else if (car.status === 'transfer_pending_police') {
-        if (actor.role !== 'police') {
-          throw new DomainError('PERMISSION_DENIED', 'Only police can reject a transfer awaiting police approval');
-        }
+        assertHasRole(actor, 'police', 'Only police can reject a transfer awaiting police approval');
+        assertNotSelfEnforcement(actorId, [car.ownerId, car.transferToOwnerId], {
+          targetType: 'car_transfer',
+          targetId: carId,
+        });
       } else {
         throw new DomainError('FAILED_PRECONDITION', 'Car is not pending transfer');
       }

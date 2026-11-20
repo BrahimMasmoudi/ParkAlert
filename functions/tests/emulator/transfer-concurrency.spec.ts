@@ -42,9 +42,9 @@ describe('US3: Atomic Concurrency & Unpaid-Fines Enforcement (Emulator)', () => 
 
   beforeEach(async () => {
     await Promise.all([clearCollection('users'), clearCollection('cars'), clearCollection('fines'), clearCollection('reports'), clearCollection('car_audit_logs')]);
-    await db.collection('users').doc('owner-a').set({ uid: 'owner-a', role: 'owner' });
-    await db.collection('users').doc('owner-b').set({ uid: 'owner-b', role: 'owner' });
-    await db.collection('users').doc('police-1').set({ uid: 'police-1', role: 'police' });
+    await db.collection('users').doc('owner-a').set({ uid: 'owner-a', roles: ['owner'] });
+    await db.collection('users').doc('owner-b').set({ uid: 'owner-b', roles: ['owner'] });
+    await db.collection('users').doc('police-1').set({ uid: 'police-1', roles: ['police', 'owner'] });
   });
 
   it('allows only one approveTransfer when two police officers approve concurrently', async () => {
@@ -170,5 +170,26 @@ describe('US3: Atomic Concurrency & Unpaid-Fines Enforcement (Emulator)', () => 
         carteGriseUrl: `transfers/${requester}/doc.pdf`,
       })
     ).rejects.toMatchObject({ code: 'FAILED_PRECONDITION', message: 'UNPAID_FINES_EXIST' });
+  });
+
+  it('blocks police self-approval and self-rejection of a transfer involving police-1 as seller or buyer', async () => {
+    await db.collection('cars').doc('SL111SL').set({
+      id: 'SL111SL',
+      ownerId: 'police-1',
+      plateNumber: 'SL-111-SL',
+      plateNumberNormalized: 'SL111SL',
+      brand: 'Renault',
+      model: 'Clio',
+      color: 'White',
+      carteGriseUrl: 'carteGrise/police-1/doc.png',
+      transferToOwnerId: 'owner-b',
+      transferCarteGriseUrl: 'transfers/owner-b/doc.pdf',
+      status: 'transfer_pending_police',
+      createdAt: new Date(),
+    });
+    const approve = new ApproveTransferUseCase(carRepo, fineRepo, userRepo, txRunner);
+    await expect(approve.execute({ carId: 'SL111SL', actorId: 'police-1' })).rejects.toMatchObject({
+      code: 'PERMISSION_DENIED',
+    });
   });
 });

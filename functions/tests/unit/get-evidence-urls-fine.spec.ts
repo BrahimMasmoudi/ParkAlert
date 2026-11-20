@@ -20,7 +20,7 @@ describe('GetEvidenceUrlsUseCase (fine scope)', () => {
     const reportRepository = { create: vi.fn(), getById: vi.fn(), updateStatus: vi.fn(), update: vi.fn() };
     const userRepository = {
       getById: vi.fn(async (id: string) =>
-        id === 'pol-1' ? { id: 'pol-1', role: 'police' } : { id, role: 'owner' }
+        id === 'pol-1' ? { id: 'pol-1', roles: ['police', 'owner'] } : { id, roles: ['owner'] }
       ),
       update: vi.fn(),
     };

@@ -34,7 +34,7 @@ describe('IssueFineUseCase', () => {
       hasUnpaidFines: vi.fn(),
     };
     const userRepository = {
-      getById: vi.fn().mockResolvedValue({ id: 'pol-1', role: 'police' }),
+      getById: vi.fn().mockResolvedValue({ id: 'pol-1', roles: ['police', 'owner'] }),
       update: vi.fn(),
     };
     const carRepository = {
@@ -43,6 +43,9 @@ describe('IssueFineUseCase', () => {
         ownerId: 'owner-1',
         status: 'active',
       }),
+      getAllByPlateNumber: vi.fn().mockResolvedValue([
+        { id: 'AB123CD', ownerId: 'owner-1', status: 'active' },
+      ]),
     };
     const auditPort = { addAuditLog: vi.fn() };
 
@@ -91,8 +94,11 @@ describe('IssueFineUseCase', () => {
       update: vi.fn(),
     };
     const fineRepository = { create: vi.fn(), getById: vi.fn(), update: vi.fn(), hasUnpaidFines: vi.fn() };
-    const userRepository = { getById: vi.fn().mockResolvedValue({ id: 'pol-1', role: 'police' }), update: vi.fn() };
-    const carRepository = { getByPlateNumber: vi.fn().mockResolvedValue({ ownerId: 'owner-1', status: 'rejected' }) };
+    const userRepository = { getById: vi.fn().mockResolvedValue({ id: 'pol-1', roles: ['police', 'owner'] }), update: vi.fn() };
+    const carRepository = {
+      getByPlateNumber: vi.fn().mockResolvedValue({ ownerId: 'owner-1', status: 'rejected' }),
+      getAllByPlateNumber: vi.fn().mockResolvedValue([{ ownerId: 'owner-1', status: 'rejected' }]),
+    };
     const useCase = new IssueFineUseCase(
       reportRepository as any,
       fineRepository as any,
@@ -133,5 +139,73 @@ describe('IssueFineUseCase', () => {
         issuedBy: 'pol-1',
       })
     ).rejects.toMatchObject({ code: 'FAILED_PRECONDITION' });
+  });
+
+  it('blocks police self-enforcement across ownerId, report plates, originalPlateNumber, and archived/colliding vehicles', async () => {
+    const reportRepository = {
+      create: vi.fn(),
+      getById: vi.fn().mockResolvedValue({
+        id: 'rep-self',
+        plateNumber: 'CD-222-EF',
+        originalPlateNumber: 'PO-111-AA',
+        status: 'pending',
+      }),
+      updateStatus: vi.fn(),
+      update: vi.fn(),
+    };
+    const fineRepository = { create: vi.fn(), getById: vi.fn(), update: vi.fn(), hasUnpaidFines: vi.fn() };
+    const userRepository = {
+      getById: vi.fn().mockResolvedValue({ id: 'pol-1', roles: ['police', 'owner'] }),
+      update: vi.fn(),
+    };
+    const carRepository = {
+      getByPlateNumber: vi.fn().mockResolvedValue({
+        id: 'CD222EF',
+        ownerId: 'owner-2',
+        status: 'active',
+      }),
+      getAllByPlateNumber: vi.fn(async (plate: string) => {
+        if (plate === 'PO-111-AA') {
+          return [{ id: 'PO111AA', ownerId: 'pol-1', status: 'archived' }];
+        }
+        return [{ id: 'CD222EF', ownerId: 'owner-2', status: 'active' }];
+      }),
+    };
+    const useCase = new IssueFineUseCase(
+      reportRepository as any,
+      fineRepository as any,
+      userRepository as any,
+      carRepository as any,
+      makeTxRunner() as any
+    );
+
+    // Self originalPlateNumber swap attempt
+    await expect(
+      useCase.execute({
+        reportId: 'rep-self',
+        ownerId: 'owner-2',
+        plateNumber: 'CD-222-EF',
+        amount: 100,
+        issuedBy: 'pol-1',
+      })
+    ).rejects.toMatchObject({ code: 'PERMISSION_DENIED' });
+
+    // Self ownerId directly
+    reportRepository.getById.mockResolvedValue({
+      id: 'rep-own',
+      plateNumber: 'CD-222-EF',
+      status: 'pending',
+    });
+    await expect(
+      useCase.execute({
+        reportId: 'rep-own',
+        ownerId: 'pol-1',
+        plateNumber: 'CD-222-EF',
+        amount: 100,
+        issuedBy: 'pol-1',
+      })
+    ).rejects.toMatchObject({ code: 'PERMISSION_DENIED' });
+
+    expect(fineRepository.create).not.toHaveBeenCalled();
   });
 });

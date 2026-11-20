@@ -6,6 +6,7 @@ import { EnforcementAuditPort } from '../../../domain/repositories/enforcement-a
 import { TransactionRunner } from '../../../domain/repositories/transaction.port';
 import { DomainError } from '../../../domain/errors/domain.error';
 import { validateRejectionReason } from '../../../domain/value-objects/plate';
+import { assertHasRole, assertNotSelfEnforcement } from '../shared/user-authorization';
 
 export type ResolveDisputeAction = 'cancel_fine' | 'dismiss_dispute';
 
@@ -42,14 +43,13 @@ export class ResolveDisputeUseCase {
 
     return this.transactionRunner.run(async (tx) => {
       const actor = await this.userRepository.getById(actorId, tx);
-      if (!actor || actor.role !== 'police') {
-        throw new DomainError('PERMISSION_DENIED', 'Only police officers can resolve disputes');
-      }
+      assertHasRole(actor, 'police', 'Only police officers can resolve disputes');
 
       const fine = await this.fineRepository.getById(fineId, tx);
       if (!fine) {
         throw new DomainError('NOT_FOUND', 'Fine not found');
       }
+      assertNotSelfEnforcement(actorId, [fine.ownerId], { targetType: 'fine', targetId: fineId });
 
       if (fine.status !== 'unpaid' || fine.disputeStatus !== 'pending') {
         throw new DomainError('FAILED_PRECONDITION', 'Only unpaid fines with a pending dispute can be resolved');

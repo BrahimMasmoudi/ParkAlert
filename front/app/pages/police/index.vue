@@ -157,30 +157,40 @@
       </template>
 
       <template #footer>
-        <div class="flex flex-wrap gap-3 justify-between w-full">
-          <UButton
-            :label="$t('police.actions.dismiss_report')"
-            color="warning"
-            variant="soft"
-            icon="i-lucide-x-circle"
-            @click="openDismissModal"
-          />
-          <div class="flex gap-3">
+        <div class="w-full space-y-3">
+          <div
+            v-if="isReportSelfOwned || isFineTargetSelfOwned"
+            class="p-3 rounded-lg bg-amber-500/10 border border-amber-500/30 text-amber-700 dark:text-amber-300 text-xs flex items-center gap-2"
+          >
+            <UIcon name="lucide:shield-alert" class="w-4 h-4 shrink-0" />
+            <span>{{ $t('police.self_enforcement_notice') }}</span>
+          </div>
+          <div class="flex flex-wrap gap-3 justify-between w-full">
             <UButton
-              :label="$t('common.cancel')"
-              color="neutral"
-              variant="ghost"
-              @click="isReportModalOpen = false"
+              :label="$t('police.actions.dismiss_report')"
+              color="warning"
+              variant="soft"
+              icon="i-lucide-x-circle"
+              :disabled="isReportSelfOwned || fineForm.searching"
+              @click="openDismissModal"
             />
-            <UButton
-              :label="$t('police.fine.confirm')"
-              color="error"
-              icon="i-lucide-check-circle"
-              class="font-bold px-6 shadow-lg shadow-red-500/20"
-              :loading="finesStore.acting"
-              :disabled="!fineForm.selectedOwner || !isFinePlateValid"
-              @click="confirmFine"
-            />
+            <div class="flex gap-3">
+              <UButton
+                :label="$t('common.cancel')"
+                color="neutral"
+                variant="ghost"
+                @click="isReportModalOpen = false"
+              />
+              <UButton
+                :label="$t('police.fine.confirm')"
+                color="error"
+                icon="i-lucide-check-circle"
+                class="font-bold px-6 shadow-lg shadow-red-500/20"
+                :loading="finesStore.acting"
+                :disabled="!fineForm.selectedOwner || !isFinePlateValid || isReportSelfOwned || isFineTargetSelfOwned || fineForm.searching"
+                @click="confirmFine"
+              />
+            </div>
           </div>
         </div>
       </template>
@@ -313,29 +323,40 @@
       </template>
 
       <template #footer>
-        <div class="flex items-center justify-between w-full gap-2 flex-wrap">
-          <UButton
-            :label="$t('common.close')"
-            color="neutral"
-            variant="ghost"
-            @click="isDisputeModalOpen = false"
-          />
-          <div class="flex items-center gap-2">
+        <div class="w-full space-y-3">
+          <div
+            v-if="isSelectedDisputeSelfOwned"
+            class="p-3 rounded-lg bg-amber-500/10 border border-amber-500/30 text-amber-700 dark:text-amber-300 text-xs flex items-center gap-2"
+          >
+            <UIcon name="lucide:shield-alert" class="w-4 h-4 shrink-0" />
+            <span>{{ $t('police.self_enforcement_notice') }}</span>
+          </div>
+          <div class="flex items-center justify-between w-full gap-2 flex-wrap">
             <UButton
-              :label="$t('police.disputes.dismiss_dispute')"
-              color="warning"
-              variant="soft"
-              icon="i-lucide-shield-check"
-              :loading="finesStore.acting"
-              @click="openResolveDisputeModal('dismiss_dispute')"
+              :label="$t('common.close')"
+              color="neutral"
+              variant="ghost"
+              @click="isDisputeModalOpen = false"
             />
-            <UButton
-              :label="$t('police.disputes.cancel_fine')"
-              color="error"
-              icon="i-lucide-ban"
-              :loading="finesStore.acting"
-              @click="openResolveDisputeModal('cancel_fine')"
-            />
+            <div class="flex items-center gap-2">
+              <UButton
+                :label="$t('police.disputes.dismiss_dispute')"
+                color="warning"
+                variant="soft"
+                icon="i-lucide-shield-check"
+                :disabled="isSelectedDisputeSelfOwned"
+                :loading="finesStore.acting"
+                @click="openResolveDisputeModal('dismiss_dispute')"
+              />
+              <UButton
+                :label="$t('police.disputes.cancel_fine')"
+                color="error"
+                icon="i-lucide-ban"
+                :disabled="isSelectedDisputeSelfOwned"
+                :loading="finesStore.acting"
+                @click="openResolveDisputeModal('cancel_fine')"
+              />
+            </div>
           </div>
         </div>
       </template>
@@ -396,6 +417,7 @@ definePageMeta({
 })
 
 const { t } = useI18n()
+const authStore = useAuthStore()
 const reportsStore = useReportsStore()
 const carsStore = useCarsStore()
 const userStore = useUserStore()
@@ -587,21 +609,53 @@ async function lookupOwner(plate: string) {
   }
 }
 
+const isReportSelfOwned = ref(false)
+let reportOwnershipNonce = 0
+
+const isFineTargetSelfOwned = computed(() =>
+  Boolean(authStore.currentUser?.uid && fineForm.selectedOwner?.id === authStore.currentUser.uid),
+)
+
+const isSelectedDisputeSelfOwned = computed(() =>
+  Boolean(authStore.currentUser?.uid && selectedDispute.value?.ownerId === authStore.currentUser.uid),
+)
+
+async function checkReportSelfOwnership(report: Report) {
+  const currentNonce = ++reportOwnershipNonce
+  isReportSelfOwned.value = false
+  const uid = authStore.currentUser?.uid
+  if (!uid) return
+
+  const platesToCheck = [report.plateNumber, report.originalPlateNumber].filter(
+    (p): p is string => Boolean(p),
+  )
+  const resolvedCars = await Promise.all(
+    platesToCheck.map(plate => carsStore.getCarByPlate(plate)),
+  )
+  if (currentNonce !== reportOwnershipNonce) return
+
+  isReportSelfOwned.value = resolvedCars.some(
+    car => Boolean(car && (car.ownerId === uid || car.transferToOwnerId === uid)),
+  )
+}
+
 async function openReport(report: Report) {
   selected.value = report
   fineForm.plateNumber = report.plateNumber
   fineForm.expectedPlateNumber = report.plateNumber
   fineForm.selectedOwner = null
   evidenceItems.value = []
+  isReportSelfOwned.value = false
   isReportModalOpen.value = true
   await Promise.all([
     loadReportEvidence(),
     lookupOwner(report.plateNumber),
+    checkReportSelfOwnership(report),
   ])
 }
 
 async function confirmFine() {
-  if (!selected.value || !fineForm.selectedOwner || !isFinePlateValid.value) return
+  if (!selected.value || !fineForm.selectedOwner || !isFinePlateValid.value || isReportSelfOwned.value || isFineTargetSelfOwned.value) return
   await finesStore.issueFine({
     reportId: selected.value.id,
     ownerId: fineForm.selectedOwner.id,
@@ -615,6 +669,7 @@ async function confirmFine() {
 }
 
 function openDismissModal() {
+  if (isReportSelfOwned.value || fineForm.searching) return
   dismissReason.value = ''
   isDismissModalOpen.value = true
 }

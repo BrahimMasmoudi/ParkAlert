@@ -4,6 +4,7 @@ import { TransactionRunner } from '../../../domain/repositories/transaction.port
 import { Car } from '../../../domain/entities/car.entity';
 import { DomainError } from '../../../domain/errors/domain.error';
 import { isValidRegistrationPath, normalizePlate } from '../../../domain/value-objects/plate';
+import { assertHasRole } from '../shared/user-authorization';
 
 export interface AddCarRequest {
   userId: string;
@@ -38,9 +39,7 @@ export class AddCarUseCase {
 
     return this.transactionRunner.run(async (tx) => {
       const user = await this.userRepository.getById(userId, tx);
-      if (!user || user.role !== 'owner') {
-        throw new DomainError('PERMISSION_DENIED', 'Only owners can add cars');
-      }
+      assertHasRole(user, 'owner', 'Only owners can add cars');
 
       const existingCar = await this.carRepository.getById(formattedPlate, tx);
       if (existingCar) {

@@ -45,4 +45,36 @@ describe('FirestoreCarRepository.getByPlateNumber', () => {
     const car = await repo.getByPlateNumber('AB-123-CD');
     expect(car).toBeNull();
   });
+
+  it('returns all matching cars including rejected, archived, and legacy doc-ID fallback via getAllByPlateNumber', async () => {
+    const docs = [
+      { id: 'AB123CD_old', data: () => ({ id: 'AB123CD_old', plateNumberNormalized: 'AB123CD', status: 'archived', ownerId: 'pol-1' }) },
+      { id: 'AB123CD_rej', data: () => ({ id: 'AB123CD_rej', plateNumberNormalized: 'AB123CD', status: 'rejected', ownerId: 'owner-2' }) },
+      { id: 'AB123CD_new', data: () => ({ id: 'AB123CD_new', plateNumberNormalized: 'AB123CD', status: 'active', ownerId: 'owner-3' }) },
+    ];
+    const queryChain = {
+      where: vi.fn().mockReturnThis(),
+      get: vi.fn().mockResolvedValue({ empty: false, docs }),
+      doc: vi.fn().mockReturnValue({
+        get: vi.fn().mockResolvedValue({
+          exists: true,
+          data: () => ({ id: 'AB123CD', ownerId: 'legacy-owner', status: 'active' }),
+        }),
+      }),
+    };
+    const connector = {
+      db: {
+        collection: vi.fn().mockReturnValue(queryChain),
+      },
+      getFieldValue: vi.fn(),
+    };
+
+    const repo = new FirestoreCarRepository(connector as any);
+    const all = await repo.getAllByPlateNumber('AB-123-CD', undefined, {
+      includeRejected: true,
+      includeArchived: true,
+    });
+
+    expect(all.map((c) => c.ownerId)).toEqual(['pol-1', 'owner-2', 'owner-3', 'legacy-owner']);
+  });
 });

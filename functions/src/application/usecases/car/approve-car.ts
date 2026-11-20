@@ -2,6 +2,7 @@ import { CarRepository } from '../../../domain/repositories/car.repository';
 import { UserRepository } from '../../../domain/repositories/user.repository';
 import { TransactionRunner } from '../../../domain/repositories/transaction.port';
 import { DomainError } from '../../../domain/errors/domain.error';
+import { assertHasRole, assertNotSelfEnforcement } from '../shared/user-authorization';
 
 export class ApproveCarUseCase {
   constructor(
@@ -18,14 +19,13 @@ export class ApproveCarUseCase {
 
     return this.transactionRunner.run(async (tx) => {
       const actor = await this.userRepository.getById(actorId, tx);
-      if (!actor || actor.role !== 'police') {
-        throw new DomainError('PERMISSION_DENIED', 'Only police can approve cars');
-      }
+      assertHasRole(actor, 'police', 'Only police can approve cars');
 
       const car = await this.carRepository.getById(carId, tx);
       if (!car) {
         throw new DomainError('NOT_FOUND', 'Car not found');
       }
+      assertNotSelfEnforcement(actorId, [car.ownerId], { targetType: 'car', targetId: carId });
       if (car.status !== 'activation_pending') {
         throw new DomainError('FAILED_PRECONDITION', 'Car is not pending approval');
       }

@@ -9,19 +9,43 @@
           <p class="font-bold text-highlighted text-sm leading-none truncate">
             ParkAlert
           </p>
-          <p class="text-muted text-xs truncate mt-0.5">
+          <p v-if="title" class="text-muted text-xs truncate mt-0.5">
             {{ $t(title) }}
           </p>
         </div>
       </div>
 
       <div class="flex items-center gap-1 shrink-0">
-        <div
-          :class="`flex items-center gap-1.5 px-2.5 py-1 rounded-full border text-xs font-medium ${cfg.color} ${cfg.bg}`"
-        >
-          <UIcon :name="cfg.icon" class="w-3.5 h-3.5 shrink-0" />
-          <span class="capitalize hidden sm:inline">{{ $t(`roles.${role}`) }}</span>
-        </div>
+        <template v-if="role && cfg">
+          <UDropdownMenu
+            v-if="userStore.isMultiRole"
+            :items="roleMenuItems"
+            :content="{ align: 'end', sideOffset: 8 }"
+          >
+            <button
+              id="role-switcher-btn"
+              type="button"
+              :aria-label="$t('header.switch_role')"
+              :class="`flex items-center gap-1.5 px-2.5 py-1.5 rounded-full border text-xs font-medium cursor-pointer hover:brightness-110 transition-all ${cfg.color} ${cfg.bg}`"
+            >
+              <UIcon :name="cfg.icon" class="w-3.5 h-3.5 shrink-0" />
+              <span class="capitalize hidden sm:inline">{{ $t(`roles.${role}`) }}</span>
+              <UIcon name="lucide:chevrons-up-down" class="w-3 h-3 opacity-80 shrink-0" />
+            </button>
+
+            <template v-for="r in userStore.roles" :key="r" #[`${r}-trailing`]>
+              <UIcon v-if="role === r" name="lucide:check" class="shrink-0 size-4 text-primary" />
+            </template>
+          </UDropdownMenu>
+
+          <div
+            v-else
+            :class="`flex items-center gap-1.5 px-2.5 py-1 rounded-full border text-xs font-medium ${cfg.color} ${cfg.bg}`"
+          >
+            <UIcon :name="cfg.icon" class="w-3.5 h-3.5 shrink-0" />
+            <span class="capitalize hidden sm:inline">{{ $t(`roles.${role}`) }}</span>
+          </div>
+        </template>
 
         <MoleculesColorModeMenu />
         <MoleculesLanguageMenu />
@@ -41,14 +65,18 @@
 </template>
 
 <script setup lang="ts">
+import type { UserRole } from '~/utils/roles'
+
 const props = defineProps<{
-  title: string
-  role: 'agent' | 'police' | 'owner'
+  title?: string
+  role?: UserRole
 }>()
 
+const { t } = useI18n()
 const authStore = useAuthStore()
+const userStore = useUserStore()
 
-const roleConfig = {
+const roleConfig: Record<UserRole, { icon: string, color: string, bg: string }> = {
   agent: {
     icon: 'lucide:camera',
     color: 'text-amber-700 dark:text-amber-400',
@@ -66,5 +94,15 @@ const roleConfig = {
   },
 }
 
-const cfg = computed(() => roleConfig[props.role])
+const cfg = computed(() => (props.role ? roleConfig[props.role] : undefined))
+
+const roleMenuItems = computed(() =>
+  userStore.roles.map(r => ({
+    label: t(`roles.${r}`),
+    icon: roleConfig[r].icon,
+    slot: r,
+    onSelect: () => navigateTo(`/${r}`),
+    class: props.role === r ? 'text-primary font-semibold' : '',
+  })),
+)
 </script>

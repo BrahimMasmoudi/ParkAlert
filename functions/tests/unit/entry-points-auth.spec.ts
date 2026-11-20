@@ -5,6 +5,8 @@ import { mapDomainErrorToHttpsError } from '../../src/infrastructure/entry-point
 
 const mockCars = new Map<string, any>();
 const mockUsers = new Map<string, any>();
+const mockReports = new Map<string, any>();
+const mockAudits: any[] = [];
 
 vi.mock('../../src/infrastructure/entry-points/index', () => {
   const fakeTx = {} as any;
@@ -15,6 +17,10 @@ vi.mock('../../src/infrastructure/entry-points/index', () => {
     carRepository: {
       getById: async (id: string) => mockCars.get(id) ?? null,
       getByPlateNumber: async (plate: string) => mockCars.get(plate.toUpperCase().replace(/[^A-Z0-9]/g, '')) ?? null,
+      getAllByPlateNumber: async (plate: string) => {
+        const key = plate.toUpperCase().replace(/[^A-Z0-9]/g, '');
+        return mockCars.has(key) ? [mockCars.get(key)] : [];
+      },
       create: async (car: any) => {
         mockCars.set(car.id, car);
       },
@@ -26,6 +32,27 @@ vi.mock('../../src/infrastructure/entry-points/index', () => {
     },
     userRepository: {
       getById: async (uid: string) => mockUsers.get(uid) ?? null,
+      save: async (user: any) => {
+        mockUsers.set(user.uid, { ...(mockUsers.get(user.uid) ?? {}), ...user });
+      },
+      update: async (uid: string, updates: any) => {
+        mockUsers.set(uid, { ...(mockUsers.get(uid) ?? {}), ...updates });
+      },
+    },
+    reportRepository: {
+      create: async () => 'rep-1',
+      getById: async (id: string) => mockReports.get(id) ?? null,
+      updateStatus: async (id: string, status: string) => {
+        mockReports.set(id, { ...mockReports.get(id), status });
+      },
+      update: async (id: string, updates: any) => {
+        mockReports.set(id, { ...mockReports.get(id), ...updates });
+      },
+    },
+    enforcementAuditPort: {
+      addAuditLog: async (log: any) => {
+        mockAudits.push(log);
+      },
     },
     fineRepository: {
       hasUnpaidFines: async () => false,
@@ -37,14 +64,19 @@ import { approveTransfer } from '../../src/infrastructure/entry-points/car/appro
 import { acknowledgeTransfer } from '../../src/infrastructure/entry-points/car/acknowledge-transfer';
 import { rejectTransfer } from '../../src/infrastructure/entry-points/car/reject-transfer';
 import { requestOwnershipTransfer } from '../../src/infrastructure/entry-points/car/request-ownership-transfer';
+import { setUserRole } from '../../src/infrastructure/entry-points/user/set-user-role';
+import { updateUserProfile } from '../../src/infrastructure/entry-points/user/update-user-profile';
+import { dismissReport } from '../../src/infrastructure/entry-points/report/dismiss-report';
 
 describe('US1: Error Mapping & Identity Payload Precedence', () => {
   beforeEach(() => {
     mockCars.clear();
     mockUsers.clear();
-    mockUsers.set('owner-a', { uid: 'owner-a', role: 'owner' });
-    mockUsers.set('owner-b', { uid: 'owner-b', role: 'owner' });
-    mockUsers.set('police-1', { uid: 'police-1', role: 'police' });
+    mockReports.clear();
+    mockAudits.length = 0;
+    mockUsers.set('owner-a', { uid: 'owner-a', roles: ['owner'] });
+    mockUsers.set('owner-b', { uid: 'owner-b', roles: ['owner'] });
+    mockUsers.set('police-1', { uid: 'police-1', roles: ['police', 'owner'] });
   });
 
   it('maps every DomainErrorCode to the expected Firebase HttpsError code', () => {
@@ -102,5 +134,33 @@ describe('US1: Error Mapping & Identity Payload Precedence', () => {
       } as any)
     ).resolves.toEqual({ ok: true });
     expect(mockCars.get('AB123CD').transferToOwnerId).toBe('owner-b');
+  });
+
+  it('enforces unauthenticated checks and domain error mapping on setUserRole, updateUserProfile, and dismissReport', async () => {
+    await expect(setUserRole.run({ auth: null, data: { role: 'owner' } } as any)).rejects.toMatchObject({
+      code: 'unauthenticated',
+    });
+    await expect(
+      setUserRole.run({ auth: { uid: 'owner-a', token: {} }, data: { role: 'police' } } as any)
+    ).rejects.toMatchObject({ code: 'already-exists' });
+
+    await expect(updateUserProfile.run({ auth: null, data: {} } as any)).rejects.toMatchObject({
+      code: 'unauthenticated',
+    });
+    await expect(
+      updateUserProfile.run({ auth: { uid: 'owner-a' }, data: { roles: ['police', 'owner'] } } as any)
+    ).rejects.toMatchObject({ code: 'invalid-argument' });
+
+    await expect(
+      updateUserProfile.run({ auth: { uid: 'owner-a' }, data: { uid: 'owner-b', fullName: 'Real Owner A' } } as any)
+    ).resolves.toEqual({ ok: true });
+    expect(mockUsers.get('owner-a')?.fullName).toBe('Real Owner A');
+    expect(mockUsers.get('owner-b')?.fullName).toBeUndefined();
+
+    mockReports.set('rep-1', { id: 'rep-1', plateNumber: 'AB-123-CD', status: 'pending' });
+    mockCars.set('AB123CD', { id: 'AB123CD', ownerId: 'police-1', plateNumber: 'AB-123-CD', status: 'active' });
+    await expect(
+      dismissReport.run({ auth: { uid: 'police-1' }, data: { reportId: 'rep-1', reason: 'Blurry plate' } } as any)
+    ).rejects.toMatchObject({ code: 'permission-denied' });
   });
 });

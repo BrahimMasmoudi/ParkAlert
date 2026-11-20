@@ -9,6 +9,7 @@ import { TransactionContext, TransactionRunner } from '../../src/domain/reposito
 import { UserRepository } from '../../src/domain/repositories/user.repository';
 import { AcknowledgeTransferUseCase } from '../../src/application/usecases/car/acknowledge-transfer';
 import { AddCarUseCase } from '../../src/application/usecases/car/add-car';
+import { ApproveCarDeletionUseCase } from '../../src/application/usecases/car/approve-car-deletion';
 import { ApproveCarUseCase } from '../../src/application/usecases/car/approve-car';
 import { ApproveTransferUseCase } from '../../src/application/usecases/car/approve-transfer';
 import { CancelCarDeletionUseCase } from '../../src/application/usecases/car/cancel-car-deletion';
@@ -42,6 +43,10 @@ function makeRepos(seedCars: Car[] = [], seedUsers: User[] = []) {
     async getByPlateNumber(plate) {
       const norm = plate.toUpperCase().replace(/[^A-Z0-9]/g, '');
       return cars.get(norm) ? { ...cars.get(norm)! } : null;
+    },
+    async getAllByPlateNumber(plate) {
+      const norm = plate.toUpperCase().replace(/[^A-Z0-9]/g, '');
+      return cars.get(norm) ? [{ ...cars.get(norm)! }] : [];
     },
     async update(id, updates) {
       const existing = cars.get(id);
@@ -80,10 +85,11 @@ function makeRepos(seedCars: Car[] = [], seedUsers: User[] = []) {
 }
 
 const baseUsers: User[] = [
-  { uid: 'owner-a', role: 'owner', name: 'Owner A', email: 'a@test.com', createdAt: new Date() },
-  { uid: 'owner-b', role: 'owner', name: 'Owner B', email: 'b@test.com', createdAt: new Date() },
-  { uid: 'agent-1', role: 'agent', name: 'Agent 1', email: 'ag@test.com', createdAt: new Date() },
-  { uid: 'police-1', role: 'police', name: 'Police 1', email: 'p@test.com', createdAt: new Date() },
+  { uid: 'owner-a', roles: ['owner'], name: 'Owner A', email: 'a@test.com', createdAt: new Date() },
+  { uid: 'owner-b', roles: ['owner'], name: 'Owner B', email: 'b@test.com', createdAt: new Date() },
+  { uid: 'agent-1', roles: ['agent', 'owner'], name: 'Agent 1', email: 'ag@test.com', createdAt: new Date() },
+  { uid: 'police-1', roles: ['police', 'owner'], name: 'Police 1', email: 'p@test.com', createdAt: new Date() },
+  { uid: 'no-roles', roles: [], name: 'No Roles', email: 'none@test.com', createdAt: new Date() },
 ];
 
 const activeCar: Car = {
@@ -154,11 +160,44 @@ describe('US1: Car & Transfer Authorization, Role Enforcement, and Field Whiteli
     const reqDel = new RequestCarDeletionUseCase(carRepo, fineRepo, userRepo, fakeRunner);
     const cancelDel = new CancelCarDeletionUseCase(carRepo, userRepo, fakeRunner);
 
-    await expect(reqTransfer.execute({ plateNumber: 'AB-123-CD', receiverId: 'police-1', carteGriseUrl: 'transfers/police-1/a.pdf' })).rejects.toMatchObject({ code: 'PERMISSION_DENIED' });
+    await expect(reqTransfer.execute({ plateNumber: 'AB-123-CD', receiverId: 'no-roles', carteGriseUrl: 'transfers/no-roles/a.pdf' })).rejects.toMatchObject({ code: 'PERMISSION_DENIED' });
     await expect(ack.execute({ carId: 'AB123CD', ownerId: 'owner-b' })).rejects.toMatchObject({ code: 'PERMISSION_DENIED' });
-    await expect(checkPlate.execute({ plateNumber: 'AB-123-CD', callerId: 'agent-1' })).rejects.toMatchObject({ code: 'PERMISSION_DENIED' });
+    await expect(checkPlate.execute({ plateNumber: 'AB-123-CD', callerId: 'no-roles' })).rejects.toMatchObject({ code: 'PERMISSION_DENIED' });
     await expect(reqDel.execute({ carId: 'AB123CD', userId: 'police-1' })).rejects.toMatchObject({ code: 'PERMISSION_DENIED' });
-    await expect(cancelDel.execute({ carId: 'AB123CD', userId: 'agent-1' })).rejects.toMatchObject({ code: 'PERMISSION_DENIED' });
+    await expect(cancelDel.execute({ carId: 'AB123CD', userId: 'no-roles' })).rejects.toMatchObject({ code: 'PERMISSION_DENIED' });
+    await expect(reqDel.execute({ carId: 'AB123CD', userId: 'no-roles' })).rejects.toMatchObject({ code: 'PERMISSION_DENIED' });
+
+    // Dual-role ['police', 'owner'] retains personal owner actions on non-self vehicles
+    await expect(checkPlate.execute({ plateNumber: 'AB-123-CD', callerId: 'police-1' })).resolves.toMatchObject({
+      available: false,
+      reason: 'TRANSFER_IN_PROGRESS',
+    });
+  });
+
+  it('blocks police self-enforcement on approveCar, rejectCar, approveCarDeletion, approveTransfer, and rejectTransfer', async () => {
+    const { carRepo, userRepo, fineRepo } = makeRepos(
+      [
+        { ...activeCar, id: 'ACT01', ownerId: 'police-1', status: 'activation_pending' },
+        { ...activeCar, id: 'DEL01', ownerId: 'police-1', status: 'deletion_requested' },
+        { ...activeCar, id: 'TR1', ownerId: 'police-1', status: 'transfer_pending_police', transferToOwnerId: 'owner-b', transferCarteGriseUrl: 'transfers/owner-b/doc.pdf' },
+        { ...activeCar, id: 'TR2', ownerId: 'owner-a', status: 'transfer_pending_police', transferToOwnerId: 'police-1', transferCarteGriseUrl: 'transfers/police-1/doc.pdf' },
+      ],
+      baseUsers
+    );
+
+    const approveCar = new ApproveCarUseCase(carRepo, userRepo, fakeRunner);
+    const rejectCar = new RejectCarUseCase(carRepo, userRepo, fakeRunner);
+    const approveDel = new ApproveCarDeletionUseCase(carRepo, fineRepo, userRepo, fakeRunner);
+    const approveTransfer = new ApproveTransferUseCase(carRepo, fineRepo, userRepo, fakeRunner);
+    const rejectTransfer = new RejectTransferUseCase(carRepo, userRepo, fakeRunner);
+
+    await expect(approveCar.execute({ carId: 'ACT01', actorId: 'police-1' })).rejects.toMatchObject({ code: 'PERMISSION_DENIED' });
+    await expect(rejectCar.execute({ carId: 'ACT01', actorId: 'police-1', reason: 'Self reject' })).rejects.toMatchObject({ code: 'PERMISSION_DENIED' });
+    await expect(approveDel.execute({ carId: 'DEL01', actorId: 'police-1' })).rejects.toMatchObject({ code: 'PERMISSION_DENIED' });
+    await expect(approveTransfer.execute({ carId: 'TR1', actorId: 'police-1' })).rejects.toMatchObject({ code: 'PERMISSION_DENIED' });
+    await expect(rejectTransfer.execute({ carId: 'TR1', actorId: 'police-1', reason: 'Seller self' })).rejects.toMatchObject({ code: 'PERMISSION_DENIED' });
+    await expect(approveTransfer.execute({ carId: 'TR2', actorId: 'police-1' })).rejects.toMatchObject({ code: 'PERMISSION_DENIED' });
+    await expect(rejectTransfer.execute({ carId: 'TR2', actorId: 'police-1', reason: 'Buyer self' })).rejects.toMatchObject({ code: 'PERMISSION_DENIED' });
   });
 
   it('whitelists retryCar fields, locks plateNumber, and enforces scoped Storage paths on addCar/retryCar/transfer', async () => {

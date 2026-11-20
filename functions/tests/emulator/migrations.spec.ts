@@ -3,6 +3,8 @@ import { getApps, initializeApp } from 'firebase-admin/app';
 import { getFirestore } from 'firebase-admin/firestore';
 import { migrate as migrateV2 } from '../../migrations/v2__plate_as_id';
 import { migrate as migrateV3 } from '../../migrations/v3__backfill_fines_and_audit_logs';
+import { migrate as migrateV4 } from '../../migrations/v4__user_roles_array';
+import { migrate as migrateV5 } from '../../migrations/v5__remove_legacy_user_role';
 
 process.env.FIRESTORE_EMULATOR_HOST = process.env.FIRESTORE_EMULATOR_HOST || '127.0.0.1:8080';
 
@@ -24,6 +26,7 @@ describe('US3: v2 and v3 Migrations', () => {
       clearCollection('fines'),
       clearCollection('car_audit_logs'),
       clearCollection('migration_conflicts'),
+      clearCollection('users'),
     ]);
   });
 
@@ -33,6 +36,7 @@ describe('US3: v2 and v3 Migrations', () => {
       clearCollection('fines'),
       clearCollection('car_audit_logs'),
       clearCollection('migration_conflicts'),
+      clearCollection('users'),
     ]);
   });
 
@@ -89,5 +93,46 @@ describe('US3: v2 and v3 Migrations', () => {
     // Re-running v3 is idempotent
     await migrateV3({ firestore: db } as any);
     expect((await db.collection('fines').doc('fine-legacy').get()).data()?.plateNumberNormalized).toBe('EF789GH');
+  });
+
+  it('v4 backfills roles array while retaining legacy role and skipping incomplete/already-migrated docs', async () => {
+    await db.collection('users').doc('u-owner').set({ uid: 'u-owner', role: 'owner' });
+    await db.collection('users').doc('u-police').set({ uid: 'u-police', role: 'police' });
+    await db.collection('users').doc('u-agent').set({ uid: 'u-agent', role: 'agent' });
+    await db.collection('users').doc('u-partial').set({ uid: 'u-partial', email: 'partial@test.com' });
+    await db.collection('users').doc('u-existing').set({ uid: 'u-existing', role: 'owner', roles: ['owner'] });
+
+    const first = await migrateV4({ firestore: db } as any);
+    expect(first).toEqual({ migrated: 3, skipped: 2, errors: 0 });
+
+    expect((await db.collection('users').doc('u-owner').get()).data()).toMatchObject({ role: 'owner', roles: ['owner'] });
+    expect((await db.collection('users').doc('u-police').get()).data()).toMatchObject({ role: 'police', roles: ['police', 'owner'] });
+    expect((await db.collection('users').doc('u-agent').get()).data()).toMatchObject({ role: 'agent', roles: ['agent', 'owner'] });
+    expect((await db.collection('users').doc('u-partial').get()).data()?.roles).toBeUndefined();
+
+    // Idempotent re-run
+    const second = await migrateV4({ firestore: db } as any);
+    expect(second).toEqual({ migrated: 0, skipped: 5, errors: 0 });
+  });
+
+  it('v5 backfills remaining unmigrated docs and deletes legacy role idempotently', async () => {
+    await db.collection('users').doc('u-unmigrated').set({ uid: 'u-unmigrated', role: 'police' });
+    await db.collection('users').doc('u-migrated').set({ uid: 'u-migrated', role: 'agent', roles: ['agent', 'owner'] });
+    await db.collection('users').doc('u-clean').set({ uid: 'u-clean', roles: ['owner'] });
+
+    const first = await migrateV5({ firestore: db } as any);
+    expect(first).toEqual({ backfilled: 1, cleaned: 2, skipped: 1, errors: 0 });
+
+    const unmigrated = (await db.collection('users').doc('u-unmigrated').get()).data()!;
+    expect(unmigrated.roles).toEqual(['police', 'owner']);
+    expect('role' in unmigrated).toBe(false);
+
+    const migrated = (await db.collection('users').doc('u-migrated').get()).data()!;
+    expect(migrated.roles).toEqual(['agent', 'owner']);
+    expect('role' in migrated).toBe(false);
+
+    // Idempotent re-run
+    const second = await migrateV5({ firestore: db } as any);
+    expect(second).toEqual({ backfilled: 0, cleaned: 0, skipped: 3, errors: 0 });
   });
 });

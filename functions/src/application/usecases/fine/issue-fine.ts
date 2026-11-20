@@ -9,6 +9,11 @@ import { Fine } from '../../../domain/entities/fine.entity';
 import { Report } from '../../../domain/entities/report.entity';
 import { DomainError } from '../../../domain/errors/domain.error';
 import { normalizePlate } from '../../../domain/value-objects/plate';
+import {
+  assertHasRole,
+  assertNotSelfEnforcement,
+  collectPlateOwnerIds,
+} from '../shared/user-authorization';
 
 export interface IssueFineRequest {
   reportId: string;
@@ -43,9 +48,7 @@ export class IssueFineUseCase {
 
     return this.transactionRunner.run(async (tx) => {
       const caller = await this.userRepository.getById(issuedBy, tx);
-      if (!caller || caller.role !== 'police') {
-        throw new DomainError('PERMISSION_DENIED', 'Only police officers can issue fines');
-      }
+      assertHasRole(caller, 'police', 'Only police officers can issue fines');
 
       const report = await this.reportRepository.getById(reportId, tx);
       if (!report) {
@@ -65,6 +68,17 @@ export class IssueFineUseCase {
       }
 
       const car = await this.carRepository.getByPlateNumber(plateNumber, tx);
+      const plateOwnerIds = await collectPlateOwnerIds(
+        this.carRepository,
+        [plateNumber, report.plateNumber, report.originalPlateNumber],
+        tx
+      );
+      assertNotSelfEnforcement(
+        issuedBy,
+        [ownerId, car?.ownerId, car?.transferToOwnerId, ...plateOwnerIds],
+        { targetType: 'fine', targetId: reportId }
+      );
+
       if (!car) {
         throw new DomainError('NOT_FOUND', 'Vehicle not found for fine issuance');
       }

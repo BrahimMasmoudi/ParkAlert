@@ -1,4 +1,4 @@
-import { CarRepository } from '../../../domain/repositories/car.repository';
+import { CarRepository, PlateLookupOptions } from '../../../domain/repositories/car.repository';
 import { Car, CarAuditLog } from '../../../domain/entities/car.entity';
 import { TransactionContext } from '../../../domain/repositories/transaction.port';
 import { normalizePlate } from '../../../domain/value-objects/plate';
@@ -56,6 +56,42 @@ export class FirestoreCarRepository implements CarRepository {
       return null;
     }
     return fallbackCar;
+  }
+
+  async getAllByPlateNumber(
+    plateNumber: string,
+    tx?: TransactionContext,
+    options?: PlateLookupOptions
+  ): Promise<Car[]> {
+    const normalized = normalizePlate(plateNumber);
+    if (!normalized) return [];
+
+    const plateQuery = this.connector.db
+      .collection('cars')
+      .where('plateNumberNormalized', '==', normalized);
+    const firestoreTx = asFirestoreTransaction(tx);
+    const snapshot = firestoreTx ? await firestoreTx.get(plateQuery) : await plateQuery.get();
+
+    const matchesById = new Map<string, Car>();
+    for (const doc of snapshot.docs) {
+      const car = doc.data() as Car;
+      const carId = car.id ?? doc.id;
+      matchesById.set(carId, { ...car, id: carId });
+    }
+
+    const fallbackCar = await this.getById(normalized, tx);
+    if (fallbackCar) {
+      const fallbackId = fallbackCar.id ?? normalized;
+      if (!matchesById.has(fallbackId)) {
+        matchesById.set(fallbackId, { ...fallbackCar, id: fallbackId });
+      }
+    }
+
+    return Array.from(matchesById.values()).filter((car) => {
+      if (!options?.includeRejected && car.status === 'rejected') return false;
+      if (!options?.includeArchived && car.status === 'archived') return false;
+      return true;
+    });
   }
 
   async update(id: string, updates: Partial<Car>, tx?: TransactionContext): Promise<void> {

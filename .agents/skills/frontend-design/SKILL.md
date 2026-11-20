@@ -1,5 +1,8 @@
+---
 name: gov-frontend-design
-description: Create distinctive, production-grade frontend interfaces with high design quality using Nuxt 4, NuxtUI, and Tailwind CSS. Use this skill when building UI for the Government Parking Enforcement System. Generates accessible, premium, and trustworthy code that avoids generic AI aesthetics while prioritizing usability.
+description: "Create distinctive, production-grade frontend interfaces with high design quality using Nuxt 4, NuxtUI, and Tailwind CSS. Use this skill when building UI for the Government Parking Enforcement System. Generates accessible, premium, and trustworthy code that avoids generic AI aesthetics while prioritizing usability."
+---
+
 This skill guides the creation of highly usable, production-grade frontend interfaces that look like premium enterprise software, not generic templates. The output MUST be real, working, production-ready code adapted to the Nuxt 4 + NuxtUI ecosystem.
 
 🧠 Design Thinking
