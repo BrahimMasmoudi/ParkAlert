@@ -42,10 +42,11 @@ describe('Release 2 Firestore Rules: /reports, /fines, and /enforcement_audit_lo
     await testEnv.clearFirestore();
     await testEnv.withSecurityRulesDisabled(async (ctx) => {
       const db = ctx.firestore();
-      await setDoc(doc(db, 'users/owner-1'), { uid: 'owner-1', role: 'owner' });
-      await setDoc(doc(db, 'users/owner-2'), { uid: 'owner-2', role: 'owner' });
-      await setDoc(doc(db, 'users/agent-1'), { uid: 'agent-1', role: 'agent' });
-      await setDoc(doc(db, 'users/police-1'), { uid: 'police-1', role: 'police' });
+      await setDoc(doc(db, 'users/owner-1'), { uid: 'owner-1', roles: ['owner'] });
+      await setDoc(doc(db, 'users/owner-2'), { uid: 'owner-2', roles: ['owner'] });
+      await setDoc(doc(db, 'users/agent-1'), { uid: 'agent-1', roles: ['agent', 'owner'] });
+      await setDoc(doc(db, 'users/police-1'), { uid: 'police-1', roles: ['police', 'owner'] });
+      await setDoc(doc(db, 'users/legacy-police'), { uid: 'legacy-police', role: 'police' });
 
       await setDoc(doc(db, 'reports/rep-1'), {
         agentId: 'agent-1',
@@ -97,6 +98,12 @@ describe('Release 2 Firestore Rules: /reports, /fines, and /enforcement_audit_lo
     await assertFails(getDoc(doc(owner1Db, 'enforcement_audit_logs/log-1')));
     await assertFails(
       setDoc(doc(policeDb, 'enforcement_audit_logs/log-2'), { action: 'CANCEL_FINE' })
+    );
+
+    const legacyPoliceDb = testEnv.authenticatedContext('legacy-police').firestore();
+    await assertFails(getDoc(doc(legacyPoliceDb, 'reports/rep-1')));
+    await assertFails(
+      setDoc(doc(owner1Db, 'users/owner-1'), { uid: 'owner-1', roles: ['police', 'owner'] })
     );
   });
 });

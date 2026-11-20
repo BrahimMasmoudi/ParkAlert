@@ -53,6 +53,13 @@
         </button>
       </div>
 
+      <div class="mb-6 p-3.5 rounded-xl bg-slate-900/70 border border-slate-700/80 text-xs text-slate-300 flex items-start gap-2.5">
+        <UIcon name="lucide:info" class="w-4 h-4 text-blue-400 shrink-0 mt-0.5" />
+        <p class="leading-relaxed">
+          {{ $t('onboarding.dual_role_notice') }}
+        </p>
+      </div>
+
       <UButton
         id="confirm-role-btn"
         block

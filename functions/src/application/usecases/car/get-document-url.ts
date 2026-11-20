@@ -38,9 +38,11 @@ export class GetDocumentUrlUseCase {
       throw new DomainError('NOT_FOUND', 'Car not found');
     }
 
-    const isPolice = caller.role === 'police';
+    const roles = Array.isArray(caller.roles) ? caller.roles : [];
+    const isPolice = roles.includes('police');
+    const isOwner = roles.includes('owner');
     if (documentKind === 'active') {
-      const isCurrentOwner = caller.role === 'owner' && car.ownerId === callerId;
+      const isCurrentOwner = isOwner && car.ownerId === callerId;
       if (!isPolice && !isCurrentOwner) {
         throw new DomainError('PERMISSION_DENIED', 'Not authorized to access this vehicle document');
       }
@@ -48,7 +50,7 @@ export class GetDocumentUrlUseCase {
       const isTransferPending =
         car.status === 'transfer_pending_owner' || car.status === 'transfer_pending_police';
       const isAuthorizedOwner =
-        caller.role === 'owner' &&
+        isOwner &&
         isTransferPending &&
         (car.ownerId === callerId || car.transferToOwnerId === callerId);
       if (!isPolice && !isAuthorizedOwner) {

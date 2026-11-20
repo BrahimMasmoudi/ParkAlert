@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { CreateReportUseCase } from '../../src/application/usecases/report/create-report';
 import { DomainError } from '../../src/domain/errors/domain.error';
 
-function makeDeps(overrides: { role?: string; validRaster?: boolean } = {}) {
+function makeDeps(overrides: { roles?: string[]; validRaster?: boolean } = {}) {
   const reportRepository = {
     create: vi.fn().mockResolvedValue('rep-1'),
     getById: vi.fn(),
@@ -11,9 +11,11 @@ function makeDeps(overrides: { role?: string; validRaster?: boolean } = {}) {
   };
   const userRepository = {
     getById: vi.fn().mockResolvedValue(
-      overrides.role === 'none'
-        ? null
-        : { id: 'agent-1', role: overrides.role ?? 'agent' }
+      overrides.roles === undefined
+        ? { id: 'agent-1', roles: ['agent', 'owner'] }
+        : overrides.roles.length === 0
+          ? null
+          : { id: 'agent-1', roles: overrides.roles }
     ),
     update: vi.fn(),
   };
@@ -55,7 +57,7 @@ describe('CreateReportUseCase', () => {
   });
 
   it('rejects non-agent callers with PERMISSION_DENIED', async () => {
-    const { reportRepository, userRepository, storagePort } = makeDeps({ role: 'owner' });
+    const { reportRepository, userRepository, storagePort } = makeDeps({ roles: ['owner'] });
     const useCase = new CreateReportUseCase(reportRepository as any, userRepository as any, storagePort);
 
     await expect(

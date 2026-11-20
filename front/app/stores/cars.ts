@@ -99,6 +99,7 @@ const carConverter = {
 export const useCarsStore = defineStore('cars', () => {
   const authStore = useAuthStore()
   const userStore = useUserStore()
+  const route = useRoute()
   const db = useFirestore()
   const toast = useToast()
 
@@ -119,10 +120,12 @@ export const useCarsStore = defineStore('cars', () => {
   }
 
   /**
-   * USER CARS
+   * USER CARS (gated by owner capability and /owner workspace route)
    */
   const carsRef = computed(() => {
-    if (!authStore.currentUser?.uid) return null
+    if (!authStore.currentUser?.uid || !userStore.hasRole('owner') || route.meta.role !== 'owner') {
+      return null
+    }
 
     return query(
       collection(db, 'cars').withConverter(carConverter),
@@ -138,10 +141,12 @@ export const useCarsStore = defineStore('cars', () => {
   })
 
   /**
-   * POLICE PENDING ACTIONS (role-gated to avoid permission-denied listener errors on Owner Dashboard)
+   * POLICE PENDING ACTIONS (gated by police capability and /police workspace route)
    */
   const pendingCarsRef = computed(() => {
-    if (!authStore.currentUser?.uid || userStore.role !== 'police') return null
+    if (!authStore.currentUser?.uid || !userStore.hasRole('police') || route.meta.role !== 'police') {
+      return null
+    }
 
     return query(
       collection(db, 'cars').withConverter(carConverter),

@@ -7,10 +7,10 @@ import { UserRepository } from '../../src/domain/repositories/user.repository';
 import { GetDocumentUrlUseCase } from '../../src/application/usecases/car/get-document-url';
 
 const users = new Map<string, User>([
-  ['owner-a', { uid: 'owner-a', role: 'owner', name: 'A', email: 'a@test.com', createdAt: new Date() }],
-  ['owner-b', { uid: 'owner-b', role: 'owner', name: 'B', email: 'b@test.com', createdAt: new Date() }],
-  ['stranger', { uid: 'stranger', role: 'owner', name: 'S', email: 's@test.com', createdAt: new Date() }],
-  ['police-1', { uid: 'police-1', role: 'police', name: 'P', email: 'p@test.com', createdAt: new Date() }],
+  ['owner-a', { uid: 'owner-a', roles: ['owner'], name: 'A', email: 'a@test.com', createdAt: new Date() }],
+  ['owner-b', { uid: 'owner-b', roles: ['owner'], name: 'B', email: 'b@test.com', createdAt: new Date() }],
+  ['stranger', { uid: 'stranger', roles: ['owner'], name: 'S', email: 's@test.com', createdAt: new Date() }],
+  ['police-1', { uid: 'police-1', roles: ['police', 'owner'], name: 'P', email: 'p@test.com', createdAt: new Date() }],
 ]);
 
 describe('US2: GetDocumentUrlUseCase authorization', () => {

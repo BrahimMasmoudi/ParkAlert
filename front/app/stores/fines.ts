@@ -66,12 +66,13 @@ const fineConverter = {
 export const useFinesStore = defineStore('fines', () => {
   const authStore = useAuthStore()
   const userStore = useUserStore()
+  const route = useRoute()
   const toast = useToast()
   const db = useFirestore()
 
-  // ── Owner: reactive list of their fines ─────────────────────────────────────
+  // ── Owner: reactive list of their fines (role + route gated) ─────────────────
   const ownerFinesQuery = computed(() =>
-    authStore.currentUser?.uid
+    authStore.currentUser?.uid && userStore.hasRole('owner') && route.meta.role === 'owner'
       ? query(
           collection(db, 'fines').withConverter(fineConverter),
           where('ownerId', '==', authStore.currentUser.uid),
@@ -185,9 +186,9 @@ export const useFinesStore = defineStore('fines', () => {
     }
   }
 
-  // ── Police: reactive list of ALL fines (role-gated) ────────────────────────
+  // ── Police: reactive list of ALL fines (role + route gated) ──────────────────
   const allFinesQuery = computed(() =>
-    authStore.currentUser?.uid && userStore.role === 'police'
+    authStore.currentUser?.uid && userStore.hasRole('police') && route.meta.role === 'police'
       ? query(
           collection(db, 'fines').withConverter(fineConverter),
           orderBy('issuedAt', 'desc'),
@@ -196,9 +197,9 @@ export const useFinesStore = defineStore('fines', () => {
   )
   const { data: allFines, pending: allFinesLoading } = useCollection(allFinesQuery, { ssrKey: 'allFines' })
 
-  // ── Police: indexed pending disputes query (role-gated) ────────────────────
+  // ── Police: indexed pending disputes query (role + route gated) ──────────────
   const pendingDisputesQuery = computed(() =>
-    authStore.currentUser?.uid && userStore.role === 'police'
+    authStore.currentUser?.uid && userStore.hasRole('police') && route.meta.role === 'police'
       ? query(
           collection(db, 'fines').withConverter(fineConverter),
           where('disputeStatus', '==', 'pending'),

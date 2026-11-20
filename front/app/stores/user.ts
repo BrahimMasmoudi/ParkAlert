@@ -1,6 +1,7 @@
-import { doc, getDoc, collection, query, where } from 'firebase/firestore'
+import { doc, getDoc } from 'firebase/firestore'
 import { httpsCallable } from 'firebase/functions'
-import { useDocument, useFirestore, useCollection } from 'vuefire'
+import { useDocument, useFirestore } from 'vuefire'
+import { resolveUserRoles, type UserRole } from '~/utils/roles'
 
 export const useUserStore = defineStore('user', () => {
   const authStore = useAuthStore()
@@ -16,13 +17,18 @@ export const useUserStore = defineStore('user', () => {
   )
   const { data: userProfile, pending: profileLoading } = useDocument(userDocRef)
 
-  const role = computed(() => userProfile.value?.role as 'agent' | 'police' | 'owner' | undefined)
+  const roles = computed<UserRole[]>(() => resolveUserRoles(userProfile.value))
+  const isMultiRole = computed(() => roles.value.length > 1)
+
+  function hasRole(role: UserRole) {
+    return roles.value.includes(role)
+  }
 
   /**
    * Called from the onboarding page.
-   * Calls the setUserRole Cloud Function — writes the role securely via Firebase Auth context.
+   * Calls the setUserRole Cloud Function — writes the roles array securely via Firebase Auth context.
    */
-  async function setRole(role: 'agent' | 'police' | 'owner') {
+  async function setRole(role: UserRole) {
     const user = authStore.currentUser!
 
     try {
@@ -43,12 +49,13 @@ export const useUserStore = defineStore('user', () => {
     }
   }
 
-  async function updateProfile(payload: { fullName: string; identityNumber: string; birthDate: string; phone: string }) {
+  async function updateProfile(payload: { fullName: string, identityNumber: string, birthDate: string, phone: string }) {
     try {
       const { $functions } = useNuxtApp()
       await httpsCallable($functions, 'updateUserProfile')(payload)
       toast.add({ title: 'Profile updated successfully', color: 'success' })
-    } catch (e: unknown) {
+    }
+    catch (e: unknown) {
       const msg = e instanceof Error ? e.message : 'Failed to update profile'
       toast.add({ title: 'Error updating profile', description: msg, color: 'error' })
       throw e
@@ -67,10 +74,12 @@ export const useUserStore = defineStore('user', () => {
       const snap = await getDoc(doc(db, 'users', uid))
       if (snap.exists()) {
         usersCache.value[uid] = { id: snap.id, ...snap.data() }
-      } else {
+      }
+      else {
         usersCache.value[uid] = { name: 'Unknown User' }
       }
-    } catch (e) {
+    }
+    catch (e) {
       console.error('Failed to fetch user:', e)
       usersCache.value[uid] = { name: 'Unknown User' }
     }
@@ -78,38 +87,15 @@ export const useUserStore = defineStore('user', () => {
     return usersCache.value[uid]
   }
 
-  const ownersQuery = query(collection(db, 'users'), where('role', '==', 'owner'))
-  const { data: allOwnersList } = useCollection(ownersQuery)
-
-  const availableOwners = computed(() => {
-    if (!allOwnersList.value) return []
-    return allOwnersList.value
-      .filter((u: any) => u.id !== userProfile.value?.uid)
-      .map((u: any) => ({
-        id: u.id,
-        label: `${u.fullName || u.name || 'Unknown'}`,
-        ...u
-      }))
-  })
-
-  const allOwners = computed(() => {
-    if (!allOwnersList.value) return []
-    return allOwnersList.value.map((u: any) => ({
-      id: u.id,
-      label: `${u.fullName || u.name || 'Unknown'}`,
-      ...u
-    }))
-  })
-
   return {
     userProfile,
     profileLoading,
-    role,
+    roles,
+    hasRole,
+    isMultiRole,
     setRole,
     updateProfile,
     usersCache,
     fetchUser,
-    availableOwners,
-    allOwners,
   }
 })

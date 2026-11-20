@@ -1,6 +1,7 @@
 import { CarRepository } from '../../../domain/repositories/car.repository';
 import { UserRepository } from '../../../domain/repositories/user.repository';
 import { DomainError } from '../../../domain/errors/domain.error';
+import { assertHasRole } from '../shared/user-authorization';
 
 export type PlateIneligibilityReason =
   | 'OWNED_BY_CALLER'
@@ -26,9 +27,7 @@ export class CheckPlateAvailabilityUseCase {
     }
 
     const caller = await this.userRepository.getById(callerId);
-    if (!caller || caller.role !== 'owner') {
-      throw new DomainError('PERMISSION_DENIED', 'Only owners can check plate availability');
-    }
+    assertHasRole(caller, 'owner', 'Only owners can check plate availability');
 
     const car = await this.carRepository.getByPlateNumber(plateNumber);
     if (!car) {

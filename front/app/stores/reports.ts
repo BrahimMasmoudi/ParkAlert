@@ -80,10 +80,15 @@ const reportConverter = {
 
 export const useReportsStore = defineStore('reports', () => {
   const user = useCurrentUser()
+  const userStore = useUserStore()
+  const route = useRoute()
   const toast = useToast()
   const db = useFirestore()
 
   const pendingReportsQuery = computed(() => {
+    if (!user.value?.uid || !userStore.hasRole('police') || route.meta.role !== 'police') {
+      return null
+    }
     return query(
       collection(db, 'reports').withConverter(reportConverter),
       where('status', '==', 'pending'),
@@ -97,7 +102,7 @@ export const useReportsStore = defineStore('reports', () => {
 
   const agentReportsQuery = computed(() => {
     const uid = user.value?.uid
-    if (!uid) return null
+    if (!uid || !userStore.hasRole('agent') || route.meta.role !== 'agent') return null
 
     return query(
       collection(db, 'reports').withConverter(reportConverter),

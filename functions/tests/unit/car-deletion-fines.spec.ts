@@ -19,6 +19,7 @@ describe('Car deletion unpaid-fine guards', () => {
         status: carStatus,
       }),
       getByPlateNumber: vi.fn(),
+      getAllByPlateNumber: vi.fn().mockResolvedValue([]),
       update: vi.fn().mockResolvedValue(undefined),
       addAuditLog: vi.fn().mockResolvedValue(undefined),
       generateId: () => 'id-1',
@@ -32,8 +33,8 @@ describe('Car deletion unpaid-fine guards', () => {
     const userRepository = {
       getById: vi.fn(async (uid: string) =>
         uid === 'pol-1'
-          ? { uid: 'pol-1', role: 'police' }
-          : { uid: 'owner-1', role: 'owner' }
+          ? { uid: 'pol-1', roles: ['police', 'owner'] }
+          : { uid: 'owner-1', roles: ['owner'] }
       ),
       update: vi.fn(),
     };

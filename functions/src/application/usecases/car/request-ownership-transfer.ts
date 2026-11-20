@@ -4,6 +4,7 @@ import { UserRepository } from '../../../domain/repositories/user.repository';
 import { TransactionRunner } from '../../../domain/repositories/transaction.port';
 import { DomainError } from '../../../domain/errors/domain.error';
 import { isValidTransferPath, normalizePlate } from '../../../domain/value-objects/plate';
+import { assertHasRole } from '../shared/user-authorization';
 
 export class RequestOwnershipTransferUseCase {
   constructor(
@@ -25,9 +26,7 @@ export class RequestOwnershipTransferUseCase {
 
     return this.transactionRunner.run(async (tx) => {
       const receiver = await this.userRepository.getById(receiverId, tx);
-      if (!receiver || receiver.role !== 'owner') {
-        throw new DomainError('PERMISSION_DENIED', 'Only owners can request vehicle transfers');
-      }
+      assertHasRole(receiver, 'owner', 'Only owners can request vehicle transfers');
 
       const car = await this.carRepository.getByPlateNumber(plateNumber, tx);
       if (!car) {

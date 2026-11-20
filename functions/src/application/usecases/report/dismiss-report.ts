@@ -1,10 +1,16 @@
 import * as logger from 'firebase-functions/logger';
+import { CarRepository } from '../../../domain/repositories/car.repository';
 import { ReportRepository } from '../../../domain/repositories/report.repository';
 import { UserRepository } from '../../../domain/repositories/user.repository';
 import { EnforcementAuditPort } from '../../../domain/repositories/enforcement-audit.port';
 import { TransactionRunner } from '../../../domain/repositories/transaction.port';
 import { DomainError } from '../../../domain/errors/domain.error';
 import { validateRejectionReason } from '../../../domain/value-objects/plate';
+import {
+  assertHasRole,
+  assertNotSelfEnforcement,
+  collectPlateOwnerIds,
+} from '../shared/user-authorization';
 
 export interface DismissReportRequest {
   reportId: string;
@@ -21,7 +27,8 @@ export class DismissReportUseCase {
     private readonly reportRepository: ReportRepository,
     private readonly userRepository: UserRepository,
     private readonly enforcementAuditPort: EnforcementAuditPort,
-    private readonly transactionRunner: TransactionRunner
+    private readonly transactionRunner: TransactionRunner,
+    private readonly carRepository: CarRepository
   ) {}
 
   async execute(request: DismissReportRequest): Promise<{ ok: true }> {
@@ -33,9 +40,7 @@ export class DismissReportUseCase {
 
     return this.transactionRunner.run(async (tx) => {
       const actor = await this.userRepository.getById(actorId, tx);
-      if (!actor || actor.role !== 'police') {
-        throw new DomainError('PERMISSION_DENIED', 'Only police officers can dismiss reports');
-      }
+      assertHasRole(actor, 'police', 'Only police officers can dismiss reports');
 
       const report = await this.reportRepository.getById(reportId, tx);
       if (!report) {
@@ -44,6 +49,16 @@ export class DismissReportUseCase {
       if (report.status !== 'pending') {
         throw new DomainError('FAILED_PRECONDITION', 'Only pending reports can be dismissed');
       }
+
+      const plateOwnerIds = await collectPlateOwnerIds(
+        this.carRepository,
+        [report.plateNumber, report.originalPlateNumber],
+        tx
+      );
+      assertNotSelfEnforcement(actorId, plateOwnerIds, {
+        targetType: 'report',
+        targetId: reportId,
+      });
 
       await this.reportRepository.update(
         reportId,

@@ -39,9 +39,9 @@ describe('US2: Firestore & Storage Security Rules', () => {
     await testEnv.clearStorage();
     await testEnv.withSecurityRulesDisabled(async (ctx) => {
       const db = ctx.firestore();
-      await setDoc(doc(db, 'users/owner-a'), { uid: 'owner-a', role: 'owner' });
-      await setDoc(doc(db, 'users/owner-b'), { uid: 'owner-b', role: 'owner' });
-      await setDoc(doc(db, 'users/police-1'), { uid: 'police-1', role: 'police' });
+      await setDoc(doc(db, 'users/owner-a'), { uid: 'owner-a', roles: ['owner'] });
+      await setDoc(doc(db, 'users/owner-b'), { uid: 'owner-b', roles: ['owner'] });
+      await setDoc(doc(db, 'users/police-1'), { uid: 'police-1', roles: ['police', 'owner'] });
 
       await setDoc(doc(db, 'cars/AB123CD'), {
         id: 'AB123CD',

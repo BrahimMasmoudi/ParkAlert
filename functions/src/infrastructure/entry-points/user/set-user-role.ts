@@ -1,8 +1,9 @@
 import { onCall, HttpsError } from 'firebase-functions/v2/https';
 import { SetUserRoleUseCase } from '../../../application/usecases/user/set-user-role';
-import { userRepository } from '../index';
+import { userRepository, transactionRunner } from '../index';
+import { mapDomainErrorToHttpsError } from '../shared/error-mapper';
 
-const setUserRoleUseCase = new SetUserRoleUseCase(userRepository);
+const setUserRoleUseCase = new SetUserRoleUseCase(userRepository, transactionRunner);
 
 export const setUserRole = onCall(
   { region: 'europe-west3', enforceAppCheck: true },
@@ -12,17 +13,17 @@ export const setUserRole = onCall(
     }
 
     try {
-      const { role, name, email, phone } = request.data;
+      const { role, name, email, phone } = request.data ?? {};
       return await setUserRoleUseCase.execute({
         uid: request.auth.uid,
         role,
         name,
-        email: email ?? request.auth!.token['email'],
+        email: email ?? request.auth.token['email'],
         phone,
-        photoURL: request.auth!.token['picture'] as string,
+        photoURL: request.auth.token['picture'] as string,
       });
-    } catch (error: any) {
-      throw new HttpsError('internal', error.message);
+    } catch (error: unknown) {
+      throw mapDomainErrorToHttpsError(error);
     }
   }
 );

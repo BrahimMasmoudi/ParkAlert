@@ -5,6 +5,7 @@ import { DocumentStoragePort } from '../../../domain/repositories/storage.port';
 import { Report, ReportPhoto, ReportPhotoSlot } from '../../../domain/entities/report.entity';
 import { DomainError } from '../../../domain/errors/domain.error';
 import { isValidPlateFormat, isValidReportPath } from '../../../domain/value-objects/plate';
+import { assertHasRole } from '../shared/user-authorization';
 
 export interface CreateReportRequest {
   agentId: string;
@@ -25,9 +26,7 @@ export class CreateReportUseCase {
 
   async execute(request: CreateReportRequest) {
     const user = await this.userRepository.getById(request.agentId);
-    if (!user || user.role !== 'agent') {
-      throw new DomainError('PERMISSION_DENIED', 'Only agents can file reports');
-    }
+    assertHasRole(user, 'agent', 'Only agents can file reports');
 
     const { plateNumber, location, photos, address } = request;
 

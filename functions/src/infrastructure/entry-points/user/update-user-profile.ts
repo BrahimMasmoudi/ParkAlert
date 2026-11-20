@@ -1,6 +1,7 @@
 import { onCall, HttpsError } from 'firebase-functions/v2/https';
 import { UpdateUserProfileUseCase } from '../../../application/usecases/user/update-user-profile';
 import { userRepository } from '../index';
+import { mapDomainErrorToHttpsError } from '../shared/error-mapper';
 
 const updateUserProfileUseCase = new UpdateUserProfileUseCase(userRepository);
 
@@ -13,11 +14,11 @@ export const updateUserProfile = onCall(
 
     try {
       return await updateUserProfileUseCase.execute({
+        ...(request.data ?? {}),
         uid: request.auth.uid,
-        ...request.data,
       });
-    } catch (error: any) {
-      throw new HttpsError('internal', error.message);
+    } catch (error: unknown) {
+      throw mapDomainErrorToHttpsError(error);
     }
   }
 );

@@ -5,6 +5,7 @@ import { EnforcementAuditPort } from '../../../domain/repositories/enforcement-a
 import { TransactionRunner } from '../../../domain/repositories/transaction.port';
 import { DomainError } from '../../../domain/errors/domain.error';
 import { isValidPlateFormat, normalizePlate } from '../../../domain/value-objects/plate';
+import { assertHasRole } from '../shared/user-authorization';
 
 export interface UpdatePendingReportPlateRequest {
   reportId: string;
@@ -37,9 +38,7 @@ export class UpdatePendingReportPlateUseCase {
 
     return this.transactionRunner.run(async (tx) => {
       const actor = await this.userRepository.getById(actorId, tx);
-      if (!actor || actor.role !== 'agent') {
-        throw new DomainError('PERMISSION_DENIED', 'Only agents can edit pending report plates');
-      }
+      assertHasRole(actor, 'agent', 'Only agents can edit pending report plates');
 
       const report = await this.reportRepository.getById(reportId, tx);
       if (!report) {

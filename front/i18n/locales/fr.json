@@ -29,12 +29,20 @@
   "roles": {
     "agent": "Agent",
     "police": "Police",
-    "owner": "Citoyen"
+    "owner": "Propriétaire"
+  },
+  "header": {
+    "switch_role": "Changer d'espace"
+  },
+  "select_role": {
+    "title": "Choisir un espace",
+    "subtitle": "Votre compte donne accès à plusieurs espaces. Choisissez par où commencer."
   },
   "onboarding": {
     "welcome": "Bienvenue, {name}",
     "subtitle": "Sélectionnez votre rôle pour accéder à votre tableau de bord personnalisé.",
     "continue": "Continuer en tant que {role}",
+    "dual_role_notice": "Les comptes Police et Agent incluent aussi les fonctionnalités personnelles de Propriétaire. Votre choix initial est définitif.",
     "roles": {
       "agent": {
         "label": "Agent de Stationnement",
@@ -106,6 +114,7 @@
   },
   "police": {
     "title": "Portail de Police",
+    "self_enforcement_notice": "Action bloquée : vous ne pouvez pas effectuer d'action policière sur votre propre véhicule ou amende.",
     "search_placeholder": "Chercher par plaque, agent ou lieu...",
     "pending_reports": "Signalements en Attente",
     "no_reports": "Aucun signalement en attente",

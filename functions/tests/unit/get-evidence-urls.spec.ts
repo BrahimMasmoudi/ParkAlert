@@ -18,7 +18,7 @@ describe('GetEvidenceUrlsUseCase', () => {
     };
     const fineRepository = { create: vi.fn(), getById: vi.fn(), update: vi.fn(), hasUnpaidFines: vi.fn() };
     const userRepository = {
-      getById: vi.fn().mockResolvedValue({ id: 'agent-1', role: 'agent' }),
+      getById: vi.fn().mockResolvedValue({ id: 'agent-1', roles: ['agent', 'owner'] }),
       update: vi.fn(),
     };
     const storagePort = {
@@ -52,7 +52,7 @@ describe('GetEvidenceUrlsUseCase', () => {
       agentId: 'agent-1',
       photoUrl: 'http://127.0.0.1:9199/v0/b/demo/o/photo.jpg',
     });
-    userRepository.getById.mockResolvedValue({ id: 'pol-1', role: 'police' });
+    userRepository.getById.mockResolvedValue({ id: 'pol-1', roles: ['police', 'owner'] });
     const legacyRes = await useCase.execute({
       targetType: 'report',
       targetId: 'rep-legacy',
@@ -71,7 +71,7 @@ describe('GetEvidenceUrlsUseCase', () => {
       update: vi.fn(),
     };
     const fineRepository = { create: vi.fn(), getById: vi.fn(), update: vi.fn(), hasUnpaidFines: vi.fn() };
-    const userRepository = { getById: vi.fn().mockResolvedValue({ id: 'agent-2', role: 'agent' }), update: vi.fn() };
+    const userRepository = { getById: vi.fn().mockResolvedValue({ id: 'agent-2', roles: ['agent', 'owner'] }), update: vi.fn() };
     const storagePort = { verifyRasterImage: vi.fn(), getSignedReadUrl: vi.fn() };
 
     const useCase = new GetEvidenceUrlsUseCase(

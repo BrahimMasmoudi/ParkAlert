@@ -3,6 +3,7 @@ import { UserRepository } from '../../../domain/repositories/user.repository';
 import { TransactionRunner } from '../../../domain/repositories/transaction.port';
 import { DomainError } from '../../../domain/errors/domain.error';
 import { isValidRegistrationPath, normalizePlate } from '../../../domain/value-objects/plate';
+import { assertHasRole } from '../shared/user-authorization';
 
 export interface RetryCarRequest {
   carId: string;
@@ -33,9 +34,7 @@ export class RetryCarUseCase {
 
     return this.transactionRunner.run(async (tx) => {
       const user = await this.userRepository.getById(userId, tx);
-      if (!user || user.role !== 'owner') {
-        throw new DomainError('PERMISSION_DENIED', 'Only owners can retry car registration');
-      }
+      assertHasRole(user, 'owner', 'Only owners can retry car registration');
 
       const car = await this.carRepository.getById(carId, tx);
       if (!car) {

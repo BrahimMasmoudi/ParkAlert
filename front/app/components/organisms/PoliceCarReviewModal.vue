@@ -135,31 +135,42 @@
     </template>
 
     <template #footer>
-      <div class="flex flex-col sm:flex-row justify-end w-full gap-3 pt-2">
-        <UButton
-          :label="$t('common.close')"
-          color="neutral"
-          variant="soft"
-          size="lg"
-          class="sm:flex-none justify-center"
-          @click="isOpen = false"
-        />
-        <UButton
-          :label="$t('common.reject')"
-          color="error"
-          variant="soft"
-          size="lg"
-          class="sm:flex-none justify-center"
-          @click="emit('reject')"
-        />
-        <UButton
-          :label="$t(modeConfig.approvLabel)"
-          :color="modeConfig.approveColor"
-          size="lg"
-          class="sm:flex-none justify-center font-bold"
-          :loading="isApproving"
-          @click="emit('approve')"
-        />
+      <div class="w-full space-y-3 pt-2">
+        <div
+          v-if="isSelfOwned"
+          class="p-3 rounded-lg bg-amber-950/30 border border-amber-700/40 text-amber-300 text-xs flex items-center gap-2"
+        >
+          <UIcon name="lucide:shield-alert" class="w-4 h-4 shrink-0" />
+          <span>{{ $t('police.self_enforcement_notice') }}</span>
+        </div>
+        <div class="flex flex-col sm:flex-row justify-end w-full gap-3">
+          <UButton
+            :label="$t('common.close')"
+            color="neutral"
+            variant="soft"
+            size="lg"
+            class="sm:flex-none justify-center"
+            @click="isOpen = false"
+          />
+          <UButton
+            :label="$t('common.reject')"
+            color="error"
+            variant="soft"
+            size="lg"
+            class="sm:flex-none justify-center"
+            :disabled="isSelfOwned"
+            @click="emit('reject')"
+          />
+          <UButton
+            :label="$t(modeConfig.approvLabel)"
+            :color="modeConfig.approveColor"
+            size="lg"
+            class="sm:flex-none justify-center font-bold"
+            :disabled="isSelfOwned"
+            :loading="isApproving"
+            @click="emit('approve')"
+          />
+        </div>
       </div>
     </template>
   </UModal>
@@ -183,9 +194,15 @@ const emit = defineEmits<{
 }>()
 
 const isOpen = defineModel<boolean>('open', { required: true })
+const authStore = useAuthStore()
 const userStore = useUserStore()
 const carsStore = useCarsStore()
 const { resolveDocumentUrl, openDocument, isOpening } = useDocumentViewer()
+
+const isSelfOwned = computed(() => {
+  const uid = authStore.currentUser?.uid
+  return Boolean(uid && props.car && (props.car.ownerId === uid || props.car.transferToOwnerId === uid))
+})
 
 const modeConfig = computed(() => {
   switch (props.mode) {

@@ -22,7 +22,7 @@ describe('UpdatePendingReportPlateUseCase', () => {
       update: vi.fn(),
     };
     const userRepository = {
-      getById: vi.fn().mockResolvedValue({ id: 'agent-1', role: 'agent' }),
+      getById: vi.fn().mockResolvedValue({ id: 'agent-1', roles: ['agent', 'owner'] }),
       update: vi.fn(),
     };
     const auditPort = { addAuditLog: vi.fn() };
@@ -68,7 +68,7 @@ describe('UpdatePendingReportPlateUseCase', () => {
       update: vi.fn(),
     };
     const userRepository = {
-      getById: vi.fn().mockResolvedValue({ id: 'agent-1', role: 'agent' }),
+      getById: vi.fn().mockResolvedValue({ id: 'agent-1', roles: ['agent', 'owner'] }),
       update: vi.fn(),
     };
     const auditPort = { addAuditLog: vi.fn() };
@@ -83,7 +83,7 @@ describe('UpdatePendingReportPlateUseCase', () => {
       useCase.execute({ reportId: 'rep-1', plateNumber: 'AB-999-ZZ', actorId: 'agent-1' })
     ).rejects.toMatchObject({ code: 'FAILED_PRECONDITION' });
 
-    userRepository.getById.mockResolvedValue({ id: 'agent-2', role: 'agent' });
+    userRepository.getById.mockResolvedValue({ id: 'agent-2', roles: ['agent', 'owner'] });
     await expect(
       useCase.execute({ reportId: 'rep-1', plateNumber: 'AB-999-ZZ', actorId: 'agent-2' })
     ).rejects.toMatchObject({ code: 'PERMISSION_DENIED' });

@@ -1,6 +1,7 @@
 import { onCall, HttpsError } from 'firebase-functions/v2/https';
 import { DismissReportUseCase } from '../../../application/usecases/report/dismiss-report';
 import {
+  carRepository,
   enforcementAuditPort,
   reportRepository,
   transactionRunner,
@@ -12,7 +13,8 @@ const dismissReportUseCase = new DismissReportUseCase(
   reportRepository,
   userRepository,
   enforcementAuditPort,
-  transactionRunner
+  transactionRunner,
+  carRepository
 );
 
 export const dismissReport = onCall(

@@ -30,7 +30,7 @@
           <span class="text-sm text-slate-400">{{ new Date(row.original.createdAt).toLocaleString() }}</span>
         </template>
         <template #actions-cell="{ row }">
-          <div class="flex gap-2">
+          <div class="flex flex-wrap items-center gap-2">
             <UButton
               size="xs"
               color="neutral"
@@ -41,6 +41,7 @@
             <UButton
               size="xs"
               color="success"
+              :disabled="isSelfOwned(row.original)"
               :loading="carsStore.isLoading(`${row.original.id}-approve`)"
               @click="carsStore.approveCar(row.original.id)"
             >{{ $t('police.actions.approve') }}</UButton>
@@ -48,9 +49,18 @@
               size="xs"
               color="error"
               variant="soft"
+              :disabled="isSelfOwned(row.original)"
               :loading="carsStore.isLoading(`${row.original.id}-reject`)"
               @click="$emit('reject', row.original.id, false)"
             >{{ $t('common.reject') }}</UButton>
+            <UBadge
+              v-if="isSelfOwned(row.original)"
+              color="warning"
+              variant="soft"
+              size="xs"
+            >
+              {{ $t('police.self_enforcement_notice') }}
+            </UBadge>
           </div>
         </template>
       </UTable>
@@ -86,7 +96,7 @@
           <span class="text-sm text-slate-400">{{ new Date(row.original.createdAt).toLocaleString() }}</span>
         </template>
         <template #actions-cell="{ row }">
-          <div class="flex gap-2">
+          <div class="flex flex-wrap items-center gap-2">
             <UButton
               size="xs"
               color="neutral"
@@ -97,6 +107,7 @@
             <UButton
               size="xs"
               color="error"
+              :disabled="isSelfOwned(row.original)"
               :loading="carsStore.isLoading(`${row.original.id}-approve`)"
               @click="carsStore.approveDeletion(row.original.id)"
             >{{ $t('police.actions.approve_deletion') }}</UButton>
@@ -104,9 +115,18 @@
               size="xs"
               color="neutral"
               variant="soft"
+              :disabled="isSelfOwned(row.original)"
               :loading="carsStore.isLoading(`${row.original.id}-reject`)"
               @click="carsStore.approveCar(row.original.id)"
             >{{ $t('police.actions.cancel_deletion') }}</UButton>
+            <UBadge
+              v-if="isSelfOwned(row.original)"
+              color="warning"
+              variant="soft"
+              size="xs"
+            >
+              {{ $t('police.self_enforcement_notice') }}
+            </UBadge>
           </div>
         </template>
       </UTable>
@@ -156,7 +176,7 @@
           <span v-else class="text-slate-500 italic text-sm">No doc</span>
         </template>
         <template #actions-cell="{ row }">
-          <div class="flex gap-2">
+          <div class="flex flex-wrap items-center gap-2">
             <UButton
               size="xs"
               color="neutral"
@@ -167,6 +187,7 @@
             <UButton
               size="xs"
               color="success"
+              :disabled="isSelfOwned(row.original)"
               :loading="carsStore.isLoading(row.original.id + '-approve')"
               @click="carsStore.approveTransfer(row.original.id)"
             >{{ $t('police.actions.approve') }}</UButton>
@@ -174,9 +195,18 @@
               size="xs"
               color="error"
               variant="soft"
+              :disabled="isSelfOwned(row.original)"
               :loading="carsStore.isLoading(row.original.id + '-reject')"
               @click="$emit('reject', row.original.id, true)"
             >{{ $t('police.actions.reject') }}</UButton>
+            <UBadge
+              v-if="isSelfOwned(row.original)"
+              color="warning"
+              variant="soft"
+              size="xs"
+            >
+              {{ $t('police.self_enforcement_notice') }}
+            </UBadge>
           </div>
         </template>
       </UTable>
@@ -200,7 +230,13 @@ defineProps<{
 
 defineEmits(['review', 'reject'])
 
+const authStore = useAuthStore()
 const userStore = useUserStore()
 const carsStore = useCarsStore()
 const { openDocument, isOpening } = useDocumentViewer()
+
+function isSelfOwned(car: any) {
+  const uid = authStore.currentUser?.uid
+  return Boolean(uid && car && (car.ownerId === uid || car.transferToOwnerId === uid))
+}
 </script>
