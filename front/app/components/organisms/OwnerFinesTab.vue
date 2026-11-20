@@ -1,12 +1,12 @@
 <template>
   <section class="space-y-6">
-    <div class="flex items-center justify-between mb-6 border-b border-slate-800 pb-4">
+    <div class="flex items-center justify-between mb-6 border-b border-default pb-4">
       <div>
-        <h2 class="text-xl font-bold text-white tracking-tight flex items-center gap-2">
-          <UIcon name="lucide:circle-dollar-sign" class="w-5 h-5 text-red-500" />
+        <h2 class="text-xl font-bold text-highlighted tracking-tight flex items-center gap-2">
+          <UIcon name="lucide:circle-dollar-sign" class="w-5 h-5 text-red-600 dark:text-red-500" />
           {{ $t('owner.fines.title') }}
         </h2>
-        <p class="text-sm text-slate-400 mt-1">{{ $t('owner.fines.subtitle') }}</p>
+        <p class="text-sm text-muted mt-1">{{ $t('owner.fines.subtitle') }}</p>
       </div>
     </div>
 
@@ -14,19 +14,19 @@
 
     <div
       v-else-if="!fines?.length"
-      class="flex flex-col items-center justify-center py-20 bg-slate-900 border border-slate-800 border-dashed rounded-2xl"
+      class="flex flex-col items-center justify-center py-20 bg-elevated border border-default border-dashed rounded-2xl"
     >
-      <div class="p-4 bg-slate-800 rounded-full mb-4">
-        <UIcon name="lucide:smile" class="w-8 h-8 text-green-500" />
+      <div class="p-4 bg-muted rounded-full mb-4">
+        <UIcon name="lucide:smile" class="w-8 h-8 text-emerald-700 dark:text-emerald-400" />
       </div>
-      <p class="text-lg text-white font-bold tracking-tight">{{ $t('owner.fines.no_fines') }}</p>
-      <p class="text-slate-400 text-sm mt-2 max-w-sm text-center">{{ $t('owner.fines.empty_state_desc') }}</p>
+      <p class="text-lg text-highlighted font-bold tracking-tight">{{ $t('owner.fines.no_fines') }}</p>
+      <p class="text-muted text-sm mt-2 max-w-sm text-center">{{ $t('owner.fines.empty_state_desc') }}</p>
     </div>
 
     <div v-else class="space-y-4">
       <div v-if="unpaidFines.length" class="flex items-center gap-2 mb-2">
-        <span class="text-[10px] font-black uppercase tracking-[0.2em] text-red-500">{{ $t('owner.fines.unpaid_title') }}</span>
-        <div class="h-px flex-1 bg-red-950"/>
+        <span class="text-[10px] font-black uppercase tracking-[0.2em] text-red-700 dark:text-red-400">{{ $t('owner.fines.unpaid_title') }}</span>
+        <div class="h-px flex-1 bg-red-500/25" />
       </div>
 
       <MoleculesOwnerFineCard
@@ -36,8 +36,8 @@
       />
 
       <div v-if="paidFines.length" class="flex items-center gap-2 mt-8 mb-2">
-        <span class="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">{{ $t('owner.fines.settled_title') }}</span>
-        <div class="h-px flex-1 bg-slate-800"/>
+        <span class="text-[10px] font-black uppercase tracking-[0.2em] text-muted">{{ $t('owner.fines.settled_title') }}</span>
+        <div class="h-px flex-1 bg-default border-b border-default" />
       </div>
 
       <MoleculesOwnerFineCard
@@ -47,8 +47,8 @@
       />
 
       <div v-if="cancelledFines.length" class="flex items-center gap-2 mt-8 mb-2">
-        <span class="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">{{ $t('owner.fines.cancelled_title') }}</span>
-        <div class="h-px flex-1 bg-slate-800"/>
+        <span class="text-[10px] font-black uppercase tracking-[0.2em] text-muted">{{ $t('owner.fines.cancelled_title') }}</span>
+        <div class="h-px flex-1 bg-default border-b border-default" />
       </div>
 
       <MoleculesOwnerFineCard

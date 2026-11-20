@@ -2,18 +2,19 @@
   <UCard
     class="group transition-all duration-300 relative overflow-hidden border shadow-lg hover:shadow-xl"
     :class="car.status === 'deletion_requested'
-      ? 'bg-slate-900/40 border-slate-800 opacity-75 grayscale-[0.5]'
-      : 'bg-slate-900 border-slate-700 hover:border-slate-500'"
-    :ui="{ body: { padding: 'p-0 sm:p-0' } }"
+      ? 'bg-elevated/60 border-default opacity-75 grayscale-[0.5]'
+      : 'bg-elevated border-default hover:border-primary/50'"
+    :ui="{ body: 'p-0 sm:p-0' }"
   >
     <div
-      class="p-5 border-b border-slate-800/50 flex justify-between items-start"
-      :class="car.status === 'deletion_requested' ? 'bg-amber-950/20' : 'bg-slate-800/20'"
+      class="p-5 border-b border-default flex justify-between items-start"
+      :class="car.status === 'deletion_requested' ? 'bg-amber-500/10' : 'bg-muted/40'"
     >
       <div>
         <div class="flex items-center gap-3">
           <div
-            class="px-3 py-1.5 bg-slate-950 border border-slate-700 rounded-md text-lg font-mono font-bold text-white tracking-[0.15em] shadow-inner"
+            dir="ltr"
+            class="px-3 py-1.5 bg-default border border-default rounded-md text-lg font-mono font-bold text-highlighted tracking-[0.15em] shadow-inner"
           >
             {{ car.plateNumber }}
           </div>
@@ -22,7 +23,7 @@
             color="error"
             variant="solid"
             size="xs"
-            class="animate-pulse shadow-lg shadow-red-500/40 font-black"
+            class="animate-pulse font-black"
           >
             {{ unpaidFinesCount }} {{ $t('owner.car.violations', unpaidFinesCount) }}
           </UBadge>
@@ -34,7 +35,7 @@
             variant="subtle"
             class="font-semibold text-xs px-2.5 py-1"
           >
-            <UIcon name="lucide:arrow-right-left" class="w-3 h-3 mr-1" />
+            <UIcon name="lucide:arrow-right-left" class="w-3 h-3 me-1" />
             {{ $t('owner.car.transferred') }}
           </UBadge>
           <UBadge
@@ -76,36 +77,36 @@
       </div>
     </div>
 
-    <div class="p-5 grid grid-cols-2 gap-6 bg-slate-900">
+    <div class="p-5 grid grid-cols-2 gap-6 bg-default">
       <div>
-        <p class="text-[10px] text-slate-500 font-bold uppercase tracking-widest mb-1">
+        <p class="text-[10px] text-dimmed font-bold uppercase tracking-widest mb-1">
           {{ $t('owner.car.brand_model') }}
         </p>
-        <p class="text-sm text-slate-200 font-medium capitalize">{{ car.brand }} {{ car.model }}</p>
+        <p class="text-sm text-default font-medium capitalize">{{ car.brand }} {{ car.model }}</p>
       </div>
       <div>
-        <p class="text-[10px] text-slate-500 font-bold uppercase tracking-widest mb-1">{{ $t('owner.car.color') }}</p>
-        <p class="text-sm text-slate-200 font-medium capitalize">{{ car.color }}</p>
+        <p class="text-[10px] text-dimmed font-bold uppercase tracking-widest mb-1">{{ $t('owner.car.color') }}</p>
+        <p class="text-sm text-default font-medium capitalize">{{ car.color }}</p>
       </div>
     </div>
 
-    <div v-if="!readonly" class="pb-5 bg-slate-900">
+    <div v-if="!readonly" class="px-5 pb-5 bg-default">
       <!-- Rejection Reason for Registration -->
       <div
         v-if="car.status === 'rejected' && car.rejectionReason"
-        class="bg-red-950/30 border border-red-900/50 rounded-lg p-4 mb-4"
+        class="bg-red-500/10 border border-red-500/25 rounded-lg p-4 mb-4"
       >
         <div class="flex items-start justify-between gap-4">
           <div>
-            <p class="text-[10px] text-red-400 font-bold uppercase tracking-widest mb-1 flex items-center gap-1.5">
+            <p class="text-[10px] text-red-700 dark:text-red-400 font-bold uppercase tracking-widest mb-1 flex items-center gap-1.5">
               <UIcon name="lucide:alert-circle" class="w-3.5 h-3.5" />
               {{ $t('owner.car.rejection_reason') }}
             </p>
-            <p class="text-sm text-red-200 leading-snug">{{ car.rejectionReason }}</p>
+            <p class="text-sm text-red-800 dark:text-red-200 leading-snug">{{ car.rejectionReason }}</p>
           </div>
           <UButton
-            color="white"
-            variant="solid"
+            color="neutral"
+            variant="outline"
             size="sm"
             icon="lucide:refresh-cw"
             @click="$emit('retry', car.id)"
@@ -118,15 +119,15 @@
       <!-- Incoming Transfer Request (Collapsible) -->
       <UCollapsible
         v-if="car.status === 'transfer_pending_owner'"
-        class="bg-indigo-950/20 border-t border-indigo-500/20"
+        class="bg-primary/5 border-t border-primary/20"
       >
         <template #default="{ open }">
-          <div class="py-4 flex items-center justify-between cursor-pointer hover:bg-indigo-500/5 transition-colors">
+          <div class="py-4 px-2 flex items-center justify-between cursor-pointer hover:bg-primary/10 transition-colors">
             <div class="flex items-center gap-3">
-              <div class="p-2 bg-indigo-500/20 rounded-full text-indigo-400">
+              <div class="p-2 bg-primary/15 rounded-full text-primary">
                 <UIcon name="lucide:arrow-right-left" class="w-4 h-4" />
               </div>
-              <span class="text-indigo-300 font-bold text-xs tracking-wider uppercase">{{
+              <span class="text-primary font-bold text-xs tracking-wider uppercase">{{
                 $t('owner.car.incoming_transfer_title') }}</span>
             </div>
             <div class="flex items-center gap-3">
@@ -140,7 +141,7 @@
               </UBadge>
               <UIcon
                 name="lucide:chevron-down"
-                class="w-5 h-5 text-indigo-400 transition-transform duration-200"
+                class="w-5 h-5 text-primary transition-transform duration-200"
                 :class="open ? 'rotate-180' : ''"
               />
             </div>
@@ -149,12 +150,12 @@
 
         <template #content>
           <div class="pb-6">
-            <div class="bg-indigo-900/10 rounded-xl p-5 border border-indigo-500/10">
-              <p class="text-slate-300 text-sm leading-relaxed mb-6">{{ $t('owner.car.incoming_transfer_desc') }}</p>
+            <div class="bg-primary/5 rounded-xl p-5 border border-primary/15">
+              <p class="text-default text-sm leading-relaxed mb-6">{{ $t('owner.car.incoming_transfer_desc') }}</p>
 
               <!-- Requester Info Card -->
-              <div class="bg-slate-950/50 rounded-lg p-4 mb-6 border border-indigo-500/10">
-                <p class="text-[10px] text-indigo-400 font-bold uppercase tracking-widest mb-3">
+              <div class="bg-elevated rounded-lg p-4 mb-6 border border-default">
+                <p class="text-[10px] text-primary font-bold uppercase tracking-widest mb-3">
                   {{ $t('owner.car.proposed_new_owner') }}
                 </p>
                 <div class="flex items-center gap-4">
@@ -162,20 +163,20 @@
                     :src="requester?.photoURL"
                     :alt="requester?.fullName || requester?.name"
                     size="lg"
-                    class="ring-2 ring-indigo-500/20 flex-shrink-0"
+                    class="ring-2 ring-primary/20 flex-shrink-0"
                   />
                   <div class="min-w-0 flex-1">
-                    <p class="text-slate-100 font-bold truncate">
+                    <p class="text-highlighted font-bold truncate">
                       {{ requester?.fullName || requester?.name || $t('common.loading') }}
                     </p>
                     <div class="flex flex-col gap-1 mt-1">
-                      <p v-if="requester?.email" class="text-xs text-slate-400 flex items-center gap-1.5 min-w-0">
+                      <p v-if="requester?.email" class="text-xs text-muted flex items-center gap-1.5 min-w-0">
                         <UIcon name="lucide:mail" class="w-3 h-3 flex-shrink-0" />
                         <span class="truncate">{{ requester.email }}</span>
                       </p>
                       <p
                         v-if="requester?.identityNumber"
-                        class="text-xs text-indigo-300 font-mono flex items-center gap-1.5 min-w-0"
+                        class="text-xs text-primary font-mono flex items-center gap-1.5 min-w-0"
                       >
                         <UIcon name="lucide:id-card" class="w-3 h-3 flex-shrink-0" />
                         <span class="truncate">{{ requester.identityNumber }}</span>
@@ -202,7 +203,7 @@
                   variant="solid"
                   size="md"
                   icon="lucide:check-circle"
-                  class="flex-1 justify-center font-bold shadow-lg shadow-indigo-500/20"
+                  class="flex-1 justify-center font-bold shadow-lg"
                   :loading="carsStore.isLoading(`${car.id}-acknowledge`)"
                   @click="carsStore.acknowledgeTransfer(car.id)"
                 >
@@ -217,24 +218,24 @@
       <!-- Transfer Rejected Reason -->
       <div
         v-if="car.status === 'active' && car.transferRejectionReason"
-        class="bg-red-950/30 border border-red-900/50 rounded-lg p-4 mt-4"
+        class="bg-red-500/10 border border-red-500/25 rounded-lg p-4 mt-4"
       >
         <div class="flex items-start gap-4">
           <div>
-            <p class="text-[10px] text-red-400 font-bold uppercase tracking-widest mb-1 flex items-center gap-1.5">
+            <p class="text-[10px] text-red-700 dark:text-red-400 font-bold uppercase tracking-widest mb-1 flex items-center gap-1.5">
               <UIcon name="lucide:alert-circle" class="w-3.5 h-3.5" />
               {{ $t('owner.car.transfer_rejected') }}
             </p>
-            <p class="text-sm text-red-200 leading-snug">{{ car.transferRejectionReason }}</p>
+            <p class="text-sm text-red-800 dark:text-red-200 leading-snug">{{ car.transferRejectionReason }}</p>
           </div>
         </div>
       </div>
     </div>
 
-    <div class="px-5 py-3 bg-slate-950 border-t border-slate-800 flex items-center justify-between">
+    <div class="px-5 py-3 bg-muted/40 border-t border-default flex items-center justify-between">
       <div class="flex items-center gap-2">
-        <UIcon name="lucide:file-text" class="w-4 h-4 text-slate-500" />
-        <span class="text-xs text-slate-400 font-medium uppercase tracking-wider">
+        <UIcon name="lucide:file-text" class="w-4 h-4 text-dimmed" />
+        <span class="text-xs text-muted font-medium uppercase tracking-wider">
           {{ $t('owner.car.carte_grise') }}
         </span>
       </div>
@@ -244,8 +245,7 @@
         icon="lucide:external-link"
         :label="$t('owner.car.view_doc')"
         :loading="isOpening(car.id, 'active')"
-        :padded="false"
-        class="text-indigo-400 hover:text-indigo-300 font-medium text-sm"
+        class="p-0 font-medium text-sm"
         @click="openDocument(car.id, 'active', car.carteGriseUrl)"
       />
     </div>

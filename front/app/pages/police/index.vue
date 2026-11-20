@@ -5,8 +5,8 @@
     <UTabs
       :items="tabs"
       :ui="{
-        list: 'bg-slate-900 border border-slate-800 p-1 mb-8',
-        indicator: 'bg-indigo-600',
+        list: 'bg-elevated border border-default p-1 mb-8',
+        indicator: 'bg-primary',
         trigger: 'font-bold uppercase tracking-widest text-xs py-3'
       }"
     >
@@ -55,8 +55,7 @@
       :title="`${$t('police.fine.title')} - ${selected?.plateNumber}`"
       :description="$t('police.fine.description')"
       :ui="{
-        content: 'bg-slate-900 border border-slate-700 shadow-2xl shadow-black/50 rounded-2xl overflow-hidden max-w-4xl sm:min-h-[36rem]',
-        header: 'py-4 sm:py-5 border-b border-slate-800',
+        content: 'max-w-4xl sm:min-h-[36rem]',
         body: 'p-5 sm:p-6'
       }"
     >
@@ -70,8 +69,8 @@
           />
 
           <div class="space-y-5">
-            <div class="bg-slate-950 p-4 rounded-xl border border-slate-800 space-y-3">
-              <p class="text-xs text-slate-500 font-bold uppercase tracking-wider">
+            <div class="bg-elevated p-4 rounded-xl border border-default space-y-3">
+              <p class="text-xs text-dimmed font-bold uppercase tracking-wider">
                 {{ $t('police.fine.target_vehicle') }}
               </p>
 
@@ -79,12 +78,13 @@
                 <div class="flex-1">
                   <UInput
                     v-model="fineForm.plateNumber"
+                    dir="ltr"
                     size="xl"
-                    class="font-mono text-xl uppercase tracking-widest"
+                    class="font-mono text-xl uppercase tracking-widest w-full"
                     :placeholder="$t('agent.form.plate_placeholder')"
                     @input="scheduleOwnerLookup"
                   />
-                  <p v-if="fineForm.plateNumber && !isFinePlateValid" class="text-red-400 text-xs mt-1">
+                  <p v-if="fineForm.plateNumber && !isFinePlateValid" class="text-red-700 dark:text-red-400 text-xs mt-1">
                     {{ $t('agent.form.invalid_plate') }}
                   </p>
                 </div>
@@ -99,14 +99,14 @@
                 />
               </div>
 
-              <div v-if="fineForm.searching" class="mt-2 flex items-center gap-2 text-slate-400 text-sm italic">
+              <div v-if="fineForm.searching" class="mt-2 flex items-center gap-2 text-muted text-sm italic">
                 <UIcon name="i-lucide-loader-2" class="w-4 h-4 animate-spin" />
                 {{ $t('police.fine.searching_owner') }}
               </div>
 
               <div
                 v-else-if="fineForm.selectedOwner"
-                class="mt-3 pt-3 border-t border-slate-800/50 flex items-center gap-3"
+                class="mt-3 pt-3 border-t border-default flex items-center gap-3"
               >
                 <UAvatar
                   :src="fineForm.selectedOwner.photoURL"
@@ -114,20 +114,20 @@
                   size="sm"
                 />
                 <div class="min-w-0">
-                  <p class="text-xs text-slate-500 font-bold uppercase tracking-wider">
+                  <p class="text-xs text-dimmed font-bold uppercase tracking-wider">
                     {{ $t('police.fine.owner_found') }}
                   </p>
-                  <p class="text-sm font-bold text-white truncate">
+                  <p class="text-sm font-bold text-highlighted truncate">
                     {{ fineForm.selectedOwner.fullName || fineForm.selectedOwner.name }}
                   </p>
-                  <p class="text-[10px] text-indigo-400 font-mono">
+                  <p class="text-[10px] text-primary font-mono">
                     {{ fineForm.selectedOwner.identityNumber }}
                   </p>
                 </div>
               </div>
               <div
                 v-else
-                class="mt-2 p-3 bg-red-950/20 border border-red-900/30 rounded-lg text-xs text-red-400 flex items-center gap-2"
+                class="mt-2 p-3 bg-red-500/10 border border-red-500/25 rounded-lg text-xs text-red-700 dark:text-red-400 flex items-center gap-2"
               >
                 <UIcon name="lucide:alert-circle" class="w-4 h-4" />
                 {{ $t('police.fine.no_owner_found') }}
@@ -140,11 +140,17 @@
                 type="number"
                 size="xl"
                 icon="i-lucide-circle-dollar-sign"
+                class="w-full"
               />
             </UFormField>
 
             <UFormField :label="$t('police.fine.notes')">
-              <UTextarea v-model="fineForm.notes" :placeholder="$t('police.fine.notes_placeholder')" size="xl" />
+              <UTextarea
+                v-model="fineForm.notes"
+                :placeholder="$t('police.fine.notes_placeholder')"
+                size="xl"
+                class="w-full"
+              />
             </UFormField>
           </div>
         </div>
@@ -154,7 +160,7 @@
         <div class="w-full space-y-3">
           <div
             v-if="isReportSelfOwned || isFineTargetSelfOwned"
-            class="p-3 rounded-lg bg-amber-950/30 border border-amber-700/40 text-amber-300 text-xs flex items-center gap-2"
+            class="p-3 rounded-lg bg-amber-500/10 border border-amber-500/30 text-amber-700 dark:text-amber-300 text-xs flex items-center gap-2"
           >
             <UIcon name="lucide:shield-alert" class="w-4 h-4 shrink-0" />
             <span>{{ $t('police.self_enforcement_notice') }}</span>
@@ -255,8 +261,7 @@
       v-model:open="isDisputeModalOpen"
       :title="`${$t('police.disputes.title')} - ${selectedDispute?.plateNumber}`"
       :ui="{
-        content: 'bg-slate-900 border border-slate-700 shadow-2xl shadow-black/50 rounded-2xl overflow-hidden max-w-4xl sm:min-h-[36rem]',
-        header: 'py-4 sm:py-5 border-b border-slate-800',
+        content: 'max-w-4xl sm:min-h-[36rem]',
         body: 'p-5 sm:p-6',
       }"
     >
@@ -270,46 +275,46 @@
           />
 
           <div class="space-y-4">
-            <div class="bg-slate-950 p-4 rounded-xl border border-slate-800 space-y-3">
+            <div class="bg-elevated p-4 rounded-xl border border-default space-y-3">
               <div class="flex items-center justify-between">
-                <span class="text-xs font-bold uppercase tracking-wider text-slate-400">
+                <span class="text-xs font-bold uppercase tracking-wider text-muted">
                   {{ $t('police.disputes.issued_plate') }}
                 </span>
-                <span class="font-mono text-lg font-bold text-amber-400">
+                <span dir="ltr" class="font-mono text-lg font-bold text-amber-700 dark:text-amber-400">
                   {{ selectedDispute.plateNumber }}
                 </span>
               </div>
 
               <div
                 v-if="selectedDispute.originalPlateNumber && selectedDispute.originalPlateNumber !== selectedDispute.plateNumber"
-                class="flex items-center justify-between pt-2 border-t border-slate-800"
+                class="flex items-center justify-between pt-2 border-t border-default"
               >
-                <span class="text-xs font-bold uppercase tracking-wider text-slate-400">
+                <span class="text-xs font-bold uppercase tracking-wider text-muted">
                   {{ $t('police.disputes.original_plate') }}
                 </span>
-                <span class="font-mono text-sm text-slate-300">
+                <span dir="ltr" class="font-mono text-sm text-default">
                   {{ selectedDispute.originalPlateNumber }}
                 </span>
               </div>
 
-              <div class="flex items-center justify-between pt-2 border-t border-slate-800">
-                <span class="text-xs text-slate-400">{{ $t('police.review.owner') }}</span>
+              <div class="flex items-center justify-between pt-2 border-t border-default">
+                <span class="text-xs text-muted">{{ $t('police.review.owner') }}</span>
                 <AtomsUserName
                   :user="userStore.usersCache[selectedDispute.ownerId] || { name: selectedDispute.ownerId }"
                 />
               </div>
 
-              <div class="flex items-center justify-between pt-2 border-t border-slate-800">
-                <span class="text-xs text-slate-400">{{ $t('police.fine.amount') }}</span>
-                <span class="font-bold text-white">TND {{ selectedDispute.amount }}</span>
+              <div class="flex items-center justify-between pt-2 border-t border-default">
+                <span class="text-xs text-muted">{{ $t('police.fine.amount') }}</span>
+                <span dir="ltr" class="font-bold text-highlighted">TND {{ selectedDispute.amount }}</span>
               </div>
             </div>
 
-            <div class="bg-slate-950 p-4 rounded-xl border border-amber-500/30 space-y-2">
-              <p class="text-xs font-bold uppercase tracking-wider text-amber-400">
+            <div class="bg-elevated p-4 rounded-xl border border-amber-500/30 space-y-2">
+              <p class="text-xs font-bold uppercase tracking-wider text-amber-700 dark:text-amber-400">
                 {{ $t('police.disputes.owner_explanation') }}
               </p>
-              <p class="text-sm text-slate-200 whitespace-pre-wrap leading-relaxed">
+              <p class="text-sm text-default whitespace-pre-wrap leading-relaxed">
                 {{ selectedDispute.disputeReason }}
               </p>
             </div>
@@ -321,7 +326,7 @@
         <div class="w-full space-y-3">
           <div
             v-if="isSelectedDisputeSelfOwned"
-            class="p-3 rounded-lg bg-amber-950/30 border border-amber-700/40 text-amber-300 text-xs flex items-center gap-2"
+            class="p-3 rounded-lg bg-amber-500/10 border border-amber-500/30 text-amber-700 dark:text-amber-300 text-xs flex items-center gap-2"
           >
             <UIcon name="lucide:shield-alert" class="w-4 h-4 shrink-0" />
             <span>{{ $t('police.self_enforcement_notice') }}</span>
@@ -370,7 +375,7 @@
             :rows="4"
             class="w-full"
           />
-          <p v-if="disputeResolveReasonError" class="text-xs text-red-400">
+          <p v-if="disputeResolveReasonError" class="text-xs text-red-700 dark:text-red-400">
             {{ disputeResolveReasonError }}
           </p>
         </div>

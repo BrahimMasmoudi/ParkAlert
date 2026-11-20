@@ -1,2 +1,10 @@
-@import "@nuxt/ui";
 @import "tailwindcss";
+@import "@nuxt/ui";
+
+html {
+  color-scheme: light;
+}
+
+html.dark {
+  color-scheme: dark;
+}

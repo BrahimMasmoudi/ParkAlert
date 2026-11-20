@@ -5,6 +5,7 @@ export default defineNuxtPlugin((nuxtApp) => {
   // Watch for locale changes to update document direction
   if (import.meta.client) {
     watch(() => $i18n.locale.value, (newLocale) => {
+      document.documentElement.lang = newLocale
       const localeProperties = $i18n.locales.value.find(l => l.code === newLocale)
       if (localeProperties && localeProperties.dir) {
         document.documentElement.dir = localeProperties.dir

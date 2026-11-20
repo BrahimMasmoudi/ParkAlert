@@ -24,7 +24,15 @@
     "required": "إلزامي",
     "optional": "اختياري",
     "refresh_photos": "تحديث الصور",
-    "photo_unavailable": "الصورة غير متوفرة"
+    "photo_unavailable": "الصورة غير متوفرة",
+    "language_aria": "تغيير اللغة",
+    "sign_out_aria": "تسجيل الخروج"
+  },
+  "theme": {
+    "aria_label": "وضع العرض",
+    "system": "النظام",
+    "light": "فاتح",
+    "dark": "داكن"
   },
   "roles": {
     "agent": "وكيل",

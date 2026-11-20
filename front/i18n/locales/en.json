@@ -24,7 +24,15 @@
     "required": "Required",
     "optional": "Optional",
     "refresh_photos": "Refresh Photos",
-    "photo_unavailable": "Photo unavailable"
+    "photo_unavailable": "Photo unavailable",
+    "language_aria": "Change language",
+    "sign_out_aria": "Sign out"
+  },
+  "theme": {
+    "aria_label": "Color mode",
+    "system": "System",
+    "light": "Light",
+    "dark": "Dark"
   },
   "roles": {
     "agent": "Agent",

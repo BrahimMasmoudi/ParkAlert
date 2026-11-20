@@ -8,7 +8,6 @@ export default defineNuxtConfig({
     '@nuxt/eslint',
     'nuxt-vuefire',
     '@pinia/nuxt',
-    '@nuxtjs/color-mode',
     '@nuxtjs/i18n'
   ],
   i18n: {
@@ -28,9 +27,9 @@ export default defineNuxtConfig({
     }
   },
   colorMode: {
-  preference: 'dark',
-  fallback: 'dark'
-},
+    preference: 'system',
+    fallback: 'light'
+  },
   vuefire: {
     auth: {
       enabled: true,

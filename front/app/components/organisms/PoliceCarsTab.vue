@@ -8,14 +8,14 @@
       <LoadingSkeleton v-if="loading" :count="4" />
       <div
         v-else-if="!activations.length"
-        class="text-center py-12 text-slate-500 bg-slate-900/50 rounded-xl border border-slate-800"
+        class="text-center py-12 text-muted bg-elevated rounded-xl border border-default"
       >
-        <UIcon name="lucide:check-circle-2" class="w-8 h-8 text-slate-600 mb-2 mx-auto" />
+        <UIcon name="lucide:check-circle-2" class="w-8 h-8 text-dimmed mb-2 mx-auto" />
         <p>{{ $t('police.cars.no_activations') }}</p>
       </div>
       <UTable v-else :data="activations" :columns="carColumns">
         <template #plateNumber-cell="{ row }">
-          <span class="font-mono font-bold text-amber-400">{{ row.original.plateNumber }}</span>
+          <span dir="ltr" class="font-mono font-bold text-amber-700 dark:text-amber-400">{{ row.original.plateNumber }}</span>
         </template>
         <template #vehicle-cell="{ row }">
           {{ row.original.brand }} {{ row.original.model }}
@@ -27,7 +27,7 @@
           <UBadge color="warning" variant="soft">{{ row.original.status.replace(/_/g, ' ') }}</UBadge>
         </template>
         <template #createdAt-cell="{ row }">
-          <span class="text-sm text-slate-400">{{ new Date(row.original.createdAt).toLocaleString() }}</span>
+          <span class="text-sm text-muted">{{ new Date(row.original.createdAt).toLocaleString() }}</span>
         </template>
         <template #actions-cell="{ row }">
           <div class="flex flex-wrap items-center gap-2">
@@ -74,14 +74,14 @@
       <LoadingSkeleton v-if="loading" :count="4" />
       <div
         v-else-if="!deletions.length"
-        class="text-center py-12 text-slate-500 bg-slate-900/50 rounded-xl border border-slate-800"
+        class="text-center py-12 text-muted bg-elevated rounded-xl border border-default"
       >
-        <UIcon name="lucide:check-circle-2" class="w-8 h-8 text-slate-600 mb-2 mx-auto" />
+        <UIcon name="lucide:check-circle-2" class="w-8 h-8 text-dimmed mb-2 mx-auto" />
         <p>{{ $t('police.cars.no_deletions') }}</p>
       </div>
       <UTable v-else :data="deletions" :columns="deleteColumns">
         <template #plateNumber-cell="{ row }">
-          <span class="font-mono font-bold text-amber-400">{{ row.original.plateNumber }}</span>
+          <span dir="ltr" class="font-mono font-bold text-amber-700 dark:text-amber-400">{{ row.original.plateNumber }}</span>
         </template>
         <template #vehicle-cell="{ row }">
           {{ row.original.brand }} {{ row.original.model }}
@@ -93,7 +93,7 @@
           <UBadge color="error" variant="soft">{{ $t('police.cars.status.deletion_requested') }}</UBadge>
         </template>
         <template #createdAt-cell="{ row }">
-          <span class="text-sm text-slate-400">{{ new Date(row.original.createdAt).toLocaleString() }}</span>
+          <span class="text-sm text-muted">{{ new Date(row.original.createdAt).toLocaleString() }}</span>
         </template>
         <template #actions-cell="{ row }">
           <div class="flex flex-wrap items-center gap-2">
@@ -140,14 +140,14 @@
       <LoadingSkeleton v-if="loading" :count="4" />
       <div
         v-else-if="!transfers.length"
-        class="text-center py-12 text-slate-500 bg-slate-900/50 rounded-xl border border-slate-800"
+        class="text-center py-12 text-muted bg-elevated rounded-xl border border-default"
       >
-        <UIcon name="lucide:check-circle-2" class="w-8 h-8 text-slate-600 mb-2 mx-auto" />
+        <UIcon name="lucide:check-circle-2" class="w-8 h-8 text-dimmed mb-2 mx-auto" />
         <p>{{ $t('police.cars.no_transfers') }}</p>
       </div>
       <UTable v-else :data="transfers" :columns="carColumns">
         <template #plateNumber-cell="{ row }">
-          <span class="font-mono font-bold text-amber-400">{{ row.original.plateNumber }}</span>
+          <span dir="ltr" class="font-mono font-bold text-amber-700 dark:text-amber-400">{{ row.original.plateNumber }}</span>
         </template>
         <template #vehicle-cell="{ row }">
           {{ row.original.brand }} {{ row.original.model }}
@@ -159,7 +159,7 @@
           <UBadge color="primary" variant="soft">{{ $t(`police.cars.status.${row.original.status}`) }}</UBadge>
         </template>
         <template #createdAt-cell="{ row }">
-          <span class="text-sm text-slate-400">{{ new Date(row.original.createdAt).toLocaleString() }}</span>
+          <span class="text-sm text-muted">{{ new Date(row.original.createdAt).toLocaleString() }}</span>
         </template>
         <template #carteGriseUrl-cell="{ row }">
           <UButton
@@ -173,7 +173,7 @@
           >
             {{ $t('common.view_document') }}
           </UButton>
-          <span v-else class="text-slate-500 italic text-sm">No doc</span>
+          <span v-else class="text-muted italic text-sm">No doc</span>
         </template>
         <template #actions-cell="{ row }">
           <div class="flex flex-wrap items-center gap-2">

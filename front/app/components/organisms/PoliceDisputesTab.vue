@@ -7,26 +7,26 @@
     <LoadingSkeleton v-if="loading" :count="5" />
     <div
       v-else-if="!fines.length"
-      class="text-center py-12 text-slate-500 bg-slate-900/50 rounded-xl border border-slate-800"
+      class="text-center py-12 text-muted bg-elevated rounded-xl border border-default"
     >
-      <UIcon name="lucide:scale" class="w-8 h-8 text-slate-600 mb-2 mx-auto" />
+      <UIcon name="lucide:scale" class="w-8 h-8 text-dimmed mb-2 mx-auto" />
       <p>{{ $t('police.disputes.no_disputes') }}</p>
     </div>
     <UTable v-else :data="fines" :columns="columns">
       <template #plateNumber-cell="{ row }">
-        <span class="font-mono font-bold text-amber-400">{{ row.original.plateNumber }}</span>
+        <span dir="ltr" class="font-mono font-bold text-amber-700 dark:text-amber-400">{{ row.original.plateNumber }}</span>
       </template>
       <template #ownerId-cell="{ row }">
         <AtomsUserName :user="userStore.usersCache[row.original.ownerId] || { name: row.original.ownerId }" />
       </template>
       <template #amount-cell="{ row }">
-        <span class="font-bold text-white">TND {{ row.original.amount }}</span>
+        <span dir="ltr" class="font-bold text-highlighted">TND {{ row.original.amount }}</span>
       </template>
       <template #disputeReason-cell="{ row }">
-        <span class="text-xs text-slate-300 line-clamp-2 max-w-xs">{{ row.original.disputeReason }}</span>
+        <span class="text-xs text-default line-clamp-2 max-w-xs">{{ row.original.disputeReason }}</span>
       </template>
       <template #disputedAt-cell="{ row }">
-        <span class="text-sm text-slate-400">
+        <span class="text-sm text-muted">
           {{ row.original.disputedAt ? new Date(row.original.disputedAt).toLocaleString($i18n.locale) : '-' }}
         </span>
       </template>

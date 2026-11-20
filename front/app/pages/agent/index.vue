@@ -1,19 +1,19 @@
 <template>
   <UContainer>
     <div class="grid grid-cols-2 gap-3 mb-6">
-      <UCard class="bg-amber-500/10 border border-amber-500/20 text-center p-4">
-        <p class="text-3xl font-bold text-amber-400">
+      <UCard class="bg-amber-500/10 border border-amber-500/25 text-center p-4">
+        <p class="text-3xl font-bold text-amber-700 dark:text-amber-400">
           {{ reportsStore.agentReportsTodayCount }}
         </p>
-        <p class="text-slate-400 text-xs mt-1">
+        <p class="text-muted text-xs mt-1">
           {{ $t('agent.reports_today') }}
         </p>
       </UCard>
-      <UCard class="bg-slate-800/60 border border-slate-700/50 text-center p-4">
-        <p class="text-3xl font-bold text-white">
+      <UCard class="bg-elevated border border-default text-center p-4">
+        <p class="text-3xl font-bold text-highlighted">
           {{ reportsStore.agentTotalReportsCount }}
         </p>
-        <p class="text-slate-400 text-xs mt-1">
+        <p class="text-muted text-xs mt-1">
           {{ $t('agent.total_reports') }}
         </p>
       </UCard>
@@ -21,26 +21,26 @@
 
     <button
       id="new-report-btn"
-      class="w-full bg-gradient-to-br from-amber-500 to-orange-600 hover:brightness-110 active:scale-95 text-white rounded-3xl py-8 flex flex-col items-center gap-3 shadow-2xl shadow-amber-600/30 transition-all duration-200 mb-6"
+      class="w-full bg-amber-700 hover:bg-amber-600 active:scale-95 text-white rounded-3xl py-8 flex flex-col items-center gap-3 shadow-xl transition-all duration-200 mb-6"
       @click="isOpen = true"
     >
       <UIcon name="lucide:camera" class="w-12 h-12" />
       <span class="text-xl font-bold tracking-tight">{{ $t('agent.new_report') }}</span>
-      <span class="text-amber-200 text-sm">{{ $t('agent.new_report_subtitle') }}</span>
+      <span class="text-amber-100 text-sm">{{ $t('agent.new_report_subtitle') }}</span>
     </button>
 
     <div class="space-y-3 mb-6">
-      <h2 class="text-sm font-bold uppercase tracking-wider text-slate-400">
+      <h2 class="text-sm font-bold uppercase tracking-wider text-muted">
         {{ $t('agent.sent_reports') }}
       </h2>
 
-      <div v-if="reportsStore.agentReportsLoading" class="text-center py-6 text-slate-500 text-sm">
+      <div v-if="reportsStore.agentReportsLoading" class="text-center py-6 text-muted text-sm">
         {{ $t('common.loading') }}
       </div>
 
       <div
         v-else-if="sortedAgentReports.length === 0"
-        class="bg-slate-900/60 border border-slate-800 rounded-2xl p-6 text-center text-slate-500 text-sm"
+        class="bg-elevated border border-default rounded-2xl p-6 text-center text-muted text-sm"
       >
         {{ $t('agent.no_reports') }}
       </div>
@@ -48,17 +48,17 @@
       <div
         v-for="report in sortedAgentReports"
         :key="report.id"
-        class="bg-slate-900 border border-slate-800 rounded-2xl p-4 flex items-center justify-between gap-3"
+        class="bg-elevated border border-default rounded-2xl p-4 flex items-center justify-between gap-3"
       >
         <div class="min-w-0 space-y-1">
           <div class="flex items-center gap-2">
-            <span class="font-mono font-bold text-white tracking-wider">{{ report.plateNumber }}</span>
+            <span dir="ltr" class="font-mono font-bold text-highlighted tracking-wider">{{ report.plateNumber }}</span>
             <UBadge :color="statusColor(report.status)" variant="subtle" size="xs">
               {{ $t(`agent.status.${report.status}`) }}
             </UBadge>
           </div>
-          <p v-if="report.address" class="text-xs text-slate-400 truncate">{{ report.address }}</p>
-          <p class="text-[11px] text-slate-500">{{ formatDate(report.timestamp) }}</p>
+          <p v-if="report.address" class="text-xs text-muted truncate">{{ report.address }}</p>
+          <p class="text-[11px] text-dimmed">{{ formatDate(report.timestamp) }}</p>
         </div>
 
         <UButton
@@ -73,7 +73,7 @@
       </div>
     </div>
 
-    <p class="text-slate-500 text-sm text-center">
+    <p class="text-muted text-sm text-center">
       {{ $t('agent.footer_info') }}
     </p>
 
@@ -83,7 +83,7 @@
       v-model:open="isEditOpen"
       :title="$t('agent.edit_plate.title')"
       :ui="{
-        content: 'bg-slate-900 border border-slate-700 max-w-2xl sm:min-h-[34rem]',
+        content: 'max-w-2xl sm:min-h-[34rem]',
         body: 'p-5 sm:p-6'
       }"
     >
@@ -100,12 +100,13 @@
           <UFormField :label="$t('agent.edit_plate.plate_label')">
             <UInput
               v-model="editedPlate"
+              dir="ltr"
               size="xl"
               :placeholder="$t('agent.form.plate_placeholder')"
               class="font-mono text-xl uppercase tracking-widest"
             />
           </UFormField>
-          <p v-if="editedPlate && !isEditedPlateValid" class="text-red-400 text-xs">
+          <p v-if="editedPlate && !isEditedPlateValid" class="text-red-700 dark:text-red-400 text-xs">
             {{ $t('agent.form.invalid_plate') }}
           </p>
         </div>

@@ -24,7 +24,15 @@
     "required": "Requis",
     "optional": "Optionnel",
     "refresh_photos": "Actualiser les photos",
-    "photo_unavailable": "Photo indisponible"
+    "photo_unavailable": "Photo indisponible",
+    "language_aria": "Changer de langue",
+    "sign_out_aria": "Se déconnecter"
+  },
+  "theme": {
+    "aria_label": "Mode d'affichage",
+    "system": "Système",
+    "light": "Clair",
+    "dark": "Sombre"
   },
   "roles": {
     "agent": "Agent",
