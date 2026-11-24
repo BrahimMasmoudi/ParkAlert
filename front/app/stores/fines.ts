@@ -30,12 +30,32 @@ export interface Fine {
   resolvedAt?: number
 }
 
+function parseTimestampMillis(ts: any): number | undefined {
+  if (ts === null || ts === undefined || ts === '') return undefined
+  if (typeof ts === 'number') return Number.isFinite(ts) ? ts : undefined
+  if (typeof ts.toMillis === 'function') {
+    const ms = ts.toMillis()
+    return Number.isFinite(ms) ? ms : undefined
+  }
+  if (typeof ts.seconds === 'number') {
+    return Number.isFinite(ts.seconds) ? ts.seconds * 1000 : undefined
+  }
+  if (typeof ts._seconds === 'number') {
+    return Number.isFinite(ts._seconds) ? ts._seconds * 1000 : undefined
+  }
+  if (typeof ts === 'string' || ts instanceof Date) {
+    const ms = new Date(ts).getTime()
+    return Number.isFinite(ms) ? ms : undefined
+  }
+  return undefined
+}
+
 function getTimestampMillis(ts: any): number {
-  if (!ts) return Date.now()
-  if (typeof ts.toMillis === 'function') return ts.toMillis()
-  if (ts.seconds) return ts.seconds * 1000
-  if (ts._seconds) return ts._seconds * 1000
-  return new Date(ts).getTime()
+  return parseTimestampMillis(ts) ?? Date.now()
+}
+
+function getOptionalTimestampMillis(ts: any): number | undefined {
+  return parseTimestampMillis(ts)
 }
 
 export function normalizeFineFromFirestore(id: string, data: Record<string, any>): Fine {
@@ -47,7 +67,7 @@ export function normalizeFineFromFirestore(id: string, data: Record<string, any>
     amount: data.amount || 0,
     status: data.status || 'unpaid',
     issuedAt: getTimestampMillis(data.issuedAt),
-    paidAt: data.paidAt ? getTimestampMillis(data.paidAt) : undefined,
+    paidAt: getOptionalTimestampMillis(data.paidAt),
     paymentReference: data.paymentReference,
     paymentProvider: data.paymentProvider,
     paymentAttemptId: data.paymentAttemptId,
@@ -56,9 +76,9 @@ export function normalizeFineFromFirestore(id: string, data: Record<string, any>
     originalPlateNumber: data.originalPlateNumber,
     disputeStatus: data.disputeStatus,
     disputeReason: data.disputeReason,
-    disputedAt: data.disputedAt ? getTimestampMillis(data.disputedAt) : undefined,
+    disputedAt: getOptionalTimestampMillis(data.disputedAt),
     resolutionReason: data.resolutionReason,
-    resolvedAt: data.resolvedAt ? getTimestampMillis(data.resolvedAt) : undefined,
+    resolvedAt: getOptionalTimestampMillis(data.resolvedAt),
   }
 }
 

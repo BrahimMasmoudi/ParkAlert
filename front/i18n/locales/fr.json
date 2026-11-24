@@ -123,7 +123,7 @@
   "police": {
     "title": "Portail de Police",
     "self_enforcement_notice": "Action bloquée : vous ne pouvez pas effectuer d'action policière sur votre propre véhicule ou amende.",
-    "search_placeholder": "Chercher par plaque, agent ou lieu...",
+    "search_placeholder": "Chercher par plaque, propriétaire, agent, ID ou référence de paiement...",
     "pending_reports": "Signalements en Attente",
     "no_reports": "Aucun signalement en attente",
     "tabs": {
@@ -226,7 +226,19 @@
       "no_fines": "Aucune amende n'a encore été délivrée",
       "paid": "Payée",
       "unpaid": "Non payée",
-      "cancelled": "Annulée"
+      "cancelled": "Annulée",
+      "columns": {
+        "plate": "Plaque",
+        "owner": "Propriétaire",
+        "amount": "Montant",
+        "status": "Statut",
+        "issued": "Émise le",
+        "actions": "Actions"
+      },
+      "view_receipt_button": "Reçu",
+      "receipt_modal_title": "Reçu de Vérification de Paiement",
+      "receipt_modal_desc": "Vérification d'audit en lecture seule issue des métadonnées de règlement.",
+      "verification_only_notice": "Vue de vérification uniquement : les détails de carte, le téléchargement et l'impression sont désactivés."
     }
   },
   "owner": {
@@ -347,6 +359,19 @@
           "server_unavailable": "Le service est temporairement indisponible. Vérifiez votre connexion et réessayez.",
           "server_generic": "Impossible de finaliser le paiement. Veuillez réessayer."
         }
+      },
+      "receipt_modal": {
+        "open_button": "Voir le Reçu",
+        "title": "Reçu Officiel de Paiement",
+        "description": "Consultez les détails du règlement et téléchargez une copie PDF.",
+        "download_button": "Télécharger le PDF",
+        "downloading_button": "Génération du PDF...",
+        "arabic_fallback_notice": "Les reçus officiels sont délivrés en français ou en anglais.",
+        "summary_missing": "Détails de paiement par carte indisponibles pour ce reçu. Vous pouvez tout de même télécharger le reçu officiel de règlement.",
+        "summary_error": "Impossible de charger les détails de paiement par carte pour le moment.",
+        "retry_button": "Réessayer",
+        "download_error_title": "Échec du Téléchargement PDF",
+        "download_error_desc": "Impossible de générer le PDF du reçu. Veuillez réessayer."
       }
     },
     "history": {

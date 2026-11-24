@@ -123,7 +123,7 @@
   "police": {
     "title": "Police Portal",
     "self_enforcement_notice": "Self-enforcement disabled: you cannot take police action on your own vehicle or fine.",
-    "search_placeholder": "Search by plate, agent, or location...",
+    "search_placeholder": "Search by plate, owner, agent, fine ID, or payment reference...",
     "pending_reports": "Pending Reports",
     "no_reports": "No pending reports",
     "tabs": {
@@ -226,7 +226,19 @@
       "no_fines": "No fines have been issued yet",
       "paid": "Paid",
       "unpaid": "Unpaid",
-      "cancelled": "Cancelled"
+      "cancelled": "Cancelled",
+      "columns": {
+        "plate": "Plate",
+        "owner": "Owner",
+        "amount": "Amount",
+        "status": "Status",
+        "issued": "Issued",
+        "actions": "Actions"
+      },
+      "view_receipt_button": "Receipt",
+      "receipt_modal_title": "Payment Verification Receipt",
+      "receipt_modal_desc": "Read-only audit verification sourced from fine settlement metadata.",
+      "verification_only_notice": "Audit verification view only: cardholder details, downloading, and printing are disabled."
     }
   },
   "owner": {
@@ -347,6 +359,19 @@
           "server_unavailable": "Payment service is temporarily unavailable. Check your connection and retry.",
           "server_generic": "Unable to complete payment. Please try again."
         }
+      },
+      "receipt_modal": {
+        "open_button": "View Receipt",
+        "title": "Official Payment Receipt",
+        "description": "Review settled payment details and download a PDF copy.",
+        "download_button": "Download PDF",
+        "downloading_button": "Generating PDF...",
+        "arabic_fallback_notice": "Official payment receipts are issued in English or French. This preview is displayed in English.",
+        "summary_missing": "Card payment details unavailable for this receipt. You can still download the official settlement receipt.",
+        "summary_error": "Unable to load card payment details right now.",
+        "retry_button": "Retry",
+        "download_error_title": "PDF Download Failed",
+        "download_error_desc": "Unable to generate the receipt PDF. Please try again."
       }
     },
     "history": {

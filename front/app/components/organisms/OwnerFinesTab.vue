@@ -45,6 +45,7 @@
         v-for="fine in paidFines"
         :key="fine.id"
         :fine="fine"
+        @receipt="handleOpenReceiptModal"
       />
 
       <div v-if="cancelledFines.length" class="flex items-center gap-2 mt-8 mb-2">
@@ -64,6 +65,11 @@
       :fine="activePayFine"
       :loading="props.loading"
     />
+
+    <OrganismsOwnerReceiptModal
+      v-model:open="isReceiptModalOpen"
+      :fine="activeReceiptFine"
+    />
   </section>
 </template>
 
@@ -79,12 +85,20 @@ const isPayModalOpen = ref(false)
 const selectedPayFineId = ref<string | null>(null)
 let clearTimer: ReturnType<typeof setTimeout> | null = null
 
+const isReceiptModalOpen = ref(false)
+const selectedReceiptFineId = ref<string | null>(null)
+let receiptClearTimer: ReturnType<typeof setTimeout> | null = null
+
 const unpaidFines = computed(() => (props.fines || []).filter(f => f.status === 'unpaid'))
 const paidFines = computed(() => (props.fines || []).filter(f => f.status === 'paid'))
 const cancelledFines = computed(() => (props.fines || []).filter(f => f.status === 'cancelled'))
 
 const activePayFine = computed(
   () => (selectedPayFineId.value ? (props.fines || []).find(f => f.id === selectedPayFineId.value) ?? null : null),
+)
+
+const activeReceiptFine = computed(
+  () => (selectedReceiptFineId.value ? (props.fines || []).find(f => f.id === selectedReceiptFineId.value) ?? null : null),
 )
 
 const handleOpenPayModal = (fine: Fine) => {
@@ -96,6 +110,15 @@ const handleOpenPayModal = (fine: Fine) => {
   isPayModalOpen.value = true
 }
 
+const handleOpenReceiptModal = (fine: Fine) => {
+  if (receiptClearTimer) {
+    clearTimeout(receiptClearTimer)
+    receiptClearTimer = null
+  }
+  selectedReceiptFineId.value = fine.id
+  isReceiptModalOpen.value = true
+}
+
 watch(isPayModalOpen, (isOpen) => {
   if (!isOpen) {
     clearTimer = setTimeout(() => {
@@ -105,10 +128,23 @@ watch(isPayModalOpen, (isOpen) => {
   }
 })
 
+watch(isReceiptModalOpen, (isOpen) => {
+  if (!isOpen) {
+    receiptClearTimer = setTimeout(() => {
+      selectedReceiptFineId.value = null
+      receiptClearTimer = null
+    }, 300)
+  }
+})
+
 onBeforeUnmount(() => {
   if (clearTimer) {
     clearTimeout(clearTimer)
     clearTimer = null
+  }
+  if (receiptClearTimer) {
+    clearTimeout(receiptClearTimer)
+    receiptClearTimer = null
   }
 })
 </script>

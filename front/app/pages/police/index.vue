@@ -46,6 +46,7 @@
           :fines="filteredAllFines"
           :loading="finesStore.allFinesLoading"
           :columns="auditColumns"
+          @receipt="openAuditReceipt"
         />
       </template>
     </UTabs>
@@ -398,10 +399,16 @@
         </div>
       </template>
     </UModal>
+
+    <OrganismsPoliceReceiptModal
+      v-model:open="isAuditReceiptModalOpen"
+      :fine="selectedAuditReceiptFine"
+    />
   </UContainer>
 </template>
 
 <script setup lang="ts">
+import type { TableColumn } from '@nuxt/ui'
 import { useReportsStore } from '~/stores/reports'
 import { useCarsStore } from '~/stores/cars'
 import { useUserStore } from '~/stores/user'
@@ -444,7 +451,20 @@ const filteredDeletionPending = computed(() => filterList(carsStore.deletionPend
 const filteredTransferPendingPolice = computed(() => filterList(carsStore.transferPendingPoliceCars))
 const filteredPendingReports = computed(() => filterList(reportsStore.pendingReports))
 const filteredPendingDisputes = computed(() => filterList(finesStore.pendingDisputes))
-const filteredAllFines = computed(() => filterList(finesStore.allFines))
+const filteredAllFines = computed<Fine[]>(() => {
+  const list = finesStore.allFines
+  if (!list) return []
+  const q = searchQuery.value.trim().toLowerCase()
+  if (!q) return list
+  return list.filter((fine) => {
+    const plateMatch = fine.plateNumber?.toLowerCase().includes(q)
+    const idMatch = fine.id?.toLowerCase().includes(q)
+    const refMatch = fine.paymentReference?.toLowerCase().includes(q)
+    const owner = fine.ownerId ? userStore.usersCache[fine.ownerId] : null
+    const ownerMatch = owner?.fullName?.toLowerCase().includes(q) || owner?.name?.toLowerCase().includes(q)
+    return Boolean(plateMatch || idMatch || refMatch || ownerMatch)
+  })
+})
 
 watch(() => carsStore.activationPendingCars, (cars) => {
   cars.forEach(car => userStore.fetchUser(car.ownerId))
@@ -476,6 +496,8 @@ const evidenceItems = ref<EvidenceUrlItem[]>([])
 
 const selectedDispute = ref<Fine | null>(null)
 const isDisputeModalOpen = ref(false)
+const selectedAuditReceiptFine = ref<Fine | null>(null)
+const isAuditReceiptModalOpen = ref(false)
 const disputeEvidenceItems = ref<EvidenceUrlItem[]>([])
 const isResolveDisputeModalOpen = ref(false)
 const disputeResolveAction = ref<'cancel_fine' | 'dismiss_dispute'>('cancel_fine')
@@ -692,6 +714,12 @@ async function loadDisputeEvidence() {
   }
 }
 
+function openAuditReceipt(fine: Fine) {
+  if (fine.status !== 'paid') return
+  selectedAuditReceiptFine.value = fine
+  isAuditReceiptModalOpen.value = true
+}
+
 async function openDispute(fine: Fine) {
   selectedDispute.value = fine
   disputeEvidenceItems.value = []
@@ -758,13 +786,14 @@ const columns = [
   { id: 'actions', header: 'Actions' },
 ]
 
-const auditColumns = [
-  { accessorKey: 'plateNumber', header: 'Plate' },
-  { accessorKey: 'ownerId', header: 'Owner' },
-  { accessorKey: 'amount', header: 'Amount' },
-  { accessorKey: 'status', header: 'Status' },
-  { accessorKey: 'issuedAt', header: 'Issued' },
-]
+const auditColumns = computed<TableColumn<Fine>[]>(() => [
+  { accessorKey: 'plateNumber', header: t('police.audit.columns.plate') },
+  { accessorKey: 'ownerId', header: t('police.audit.columns.owner') },
+  { accessorKey: 'amount', header: t('police.audit.columns.amount') },
+  { accessorKey: 'status', header: t('police.audit.columns.status') },
+  { accessorKey: 'issuedAt', header: t('police.audit.columns.issued') },
+  { id: 'actions', header: t('police.audit.columns.actions') },
+])
 
 const disputeColumns = [
   { accessorKey: 'plateNumber', header: 'Plate' },
