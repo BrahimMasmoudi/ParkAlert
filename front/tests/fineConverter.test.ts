@@ -46,6 +46,10 @@ describe('normalizeFineFromFirestore', () => {
       originalPlateNumber: 'AB-128-CD',
       evidencePhotos: [{ path: 'reports/agent-1/plate.jpg', slot: 'plate' }],
       issuedAt: { toMillis: () => 1700000000000 },
+      paidAt: { seconds: 1700000300 },
+      paymentReference: 'PA-20261124-AABBCCDDEEFF',
+      paymentProvider: 'simulated',
+      paymentAttemptId: 'attempt-12345678',
       disputedAt: { seconds: 1700000100 },
       resolvedAt: { _seconds: 1700000200 },
     });
@@ -63,12 +67,16 @@ describe('normalizeFineFromFirestore', () => {
       originalPlateNumber: 'AB-128-CD',
       evidencePhotos: [{ path: 'reports/agent-1/plate.jpg', slot: 'plate' }],
       issuedAt: 1700000000000,
+      paidAt: 1700000300000,
+      paymentReference: 'PA-20261124-AABBCCDDEEFF',
+      paymentProvider: 'simulated',
+      paymentAttemptId: 'attempt-12345678',
       disputedAt: 1700000100000,
       resolvedAt: 1700000200000,
     });
   });
 
-  it('keeps disputedAt and resolvedAt undefined when missing on historical fines', () => {
+  it('keeps paidAt, payment metadata, disputedAt, and resolvedAt undefined when missing on historical fines', () => {
     const legacy = normalizeFineFromFirestore('fine-legacy', {
       reportId: 'rep-old',
       ownerId: 'owner-1',
@@ -79,6 +87,10 @@ describe('normalizeFineFromFirestore', () => {
     });
 
     expect(legacy.status).toBe('unpaid');
+    expect(legacy.paidAt).toBeUndefined();
+    expect(legacy.paymentReference).toBeUndefined();
+    expect(legacy.paymentProvider).toBeUndefined();
+    expect(legacy.paymentAttemptId).toBeUndefined();
     expect(legacy.disputeStatus).toBeUndefined();
     expect(legacy.evidencePhotos).toBeUndefined();
     expect(legacy.disputedAt).toBeUndefined();

@@ -33,6 +33,7 @@
         v-for="fine in unpaidFines"
         :key="fine.id"
         :fine="fine"
+        @pay="handleOpenPayModal"
       />
 
       <div v-if="paidFines.length" class="flex items-center gap-2 mt-8 mb-2">
@@ -57,16 +58,57 @@
         :fine="fine"
       />
     </div>
+
+    <OrganismsOwnerPayFineModal
+      v-model:open="isPayModalOpen"
+      :fine="activePayFine"
+      :loading="props.loading"
+    />
   </section>
 </template>
 
 <script setup lang="ts">
+import type { Fine } from '~/stores/fines'
+
 const props = defineProps<{
-  fines: any[]
+  fines: Fine[]
   loading: boolean
 }>()
+
+const isPayModalOpen = ref(false)
+const selectedPayFineId = ref<string | null>(null)
+let clearTimer: ReturnType<typeof setTimeout> | null = null
 
 const unpaidFines = computed(() => (props.fines || []).filter(f => f.status === 'unpaid'))
 const paidFines = computed(() => (props.fines || []).filter(f => f.status === 'paid'))
 const cancelledFines = computed(() => (props.fines || []).filter(f => f.status === 'cancelled'))
+
+const activePayFine = computed(
+  () => (selectedPayFineId.value ? (props.fines || []).find(f => f.id === selectedPayFineId.value) ?? null : null),
+)
+
+const handleOpenPayModal = (fine: Fine) => {
+  if (clearTimer) {
+    clearTimeout(clearTimer)
+    clearTimer = null
+  }
+  selectedPayFineId.value = fine.id
+  isPayModalOpen.value = true
+}
+
+watch(isPayModalOpen, (isOpen) => {
+  if (!isOpen) {
+    clearTimer = setTimeout(() => {
+      selectedPayFineId.value = null
+      clearTimer = null
+    }, 300)
+  }
+})
+
+onBeforeUnmount(() => {
+  if (clearTimer) {
+    clearTimeout(clearTimer)
+    clearTimer = null
+  }
+})
 </script>

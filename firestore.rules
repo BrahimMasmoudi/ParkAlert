@@ -84,6 +84,12 @@ service cloud.firestore {
       // Owners can read ONLY their own fines
       allow read: if isSecureRequest() && (hasRole('police') || (hasRole('owner') && resource.data.ownerId == request.auth.uid));
       allow write: if false;
+
+      match /receipt/summary {
+        // Owners can read ONLY the receipt summary of their own fine
+        allow read: if isSecureRequest() && hasRole('owner') && exists(/databases/$(database)/documents/fines/$(fineId)) && 'ownerId' in get(/databases/$(database)/documents/fines/$(fineId)).data && get(/databases/$(database)/documents/fines/$(fineId)).data.ownerId == request.auth.uid;
+        allow write: if false;
+      }
     }
 
     match /cars/{carId} {
