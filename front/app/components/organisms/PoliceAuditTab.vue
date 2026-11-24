@@ -31,17 +31,35 @@
       <template #issuedAt-cell="{ row }">
         <span class="text-sm text-muted">{{ new Date(row.original.issuedAt).toLocaleString($i18n.locale) }}</span>
       </template>
+      <template #actions-cell="{ row }">
+        <UButton
+          v-if="row.original.status === 'paid'"
+          size="xs"
+          color="neutral"
+          variant="soft"
+          icon="i-lucide-receipt-text"
+          :label="$t('police.audit.view_receipt_button')"
+          @click="emit('receipt', row.original)"
+        />
+        <span v-else class="text-muted">—</span>
+      </template>
     </UTable>
   </UContainer>
 </template>
 
 <script setup lang="ts">
+import type { TableColumn } from '@nuxt/ui'
+import type { Fine } from '~/stores/fines'
 import { useUserStore } from '~/stores/user'
 
 defineProps<{
-  fines: any[]
+  fines: Fine[]
   loading: boolean
-  columns: any[]
+  columns: TableColumn<Fine>[]
+}>()
+
+const emit = defineEmits<{
+  (e: 'receipt', fine: Fine): void
 }>()
 
 const userStore = useUserStore()

@@ -25,6 +25,8 @@ export interface EnforcementAuditLog {
   originalPlate?: string;
   issuedPlate?: string;
   reason?: string;
+  paymentReference?: string;
+  paymentProvider?: string;
   timestamp: Date | any;
 }
 

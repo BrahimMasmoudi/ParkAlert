@@ -123,7 +123,7 @@
   "police": {
     "title": "Portail de Police",
     "self_enforcement_notice": "Action bloquée : vous ne pouvez pas effectuer d'action policière sur votre propre véhicule ou amende.",
-    "search_placeholder": "Chercher par plaque, agent ou lieu...",
+    "search_placeholder": "Chercher par plaque, propriétaire, agent, ID ou référence de paiement...",
     "pending_reports": "Signalements en Attente",
     "no_reports": "Aucun signalement en attente",
     "tabs": {
@@ -226,7 +226,19 @@
       "no_fines": "Aucune amende n'a encore été délivrée",
       "paid": "Payée",
       "unpaid": "Non payée",
-      "cancelled": "Annulée"
+      "cancelled": "Annulée",
+      "columns": {
+        "plate": "Plaque",
+        "owner": "Propriétaire",
+        "amount": "Montant",
+        "status": "Statut",
+        "issued": "Émise le",
+        "actions": "Actions"
+      },
+      "view_receipt_button": "Reçu",
+      "receipt_modal_title": "Reçu de Vérification de Paiement",
+      "receipt_modal_desc": "Vérification d'audit en lecture seule issue des métadonnées de règlement.",
+      "verification_only_notice": "Vue de vérification uniquement : les détails de carte, le téléchargement et l'impression sont désactivés."
     }
   },
   "owner": {
@@ -300,7 +312,67 @@
       "dispute_pending_badge": "Contestation en Attente",
       "dispute_rejected_badge": "Contestation Rejetée",
       "dispute_accepted_badge": "Contestation Acceptée",
-      "unknown_date": "Date inconnue"
+      "unknown_date": "Date inconnue",
+      "payment_modal": {
+        "title": "Régler l'Amende",
+        "subtitle": "Saisissez vos informations de carte pour payer cette amende",
+        "simulated_notice": "Mode paiement simulé : aucun débit réel n'est effectué et les données complètes de carte ne sont jamais envoyées ni enregistrées.",
+        "summary_plate": "Véhicule",
+        "summary_reference": "Réf. amende",
+        "summary_amount": "Montant dû",
+        "cardholder_label": "Nom du titulaire",
+        "cardholder_placeholder": "Nom tel qu'indiqué sur la carte",
+        "card_number_label": "Numéro de carte",
+        "card_number_placeholder": "1234 5678 9012 3456",
+        "expiry_label": "Date d'expiration",
+        "expiry_placeholder": "MM/AA",
+        "cvv_label": "Code de sécurité (CVV)",
+        "cvv_placeholder": "123",
+        "brands": {
+          "visa": "Visa",
+          "mastercard": "Mastercard",
+          "amex": "Amex",
+          "discover": "Discover"
+        },
+        "confirm_button": "Confirmer le paiement (TND {amount})",
+        "submitting_button": "Traitement en cours...",
+        "stale_fine_warning": "Cette amende n'est plus payable car son statut a changé.",
+        "success_title": "Amende réglée",
+        "success_desc": "Référence du reçu : {reference}",
+        "error_title": "Échec du paiement",
+        "errors": {
+          "cardholder_required": "Veuillez saisir le nom du titulaire.",
+          "cardholder_invalid": "Le nom doit contenir entre 2 et 100 caractères valides.",
+          "card_number_required": "Veuillez saisir un numéro de carte.",
+          "card_brand_unsupported": "Réseau de carte non pris en charge. Utilisez Visa, Mastercard, American Express ou Discover.",
+          "card_number_invalid": "Veuillez saisir un numéro de carte valide.",
+          "expiry_required": "Veuillez saisir la date d'expiration.",
+          "expiry_format": "Saisissez une date valide au format MM/AA.",
+          "expiry_expired": "Cette carte est expirée.",
+          "cvv_required": "Veuillez saisir le code de sécurité.",
+          "cvv_invalid": "Le code de sécurité doit comporter 3 chiffres (ou 4 pour Amex).",
+          "server_failed_precondition": "Cette amende ne peut plus être payée.",
+          "server_permission_denied": "Vous n'êtes pas autorisé à payer cette amende.",
+          "server_not_found": "Amende introuvable.",
+          "server_invalid_argument": "Requête de paiement invalide. Actualisez la page et réessayez.",
+          "server_timeout": "La requête a expiré. Vous pouvez réessayer en toute sécurité.",
+          "server_unavailable": "Le service est temporairement indisponible. Vérifiez votre connexion et réessayez.",
+          "server_generic": "Impossible de finaliser le paiement. Veuillez réessayer."
+        }
+      },
+      "receipt_modal": {
+        "open_button": "Voir le Reçu",
+        "title": "Reçu Officiel de Paiement",
+        "description": "Consultez les détails du règlement et téléchargez une copie PDF.",
+        "download_button": "Télécharger le PDF",
+        "downloading_button": "Génération du PDF...",
+        "arabic_fallback_notice": "Les reçus officiels sont délivrés en français ou en anglais.",
+        "summary_missing": "Détails de paiement par carte indisponibles pour ce reçu. Vous pouvez tout de même télécharger le reçu officiel de règlement.",
+        "summary_error": "Impossible de charger les détails de paiement par carte pour le moment.",
+        "retry_button": "Réessayer",
+        "download_error_title": "Échec du Téléchargement PDF",
+        "download_error_desc": "Impossible de générer le PDF du reçu. Veuillez réessayer."
+      }
     },
     "history": {
       "title": "Historique de Propriété",

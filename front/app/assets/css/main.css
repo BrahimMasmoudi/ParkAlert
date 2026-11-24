@@ -8,3 +8,13 @@ html {
 html.dark {
   color-scheme: dark;
 }
+
+@media print {
+  body:has(.no-print-modal) {
+    visibility: hidden !important;
+  }
+
+  .no-print-modal {
+    display: none !important;
+  }
+}

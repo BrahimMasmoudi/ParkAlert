@@ -123,7 +123,7 @@
   "police": {
     "title": "بوابة الشرطة",
     "self_enforcement_notice": "الإجراء معطل: لا يمكنك اتخاذ إجراء شرطي على مركبتك أو مخالفتك الخاصة.",
-    "search_placeholder": "بحث حسب اللوحة أو الوكيل أو الموقع...",
+    "search_placeholder": "بحث حسب اللوحة أو المالك أو الوكيل أو رقم المخالفة أو مرجع الدفع...",
     "pending_reports": "البلاغات المعلقة",
     "no_reports": "لا توجد بلاغات معلقة",
     "tabs": {
@@ -226,7 +226,19 @@
       "no_fines": "لم يتم إصدار أي مخالفات بعد",
       "paid": "تم الدفع",
       "unpaid": "غير مدفوعة",
-      "cancelled": "ملغاة"
+      "cancelled": "ملغاة",
+      "columns": {
+        "plate": "اللوحة",
+        "owner": "المالك",
+        "amount": "المبلغ",
+        "status": "الحالة",
+        "issued": "تاريخ الإصدار",
+        "actions": "الإجراءات"
+      },
+      "view_receipt_button": "الإيصال",
+      "receipt_modal_title": "إيصال التحقق من الدفع",
+      "receipt_modal_desc": "معاينة تدقيق للقراءة فقط مستمدة من بيانات تسوية المخالفة.",
+      "verification_only_notice": "عرض للتحقق فقط: تفاصيل حامل البطاقة والتحميل والطباعة معطلة."
     }
   },
   "owner": {
@@ -300,7 +312,67 @@
       "dispute_pending_badge": "اعتراض معلق",
       "dispute_rejected_badge": "اعتراض مرفوض",
       "dispute_accepted_badge": "اعتراض مقبول",
-      "unknown_date": "تاريخ غير معروف"
+      "unknown_date": "تاريخ غير معروف",
+      "payment_modal": {
+        "title": "دفع مخالفة المواقف",
+        "subtitle": "أدخل بيانات البطاقة لتسوية هذه المخالفة",
+        "simulated_notice": "وضع الدفع المحاكى: لا يتم خصم أي مبلغ فعلي، ولا يتم إرسال بيانات البطاقة الكاملة أو تخزينها على الخادم.",
+        "summary_plate": "المركبة",
+        "summary_reference": "مرجع المخالفة",
+        "summary_amount": "المبلغ المستحق",
+        "cardholder_label": "اسم حامل البطاقة",
+        "cardholder_placeholder": "الاسم كما يظهر على البطاقة",
+        "card_number_label": "رقم البطاقة",
+        "card_number_placeholder": "1234 5678 9012 3456",
+        "expiry_label": "تاريخ الانتهاء",
+        "expiry_placeholder": "MM/YY",
+        "cvv_label": "رمز الأمان (CVV)",
+        "cvv_placeholder": "123",
+        "brands": {
+          "visa": "Visa",
+          "mastercard": "Mastercard",
+          "amex": "Amex",
+          "discover": "Discover"
+        },
+        "confirm_button": "تأكيد الدفع (TND {amount})",
+        "submitting_button": "جارٍ معالجة الدفع...",
+        "stale_fine_warning": "لم تعد هذه المخالفة قابلة للدفع لتغير حالتها.",
+        "success_title": "تم دفع المخالفة",
+        "success_desc": "مرجع الإيصال: {reference}",
+        "error_title": "فشل الدفع",
+        "errors": {
+          "cardholder_required": "يرجى إدخال اسم حامل البطاقة.",
+          "cardholder_invalid": "يجب أن يتراوح الاسم بين 2 و 100 حرف صالح.",
+          "card_number_required": "يرجى إدخال رقم البطاقة.",
+          "card_brand_unsupported": "شبكة البطاقة غير مدعومة. استخدم Visa أو Mastercard أو American Express أو Discover.",
+          "card_number_invalid": "يرجى إدخال رقم بطاقة صالح.",
+          "expiry_required": "يرجى إدخال تاريخ الانتهاء.",
+          "expiry_format": "أدخل تاريخ انتهاء صالح بصيغة MM/YY.",
+          "expiry_expired": "انتهت صلاحية هذه البطاقة.",
+          "cvv_required": "يرجى إدخال رمز الأمان.",
+          "cvv_invalid": "يجب أن يتطابق رمز الأمان مع البطاقة (3 أرقام، أو 4 لبطاقة Amex).",
+          "server_failed_precondition": "لم يعد بالإمكان دفع هذه المخالفة.",
+          "server_permission_denied": "ليس لديك صلاحية لدفع هذه المخالفة.",
+          "server_not_found": "لم يتم العثور على المخالفة.",
+          "server_invalid_argument": "طلب دفع غير صالح. حدّث الصفحة وحاول مرة أخرى.",
+          "server_timeout": "انتهت مهلة طلب الدفع. يمكنك إعادة المحاولة بأمان.",
+          "server_unavailable": "خدمة الدفع غير متاحة مؤقتاً. تحقق من الاتصال وأعد المحاولة.",
+          "server_generic": "تعذر إتمام الدفع. يرجى المحاولة مرة أخرى."
+        }
+      },
+      "receipt_modal": {
+        "open_button": "عرض الإيصال",
+        "title": "إيصال الدفع الرسمي",
+        "description": "راجع تفاصيل التسوية وقم بتحميل نسخة PDF.",
+        "download_button": "تحميل PDF",
+        "downloading_button": "جارٍ إنشاء PDF...",
+        "arabic_fallback_notice": "يتم إصدار إيصالات الدفع الرسمية باللغتين الإنجليزية أو الفرنسية فقط. يتم عرض هذا الإيصال باللغة الإنجليزية.",
+        "summary_missing": "تفاصيل الدفع بالبطاقة غير متوفرة لهذا الإيصال. لا يزال بإمكانك تحميل إيصال التسوية الرسمي.",
+        "summary_error": "تعذر تحميل تفاصيل الدفع بالبطاقة حالياً.",
+        "retry_button": "إعادة المحاولة",
+        "download_error_title": "فشل تحميل ملف PDF",
+        "download_error_desc": "تعذر إنشاء ملف PDF للإيصال. يرجى المحاولة مرة أخرى."
+      }
     },
     "history": {
       "title": "سجل الملكية",

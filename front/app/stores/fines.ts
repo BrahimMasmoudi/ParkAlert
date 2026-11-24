@@ -4,6 +4,7 @@ import { useCollection, useFirestore } from 'vuefire'
 import { defineStore } from 'pinia'
 import { computed, ref } from 'vue'
 import type { ReportPhoto } from '~/stores/reports'
+import type { CardBrand } from '~/composables/useCardValidation'
 
 export type DisputeStatus = 'none' | 'pending' | 'accepted' | 'rejected'
 
@@ -15,6 +16,10 @@ export interface Fine {
   amount: number
   status: 'unpaid' | 'paid' | 'cancelled'
   issuedAt: number
+  paidAt?: number
+  paymentReference?: string
+  paymentProvider?: string
+  paymentAttemptId?: string
   notes?: string
   evidencePhotos?: ReportPhoto[]
   originalPlateNumber?: string
@@ -25,12 +30,32 @@ export interface Fine {
   resolvedAt?: number
 }
 
+function parseTimestampMillis(ts: any): number | undefined {
+  if (ts === null || ts === undefined || ts === '') return undefined
+  if (typeof ts === 'number') return Number.isFinite(ts) ? ts : undefined
+  if (typeof ts.toMillis === 'function') {
+    const ms = ts.toMillis()
+    return Number.isFinite(ms) ? ms : undefined
+  }
+  if (typeof ts.seconds === 'number') {
+    return Number.isFinite(ts.seconds) ? ts.seconds * 1000 : undefined
+  }
+  if (typeof ts._seconds === 'number') {
+    return Number.isFinite(ts._seconds) ? ts._seconds * 1000 : undefined
+  }
+  if (typeof ts === 'string' || ts instanceof Date) {
+    const ms = new Date(ts).getTime()
+    return Number.isFinite(ms) ? ms : undefined
+  }
+  return undefined
+}
+
 function getTimestampMillis(ts: any): number {
-  if (!ts) return Date.now()
-  if (typeof ts.toMillis === 'function') return ts.toMillis()
-  if (ts.seconds) return ts.seconds * 1000
-  if (ts._seconds) return ts._seconds * 1000
-  return new Date(ts).getTime()
+  return parseTimestampMillis(ts) ?? Date.now()
+}
+
+function getOptionalTimestampMillis(ts: any): number | undefined {
+  return parseTimestampMillis(ts)
 }
 
 export function normalizeFineFromFirestore(id: string, data: Record<string, any>): Fine {
@@ -42,14 +67,18 @@ export function normalizeFineFromFirestore(id: string, data: Record<string, any>
     amount: data.amount || 0,
     status: data.status || 'unpaid',
     issuedAt: getTimestampMillis(data.issuedAt),
+    paidAt: getOptionalTimestampMillis(data.paidAt),
+    paymentReference: data.paymentReference,
+    paymentProvider: data.paymentProvider,
+    paymentAttemptId: data.paymentAttemptId,
     notes: data.notes,
     evidencePhotos: Array.isArray(data.evidencePhotos) ? data.evidencePhotos : undefined,
     originalPlateNumber: data.originalPlateNumber,
     disputeStatus: data.disputeStatus,
     disputeReason: data.disputeReason,
-    disputedAt: data.disputedAt ? getTimestampMillis(data.disputedAt) : undefined,
+    disputedAt: getOptionalTimestampMillis(data.disputedAt),
     resolutionReason: data.resolutionReason,
-    resolvedAt: data.resolvedAt ? getTimestampMillis(data.resolvedAt) : undefined,
+    resolvedAt: getOptionalTimestampMillis(data.resolvedAt),
   }
 }
 
@@ -120,23 +149,22 @@ export const useFinesStore = defineStore('fines', () => {
   }
 
   /**
-   * Owner: marks a fine as paid via Cloud Function.
+   * Owner: settles an unpaid fine via Cloud Function with validated payment summary metadata.
    */
-  async function payFine(fineId: string) {
-    acting.value = true
-    try {
-      const { $functions } = useNuxtApp()
-      await httpsCallable($functions, 'payFine')({ fineId })
-      toast.add({ title: 'Fine marked as paid', color: 'success' })
-    }
-    catch (e: unknown) {
-      const msg = e instanceof Error ? e.message : 'Failed to process payment'
-      toast.add({ title: 'Error', description: msg, color: 'error' })
-      throw e
-    }
-    finally {
-      acting.value = false
-    }
+  async function payFine(payload: {
+    fineId: string
+    cardholderName: string
+    cardBrand: CardBrand
+    cardLast4: string
+    paymentAttemptId: string
+  }): Promise<{ ok: true; paymentReference: string }> {
+    const { $functions } = useNuxtApp()
+    const callable = httpsCallable<
+      typeof payload,
+      { ok: true; paymentReference: string }
+    >($functions, 'payFine', { timeout: 20_000 })
+    const result = await callable(payload)
+    return result.data
   }
 
   /**

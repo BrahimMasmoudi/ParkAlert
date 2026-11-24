@@ -1,5 +1,5 @@
 import { FineRepository } from '../../../domain/repositories/fine.repository';
-import { Fine } from '../../../domain/entities/fine.entity';
+import { Fine, FineReceiptSummary } from '../../../domain/entities/fine.entity';
 import { TransactionContext } from '../../../domain/repositories/transaction.port';
 import { normalizePlate } from '../../../domain/value-objects/plate';
 import { FirestoreConnector } from '../../connectors/FirestoreConnector';
@@ -57,6 +57,32 @@ export class FirestoreFineRepository implements FineRepository {
       txOrBatch.update(ref, firestoreUpdates);
     } else {
       await ref.update(firestoreUpdates);
+    }
+  }
+
+  async setReceiptSummary(
+    fineId: string,
+    receipt: FineReceiptSummary,
+    txOrBatch?: TransactionContext | any
+  ): Promise<void> {
+    const ref = this.connector.db
+      .collection('fines')
+      .doc(fineId)
+      .collection('receipt')
+      .doc('summary');
+    const data: FineReceiptSummary = {
+      cardholderName: receipt.cardholderName,
+      cardBrand: receipt.cardBrand,
+      cardLast4: receipt.cardLast4,
+    };
+
+    const firestoreTx = asFirestoreTransaction(txOrBatch);
+    if (firestoreTx) {
+      firestoreTx.set(ref, data);
+    } else if (txOrBatch && typeof txOrBatch.set === 'function') {
+      txOrBatch.set(ref, data);
+    } else {
+      await ref.set(data);
     }
   }
 

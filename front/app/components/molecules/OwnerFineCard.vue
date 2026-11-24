@@ -100,8 +100,7 @@
           size="sm"
           icon="i-lucide-credit-card"
           class="font-bold shadow-lg px-4"
-          :loading="finesStore.acting"
-          @click="finesStore.payFine(fine.id)"
+          @click="emit('pay', fine)"
         />
         <span
           v-else-if="fine.status === 'unpaid' && fine.disputeStatus === 'pending'"
@@ -109,13 +108,15 @@
         >
           {{ $t('owner.fines.under_review') }}
         </span>
-        <div
+        <UButton
           v-else-if="fine.status === 'paid'"
-          class="flex items-center gap-1.5 text-emerald-700 dark:text-emerald-400 font-bold text-[10px] uppercase tracking-widest"
-        >
-          <UIcon name="i-lucide-verified" class="w-3.5 h-3.5" />
-          {{ $t('owner.fines.receipt_issued') }}
-        </div>
+          :label="$t('owner.fines.receipt_modal.open_button')"
+          color="neutral"
+          variant="outline"
+          size="sm"
+          icon="i-lucide-file-text"
+          @click="emit('receipt', fine)"
+        />
         <div
           v-else
           class="flex items-center gap-1.5 text-muted font-bold text-[10px] uppercase tracking-widest"
@@ -199,6 +200,11 @@ import type { Fine } from '~/stores/fines'
 
 const props = defineProps<{
   fine: Fine
+}>()
+
+const emit = defineEmits<{
+  (e: 'pay', fine: Fine): void
+  (e: 'receipt', fine: Fine): void
 }>()
 
 const { locale, t } = useI18n()

@@ -22,13 +22,15 @@
     "@pinia/nuxt": "^1.0.3",
     "firebase": "12.12.1",
     "firebase-admin": "^13.10.0",
-    "nuxt": "^4.6.4",
+    "nuxt": "^4.7.0",
     "nuxt-vuefire": "^1.1.2",
+    "pdfmake": "^0.3.15",
     "pinia": "^4.1.0",
     "vuefire": "^3.2.3"
   },
   "devDependencies": {
     "@nuxt/eslint": "^1.17.0",
+    "@types/pdfmake": "^0.3.3",
     "concurrently": "^10.0.7",
     "eslint": "^10.15.0",
     "firebase-tools": "^15.36.0",

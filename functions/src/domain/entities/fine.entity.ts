@@ -1,8 +1,15 @@
 import { ReportPhoto } from './report.entity';
+import { CardBrand } from '../value-objects/payment';
 
 export type FineStatus = 'unpaid' | 'paid' | 'cancelled';
 
 export type DisputeStatus = 'none' | 'pending' | 'accepted' | 'rejected';
+
+export interface FineReceiptSummary {
+  cardholderName: string;
+  cardBrand: CardBrand;
+  cardLast4: string;
+}
 
 export interface Fine {
   id?: string;
@@ -26,4 +33,7 @@ export interface Fine {
   issuedBy: string;
   issuedAt: Date | any;
   paidAt?: Date | any;
+  paymentReference?: string;
+  paymentProvider?: 'simulated';
+  paymentAttemptId?: string;
 }

@@ -9,6 +9,7 @@ import {
 } from '@firebase/rules-unit-testing';
 import {
   collection,
+  deleteDoc,
   doc,
   getDoc,
   getDocs,
@@ -16,6 +17,7 @@ import {
   orderBy,
   query,
   setDoc,
+  updateDoc,
   where,
 } from 'firebase/firestore';
 
@@ -46,6 +48,7 @@ describe('Release 2 Firestore Rules: /reports, /fines, and /enforcement_audit_lo
       await setDoc(doc(db, 'users/owner-2'), { uid: 'owner-2', roles: ['owner'] });
       await setDoc(doc(db, 'users/agent-1'), { uid: 'agent-1', roles: ['agent', 'owner'] });
       await setDoc(doc(db, 'users/police-1'), { uid: 'police-1', roles: ['police', 'owner'] });
+      await setDoc(doc(db, 'users/police-only'), { uid: 'police-only', roles: ['police'] });
       await setDoc(doc(db, 'users/legacy-police'), { uid: 'legacy-police', role: 'police' });
 
       await setDoc(doc(db, 'reports/rep-1'), {
@@ -104,6 +107,58 @@ describe('Release 2 Firestore Rules: /reports, /fines, and /enforcement_audit_lo
     await assertFails(getDoc(doc(legacyPoliceDb, 'reports/rep-1')));
     await assertFails(
       setDoc(doc(owner1Db, 'users/owner-1'), { uid: 'owner-1', roles: ['police', 'owner'] })
+    );
+  });
+
+  it('restricts /fines/{fineId}/receipt/summary reads to the owning user, allows missing receipt checks, blocks police-only users, and denies client writes', async () => {
+    const owner1Db = testEnv.authenticatedContext('owner-1').firestore();
+    const owner2Db = testEnv.authenticatedContext('owner-2').firestore();
+    const policeOnlyDb = testEnv.authenticatedContext('police-only').firestore();
+
+    // Missing receipt summary on unpaid/legacy fine resolves as non-existent rather than PERMISSION_DENIED
+    const missingSnap = await assertSucceeds(getDoc(doc(owner1Db, 'fines/fine-1/receipt/summary')));
+    expect(missingSnap.exists()).toBe(false);
+
+    await testEnv.withSecurityRulesDisabled(async (ctx) => {
+      const db = ctx.firestore();
+      await setDoc(doc(db, 'fines/fine-1/receipt/summary'), {
+        cardholderName: 'Amira Ben Salah',
+        cardBrand: 'visa',
+        cardLast4: '4242',
+      });
+    });
+
+    const presentSnap = await assertSucceeds(getDoc(doc(owner1Db, 'fines/fine-1/receipt/summary')));
+    expect(presentSnap.exists()).toBe(true);
+    expect(presentSnap.data()).toEqual({
+      cardholderName: 'Amira Ben Salah',
+      cardBrand: 'visa',
+      cardLast4: '4242',
+    });
+
+    // Other owners and police-only users (without 'owner' role) cannot read receipt/summary
+    await assertFails(getDoc(doc(owner2Db, 'fines/fine-1/receipt/summary')));
+    await assertSucceeds(getDoc(doc(policeOnlyDb, 'fines/fine-1')));
+    await assertFails(getDoc(doc(policeOnlyDb, 'fines/fine-1/receipt/summary')));
+
+    // Client writes are denied
+    await assertFails(
+      setDoc(doc(owner1Db, 'fines/fine-1/receipt/summary'), {
+        cardholderName: 'Tamper',
+        cardBrand: 'visa',
+        cardLast4: '1111',
+      })
+    );
+    await assertFails(
+      updateDoc(doc(owner1Db, 'fines/fine-1/receipt/summary'), { cardLast4: '9999' })
+    );
+    await assertFails(deleteDoc(doc(owner1Db, 'fines/fine-1/receipt/summary')));
+    await assertFails(
+      setDoc(doc(policeOnlyDb, 'fines/fine-1/receipt/summary'), {
+        cardholderName: 'Tamper',
+        cardBrand: 'visa',
+        cardLast4: '1111',
+      })
     );
   });
 });
