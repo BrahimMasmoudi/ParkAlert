@@ -1,5 +1,5 @@
 // stores/cars.ts
-import { collection, query, where } from 'firebase/firestore'
+import { collection, doc, getDoc, getDocs, query, where } from 'firebase/firestore'
 import type {
   QueryDocumentSnapshot,
   SnapshotOptions,
@@ -10,6 +10,7 @@ import { useCollection, useFirestore } from 'vuefire'
 import { defineStore } from 'pinia'
 import { computed, ref } from 'vue'
 import { normalizePlate } from '~/composables/useVehicleValidation'
+import { getOptionalTimestampMillis, getTimestampMillis } from '~/utils/timestamp'
 
 export type CarStatus =
   | 'activation_pending'
@@ -52,21 +53,16 @@ export interface Car {
   carteGriseUrl?: string
   status: CarStatus
   createdAt: number
+  updatedAt?: number
+  deletionRequestedAt?: number
+  transferRequestedAt?: number
   rejectionReason?: string
   transferRejectionReason?: string
   transferToOwnerId?: string
   transferCarteGriseUrl?: string
 }
 
-function getTimestampMillis(ts: any): number {
-  if (!ts) return Date.now()
-  if (typeof ts.toMillis === 'function') return ts.toMillis()
-  if (ts.seconds) return ts.seconds * 1000
-  if (ts._seconds) return ts._seconds * 1000
-  return new Date(ts).getTime()
-}
-
-const carConverter = {
+export const carConverter = {
   toFirestore(car: Car): DocumentData {
     return car
   },
@@ -88,6 +84,9 @@ const carConverter = {
       carteGriseUrl: data.carteGriseUrl || '',
       status: data.status || 'activation_pending',
       createdAt: getTimestampMillis(data.createdAt),
+      updatedAt: getOptionalTimestampMillis(data.updatedAt),
+      deletionRequestedAt: getOptionalTimestampMillis(data.deletionRequestedAt),
+      transferRequestedAt: getOptionalTimestampMillis(data.transferRequestedAt),
       rejectionReason: data.rejectionReason,
       transferRejectionReason: data.transferRejectionReason,
       transferToOwnerId: data.transferToOwnerId,
@@ -153,7 +152,6 @@ export const useCarsStore = defineStore('cars', () => {
       where('status', 'in', [
         'activation_pending',
         'deletion_requested',
-        'transfer_pending_owner',
         'transfer_pending_police',
       ])
     )
@@ -175,12 +173,6 @@ export const useCarsStore = defineStore('cars', () => {
   const deletionPendingCars = computed(() =>
     (pendingCars.value || []).filter(
       car => car.status === 'deletion_requested'
-    )
-  )
-
-  const transferPendingOwnerCars = computed(() =>
-    (pendingCars.value || []).filter(
-      car => car.status === 'transfer_pending_owner'
     )
   )
 
@@ -381,7 +373,6 @@ export const useCarsStore = defineStore('cars', () => {
     pendingCarsLoading,
     activationPendingCars,
     deletionPendingCars,
-    transferPendingOwnerCars,
     transferPendingPoliceCars,
     isLoading,
     addCar,

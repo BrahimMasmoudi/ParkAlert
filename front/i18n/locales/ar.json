@@ -192,6 +192,17 @@
         "rejected": "مرفوض"
       }
     },
+    "sort": {
+      "oldest_first": "الأقدم أولاً",
+      "newest_first": "الأحدث أولاً",
+      "oldest_cap_notice": "يتم عرض أقدم 250 طلباً معلقاً. قم بمعالجة الطلبات الأقدم أو ابحث ضمن هذه القائمة."
+    },
+    "wait_age": {
+      "just_now": "الآن",
+      "minutes": "منذ {count} د",
+      "hours": "منذ {count} س",
+      "days": "منذ {count} ي"
+    },
     "reject": {
       "title": "رفض الطلب",
       "description": "يرجى تقديم سبب للرفض.",
@@ -222,20 +233,54 @@
       "reason_length_error": "يجب أن يتراوح سبب القرار بين 3 و 500 حرف."
     },
     "audit": {
-      "title": "سجل تدقيق المخالفات",
-      "no_fines": "لم يتم إصدار أي مخالفات بعد",
+      "title": "سجل تدقيق الشرطة",
+      "subtitle": "سجل موحد لقرارات الشرطة الخاصة بالمركبات والبلاغات والمخالفات والاعتراضات.",
+      "refresh": "تحديث",
+      "load_more": "تحميل المزيد",
+      "retry": "إعادة المحاولة",
+      "no_entries": "لم يتم تسجيل أي قرارات للشرطة بعد.",
+      "no_filtered_entries": "لا توجد سجلات محمّلة تطابق التصفية.",
+      "plate_search_placeholder": "بحث في الخادم برقم اللوحة...",
+      "plate_search_button": "بحث باللوحة",
+      "plate_clear_button": "مسح",
+      "plate_active_filter": "تصفية اللوحة: {plate}",
+      "filter_loaded_placeholder": "تصفية الصفوف المحمّلة...",
+      "receipt_lookup_placeholder": "معرف المخالفة أو مرجع الدفع (PA-...)...",
+      "find_receipt_button": "بحث عن الإيصال",
+      "receipt_not_found": "لم يتم العثور على مخالفة مطابقة.",
+      "receipt_not_paid": "لم يتم سداد هذه المخالفة بعد، ولا يوجد إيصال دفع.",
+      "unregistered_owner": "مركبة غير مسجلة أو دون مالك مرتبط",
+      "original_plate": "الأصلية: {plate}",
       "paid": "تم الدفع",
       "unpaid": "غير مدفوعة",
       "cancelled": "ملغاة",
+      "categories": {
+        "all": "الكل",
+        "car": "المركبات",
+        "report": "البلاغات",
+        "fine": "المخالفات"
+      },
+      "actions": {
+        "CAR_APPROVED": "اعتماد المركبة",
+        "CAR_REJECTED": "رفض المركبة",
+        "CAR_DELETION_APPROVED": "الموافقة على الحذف",
+        "TRANSFER_APPROVED": "الموافقة على النقل",
+        "TRANSFER_REJECTED": "رفض النقل",
+        "DISMISS_REPORT": "حفظ البلاغ",
+        "ISSUE_FINE": "إصدار مخالفة",
+        "CANCEL_FINE": "إلغاء مخالفة",
+        "DISMISS_DISPUTE": "رفض الاعتراض"
+      },
       "columns": {
+        "timestamp": "التاريخ والوقت",
+        "action": "الإجراء",
         "plate": "اللوحة",
+        "actor": "الضابط",
         "owner": "المالك",
-        "amount": "المبلغ",
-        "status": "الحالة",
-        "issued": "تاريخ الإصدار",
+        "reason": "السبب / الملاحظة",
         "actions": "الإجراءات"
       },
-      "view_receipt_button": "الإيصال",
+      "view_receipt_button": "عرض الإيصال",
       "receipt_modal_title": "إيصال التحقق من الدفع",
       "receipt_modal_desc": "معاينة تدقيق للقراءة فقط مستمدة من بيانات تسوية المخالفة.",
       "verification_only_notice": "عرض للتحقق فقط: تفاصيل حامل البطاقة والتحميل والطباعة معطلة."

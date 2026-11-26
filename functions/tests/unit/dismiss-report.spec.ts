@@ -23,12 +23,14 @@ describe('DismissReportUseCase', () => {
       getAllByPlateNumber: vi.fn().mockResolvedValue([]),
     };
     const auditPort = { addAuditLog: vi.fn() };
+    const policeAuditPort = { addLog: vi.fn().mockResolvedValue(undefined) };
     const useCase = new DismissReportUseCase(
       reportRepository as any,
       userRepository as any,
       auditPort,
       makeTxRunner() as any,
-      carRepository as any
+      carRepository as any,
+      policeAuditPort
     );
 
     const res = await useCase.execute({
@@ -51,6 +53,17 @@ describe('DismissReportUseCase', () => {
       expect.objectContaining({ action: 'DISMISS_REPORT', targetId: 'rep-1' }),
       expect.anything()
     );
+    expect(policeAuditPort.addLog).toHaveBeenCalledWith(
+      expect.objectContaining({
+        action: 'DISMISS_REPORT',
+        targetType: 'report',
+        targetId: 'rep-1',
+        actorId: 'pol-1',
+        ownerId: '',
+        reason: 'Plate photo is blurred',
+      }),
+      expect.anything()
+    );
   });
 
   it('rejects non-police callers, short reasons, and non-pending reports', async () => {
@@ -68,12 +81,14 @@ describe('DismissReportUseCase', () => {
       getAllByPlateNumber: vi.fn().mockResolvedValue([]),
     };
     const auditPort = { addAuditLog: vi.fn() };
+    const policeAuditPort = { addLog: vi.fn().mockResolvedValue(undefined) };
     const useCase = new DismissReportUseCase(
       reportRepository as any,
       userRepository as any,
       auditPort,
       makeTxRunner() as any,
-      carRepository as any
+      carRepository as any,
+      policeAuditPort
     );
 
     await expect(
@@ -118,12 +133,14 @@ describe('DismissReportUseCase', () => {
       }),
     };
     const auditPort = { addAuditLog: vi.fn() };
+    const policeAuditPort = { addLog: vi.fn().mockResolvedValue(undefined) };
     const useCase = new DismissReportUseCase(
       reportRepository as any,
       userRepository as any,
       auditPort,
       makeTxRunner() as any,
-      carRepository as any
+      carRepository as any,
+      policeAuditPort
     );
 
     await expect(

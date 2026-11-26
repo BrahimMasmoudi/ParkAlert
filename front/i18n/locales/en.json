@@ -192,6 +192,17 @@
         "rejected": "Rejected"
       }
     },
+    "sort": {
+      "oldest_first": "Oldest first",
+      "newest_first": "Newest first",
+      "oldest_cap_notice": "Showing the oldest 250 pending items. Resolve older requests or use search within this slice to inspect queued work."
+    },
+    "wait_age": {
+      "just_now": "just now",
+      "minutes": "{count}m ago",
+      "hours": "{count}h ago",
+      "days": "{count}d ago"
+    },
     "reject": {
       "title": "Reject Request",
       "description": "Please provide a reason for the rejection.",
@@ -222,20 +233,54 @@
       "reason_length_error": "Resolution reason must be between 3 and 500 characters."
     },
     "audit": {
-      "title": "Fine Issuance Audit",
-      "no_fines": "No fines have been issued yet",
+      "title": "Police Audit Log",
+      "subtitle": "Unified chronicle of police decisions across vehicles, reports, fines, and disputes.",
+      "refresh": "Refresh",
+      "load_more": "Load More",
+      "retry": "Retry",
+      "no_entries": "No police audit decisions recorded yet.",
+      "no_filtered_entries": "No loaded audit entries match your filter.",
+      "plate_search_placeholder": "Server search by plate (e.g. AB-123-CD)...",
+      "plate_search_button": "Search Plate",
+      "plate_clear_button": "Clear",
+      "plate_active_filter": "Plate filter: {plate}",
+      "filter_loaded_placeholder": "Filter loaded rows...",
+      "receipt_lookup_placeholder": "Fine ID or Payment Ref (PA-...)...",
+      "find_receipt_button": "Find Receipt",
+      "receipt_not_found": "No matching fine record found.",
+      "receipt_not_paid": "This fine is not settled yet, so no payment receipt exists.",
+      "unregistered_owner": "Unregistered vehicle or no linked owner",
+      "original_plate": "Orig: {plate}",
       "paid": "Paid",
       "unpaid": "Unpaid",
       "cancelled": "Cancelled",
+      "categories": {
+        "all": "All",
+        "car": "Cars",
+        "report": "Reports",
+        "fine": "Fines"
+      },
+      "actions": {
+        "CAR_APPROVED": "Vehicle Approved",
+        "CAR_REJECTED": "Vehicle Rejected",
+        "CAR_DELETION_APPROVED": "Deletion Approved",
+        "TRANSFER_APPROVED": "Transfer Approved",
+        "TRANSFER_REJECTED": "Transfer Rejected",
+        "DISMISS_REPORT": "Report Dismissed",
+        "ISSUE_FINE": "Fine Issued",
+        "CANCEL_FINE": "Fine Cancelled",
+        "DISMISS_DISPUTE": "Dispute Dismissed"
+      },
       "columns": {
+        "timestamp": "Timestamp",
+        "action": "Action",
         "plate": "Plate",
+        "actor": "Officer",
         "owner": "Owner",
-        "amount": "Amount",
-        "status": "Status",
-        "issued": "Issued",
+        "reason": "Reason / Note",
         "actions": "Actions"
       },
-      "view_receipt_button": "Receipt",
+      "view_receipt_button": "View Receipt",
       "receipt_modal_title": "Payment Verification Receipt",
       "receipt_modal_desc": "Read-only audit verification sourced from fine settlement metadata.",
       "verification_only_notice": "Audit verification view only: cardholder details, downloading, and printing are disabled."

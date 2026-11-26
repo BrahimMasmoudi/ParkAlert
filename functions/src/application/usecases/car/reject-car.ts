@@ -1,15 +1,17 @@
 import { CarRepository } from '../../../domain/repositories/car.repository';
+import { PoliceAuditPort } from '../../../domain/repositories/police-audit.port';
 import { UserRepository } from '../../../domain/repositories/user.repository';
 import { TransactionRunner } from '../../../domain/repositories/transaction.port';
 import { DomainError } from '../../../domain/errors/domain.error';
-import { validateRejectionReason } from '../../../domain/value-objects/plate';
+import { normalizePlate, validateRejectionReason } from '../../../domain/value-objects/plate';
 import { assertHasRole, assertNotSelfEnforcement } from '../shared/user-authorization';
 
 export class RejectCarUseCase {
   constructor(
     private readonly carRepository: CarRepository,
     private readonly userRepository: UserRepository,
-    private readonly transactionRunner: TransactionRunner
+    private readonly transactionRunner: TransactionRunner,
+    private readonly policeAuditPort: PoliceAuditPort
   ) {}
 
   async execute(request: { carId: string; reason: string; actorId: string }) {
@@ -48,6 +50,19 @@ export class RejectCarUseCase {
           action: 'REJECTED',
           reason: trimmedReason,
           timestamp: new Date(),
+        },
+        tx
+      );
+      await this.policeAuditPort.addLog(
+        {
+          targetType: 'car',
+          targetId: carId,
+          actorId,
+          ownerId: car.ownerId,
+          plateNumber: car.plateNumber,
+          plateNumberNormalized: car.plateNumberNormalized || normalizePlate(car.plateNumber),
+          action: 'CAR_REJECTED',
+          reason: trimmedReason || null,
         },
         tx
       );

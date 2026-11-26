@@ -54,6 +54,9 @@ vi.mock('../../src/infrastructure/entry-points/index', () => {
         mockAudits.push(log);
       },
     },
+    policeAuditPort: {
+      addLog: async () => {},
+    },
     fineRepository: {
       hasUnpaidFines: async () => false,
     },

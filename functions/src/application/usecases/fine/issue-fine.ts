@@ -2,6 +2,7 @@ import * as logger from 'firebase-functions/logger';
 import { CarRepository } from '../../../domain/repositories/car.repository';
 import { ReportRepository } from '../../../domain/repositories/report.repository';
 import { FineRepository } from '../../../domain/repositories/fine.repository';
+import { PoliceAuditPort } from '../../../domain/repositories/police-audit.port';
 import { UserRepository } from '../../../domain/repositories/user.repository';
 import { EnforcementAuditPort } from '../../../domain/repositories/enforcement-audit.port';
 import { TransactionRunner } from '../../../domain/repositories/transaction.port';
@@ -32,7 +33,8 @@ export class IssueFineUseCase {
     private readonly userRepository: UserRepository,
     private readonly carRepository: CarRepository,
     private readonly transactionRunner: TransactionRunner,
-    private readonly enforcementAuditPort?: EnforcementAuditPort
+    private readonly enforcementAuditPort: EnforcementAuditPort,
+    private readonly policeAuditPort: PoliceAuditPort
   ) {}
 
   async execute(request: IssueFineRequest) {
@@ -127,20 +129,33 @@ export class IssueFineUseCase {
 
       const fineId = await this.fineRepository.create(fine, tx);
 
-      if (this.enforcementAuditPort) {
-        await this.enforcementAuditPort.addAuditLog(
-          {
-            targetType: 'fine',
-            targetId: fineId,
-            actorId: issuedBy,
-            action: 'ISSUE_FINE',
-            originalPlate: earliestOriginal ?? report.plateNumber,
-            issuedPlate: issuedPlateFormatted,
-            timestamp: new Date(),
-          },
-          tx
-        );
-      }
+      await this.enforcementAuditPort.addAuditLog(
+        {
+          targetType: 'fine',
+          targetId: fineId,
+          actorId: issuedBy,
+          action: 'ISSUE_FINE',
+          originalPlate: earliestOriginal ?? report.plateNumber,
+          issuedPlate: issuedPlateFormatted,
+          timestamp: new Date(),
+        },
+        tx
+      );
+
+      await this.policeAuditPort.addLog(
+        {
+          targetType: 'fine',
+          targetId: fineId,
+          actorId: issuedBy,
+          ownerId,
+          plateNumber: issuedPlateFormatted,
+          plateNumberNormalized: normalizedPlate,
+          action: 'ISSUE_FINE',
+          reason: notes?.trim() || null,
+          ...(earliestOriginal ? { metadata: { originalPlateNumber: earliestOriginal } } : {}),
+        },
+        tx
+      );
 
       logger.info('Fine issued', {
         reportId,

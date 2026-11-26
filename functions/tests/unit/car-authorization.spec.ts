@@ -5,6 +5,7 @@ import { User } from '../../src/domain/entities/user.entity';
 import { DomainError } from '../../src/domain/errors/domain.error';
 import { CarRepository } from '../../src/domain/repositories/car.repository';
 import { FineRepository } from '../../src/domain/repositories/fine.repository';
+import { PoliceAuditPort } from '../../src/domain/repositories/police-audit.port';
 import { TransactionContext, TransactionRunner } from '../../src/domain/repositories/transaction.port';
 import { UserRepository } from '../../src/domain/repositories/user.repository';
 import { AcknowledgeTransferUseCase } from '../../src/application/usecases/car/acknowledge-transfer';
@@ -23,6 +24,9 @@ import { RetryCarUseCase } from '../../src/application/usecases/car/retry-car';
 const fakeTx = {} as TransactionContext;
 const fakeRunner: TransactionRunner = {
   run: async <T>(work: (tx: TransactionContext) => Promise<T>) => work(fakeTx),
+};
+const fakePoliceAuditPort: PoliceAuditPort = {
+  addLog: async () => undefined,
 };
 
 function makeRepos(seedCars: Car[] = [], seedUsers: User[] = []) {
@@ -115,9 +119,9 @@ describe('US1: Car & Transfer Authorization, Role Enforcement, and Field Whiteli
       baseUsers
     );
 
-    const approveTransfer = new ApproveTransferUseCase(carRepo, fineRepo, userRepo, fakeRunner);
-    const approveCar = new ApproveCarUseCase(carRepo, userRepo, fakeRunner);
-    const rejectCar = new RejectCarUseCase(carRepo, userRepo, fakeRunner);
+    const approveTransfer = new ApproveTransferUseCase(carRepo, fineRepo, userRepo, fakeRunner, fakePoliceAuditPort);
+    const approveCar = new ApproveCarUseCase(carRepo, userRepo, fakeRunner, fakePoliceAuditPort);
+    const rejectCar = new RejectCarUseCase(carRepo, userRepo, fakeRunner, fakePoliceAuditPort);
 
     for (const actorId of ['owner-a', 'owner-b', 'agent-1', 'unknown']) {
       await expect(approveTransfer.execute({ carId: 'AB123CD', actorId })).rejects.toMatchObject({ code: 'PERMISSION_DENIED' });
@@ -134,7 +138,7 @@ describe('US1: Car & Transfer Authorization, Role Enforcement, and Field Whiteli
       ],
       baseUsers
     );
-    const rejectTransfer = new RejectTransferUseCase(carRepo, userRepo, fakeRunner);
+    const rejectTransfer = new RejectTransferUseCase(carRepo, userRepo, fakeRunner, fakePoliceAuditPort);
 
     // Owner stage: police, owner-b, agent denied
     await expect(rejectTransfer.execute({ carId: 'AB123CD', actorId: 'police-1', reason: 'Valid reason' })).rejects.toMatchObject({ code: 'PERMISSION_DENIED' });
@@ -185,11 +189,11 @@ describe('US1: Car & Transfer Authorization, Role Enforcement, and Field Whiteli
       baseUsers
     );
 
-    const approveCar = new ApproveCarUseCase(carRepo, userRepo, fakeRunner);
-    const rejectCar = new RejectCarUseCase(carRepo, userRepo, fakeRunner);
-    const approveDel = new ApproveCarDeletionUseCase(carRepo, fineRepo, userRepo, fakeRunner);
-    const approveTransfer = new ApproveTransferUseCase(carRepo, fineRepo, userRepo, fakeRunner);
-    const rejectTransfer = new RejectTransferUseCase(carRepo, userRepo, fakeRunner);
+    const approveCar = new ApproveCarUseCase(carRepo, userRepo, fakeRunner, fakePoliceAuditPort);
+    const rejectCar = new RejectCarUseCase(carRepo, userRepo, fakeRunner, fakePoliceAuditPort);
+    const approveDel = new ApproveCarDeletionUseCase(carRepo, fineRepo, userRepo, fakeRunner, fakePoliceAuditPort);
+    const approveTransfer = new ApproveTransferUseCase(carRepo, fineRepo, userRepo, fakeRunner, fakePoliceAuditPort);
+    const rejectTransfer = new RejectTransferUseCase(carRepo, userRepo, fakeRunner, fakePoliceAuditPort);
 
     await expect(approveCar.execute({ carId: 'ACT01', actorId: 'police-1' })).rejects.toMatchObject({ code: 'PERMISSION_DENIED' });
     await expect(rejectCar.execute({ carId: 'ACT01', actorId: 'police-1', reason: 'Self reject' })).rejects.toMatchObject({ code: 'PERMISSION_DENIED' });

@@ -48,6 +48,7 @@ describe('IssueFineUseCase', () => {
       ]),
     };
     const auditPort = { addAuditLog: vi.fn() };
+    const policeAuditPort = { addLog: vi.fn().mockResolvedValue(undefined) };
 
     const useCase = new IssueFineUseCase(
       reportRepository as any,
@@ -55,7 +56,8 @@ describe('IssueFineUseCase', () => {
       userRepository as any,
       carRepository as any,
       makeTxRunner() as any,
-      auditPort
+      auditPort,
+      policeAuditPort
     );
 
     const res = await useCase.execute({
@@ -77,6 +79,19 @@ describe('IssueFineUseCase', () => {
           { path: 'reports/agent-1/ctx.jpg', slot: 'context' },
           { path: 'reports/agent-1/plt.jpg', slot: 'plate' },
         ],
+      }),
+      expect.anything()
+    );
+    expect(policeAuditPort.addLog).toHaveBeenCalledWith(
+      expect.objectContaining({
+        action: 'ISSUE_FINE',
+        targetType: 'fine',
+        targetId: 'fine-1',
+        plateNumber: 'AB-123-CD',
+        plateNumberNormalized: 'AB123CD',
+        actorId: 'pol-1',
+        ownerId: 'owner-1',
+        metadata: { originalPlateNumber: 'AA-111-AA' },
       }),
       expect.anything()
     );
@@ -104,7 +119,9 @@ describe('IssueFineUseCase', () => {
       fineRepository as any,
       userRepository as any,
       carRepository as any,
-      makeTxRunner() as any
+      makeTxRunner() as any,
+      { addAuditLog: vi.fn() },
+      { addLog: vi.fn() }
     );
 
     await expect(
@@ -176,7 +193,9 @@ describe('IssueFineUseCase', () => {
       fineRepository as any,
       userRepository as any,
       carRepository as any,
-      makeTxRunner() as any
+      makeTxRunner() as any,
+      { addAuditLog: vi.fn() },
+      { addLog: vi.fn() }
     );
 
     // Self originalPlateNumber swap attempt

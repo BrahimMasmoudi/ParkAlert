@@ -1,11 +1,12 @@
 import * as logger from 'firebase-functions/logger';
 import { FineRepository } from '../../../domain/repositories/fine.repository';
+import { PoliceAuditPort } from '../../../domain/repositories/police-audit.port';
 import { ReportRepository } from '../../../domain/repositories/report.repository';
 import { UserRepository } from '../../../domain/repositories/user.repository';
 import { EnforcementAuditPort } from '../../../domain/repositories/enforcement-audit.port';
 import { TransactionRunner } from '../../../domain/repositories/transaction.port';
 import { DomainError } from '../../../domain/errors/domain.error';
-import { validateRejectionReason } from '../../../domain/value-objects/plate';
+import { normalizePlate, validateRejectionReason } from '../../../domain/value-objects/plate';
 import { assertHasRole, assertNotSelfEnforcement } from '../shared/user-authorization';
 
 export type ResolveDisputeAction = 'cancel_fine' | 'dismiss_dispute';
@@ -27,7 +28,8 @@ export class ResolveDisputeUseCase {
     private readonly reportRepository: ReportRepository,
     private readonly userRepository: UserRepository,
     private readonly enforcementAuditPort: EnforcementAuditPort,
-    private readonly transactionRunner: TransactionRunner
+    private readonly transactionRunner: TransactionRunner,
+    private readonly policeAuditPort: PoliceAuditPort
   ) {}
 
   async execute(request: ResolveDisputeRequest): Promise<{ ok: true }> {
@@ -135,6 +137,20 @@ export class ResolveDisputeUseCase {
           action: 'DISMISS_DISPUTE',
         });
       }
+
+      await this.policeAuditPort.addLog(
+        {
+          targetType: 'fine',
+          targetId: fineId,
+          actorId,
+          ownerId: fine.ownerId,
+          plateNumber: fine.plateNumber,
+          plateNumberNormalized: fine.plateNumberNormalized || normalizePlate(fine.plateNumber),
+          action: action === 'cancel_fine' ? 'CANCEL_FINE' : 'DISMISS_DISPUTE',
+          reason: cleanReason?.trim() || null,
+        },
+        tx
+      );
 
       return { ok: true };
     });

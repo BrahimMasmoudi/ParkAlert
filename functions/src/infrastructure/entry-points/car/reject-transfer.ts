@@ -1,12 +1,13 @@
 import { onCall, HttpsError } from 'firebase-functions/v2/https';
 import { RejectTransferUseCase } from '../../../application/usecases/car/reject-transfer';
-import { carRepository, transactionRunner, userRepository } from '../index';
+import { carRepository, policeAuditPort, transactionRunner, userRepository } from '../index';
 import { mapDomainErrorToHttpsError } from '../shared/error-mapper';
 
 const rejectTransferUseCase = new RejectTransferUseCase(
   carRepository,
   userRepository,
-  transactionRunner
+  transactionRunner,
+  policeAuditPort
 );
 
 export const rejectTransfer = onCall(

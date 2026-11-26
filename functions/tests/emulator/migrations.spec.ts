@@ -5,6 +5,7 @@ import { migrate as migrateV2 } from '../../migrations/v2__plate_as_id';
 import { migrate as migrateV3 } from '../../migrations/v3__backfill_fines_and_audit_logs';
 import { migrate as migrateV4 } from '../../migrations/v4__user_roles_array';
 import { migrate as migrateV5 } from '../../migrations/v5__remove_legacy_user_role';
+import { migrate as migrateV6 } from '../../migrations/v6__backfill_police_audit';
 
 process.env.FIRESTORE_EMULATOR_HOST = process.env.FIRESTORE_EMULATOR_HOST || '127.0.0.1:8080';
 
@@ -27,6 +28,9 @@ describe('US3: v2 and v3 Migrations', () => {
       clearCollection('car_audit_logs'),
       clearCollection('migration_conflicts'),
       clearCollection('users'),
+      clearCollection('reports'),
+      clearCollection('enforcement_audit_logs'),
+      clearCollection('police_audit_logs'),
     ]);
   });
 
@@ -37,6 +41,9 @@ describe('US3: v2 and v3 Migrations', () => {
       clearCollection('car_audit_logs'),
       clearCollection('migration_conflicts'),
       clearCollection('users'),
+      clearCollection('reports'),
+      clearCollection('enforcement_audit_logs'),
+      clearCollection('police_audit_logs'),
     ]);
   });
 
@@ -134,5 +141,62 @@ describe('US3: v2 and v3 Migrations', () => {
     // Idempotent re-run
     const second = await migrateV5({ firestore: db } as any);
     expect(second).toEqual({ backfilled: 0, cleaned: 0, skipped: 3, errors: 0 });
+  });
+
+  it('v6 backfills police_audit_logs from enforcement_audit_logs and car_audit_logs idempotently', async () => {
+    const now = new Date('2026-11-25T12:00:00Z');
+    await db.collection('users').doc('pol-1').set({ uid: 'pol-1', roles: ['police', 'owner'] });
+    await db.collection('cars').doc('AB123CD').set({
+      id: 'AB123CD',
+      ownerId: 'owner-a',
+      plateNumber: 'AB-123-CD',
+      plateNumberNormalized: 'AB123CD',
+      status: 'active',
+    });
+    await db.collection('fines').doc('fine-1').set({
+      ownerId: 'owner-a',
+      plateNumber: 'AB-123-CD',
+      plateNumberNormalized: 'AB123CD',
+      status: 'unpaid',
+      amount: 50,
+    });
+    await db.collection('enforcement_audit_logs').doc('enf-1').set({
+      targetType: 'fine',
+      targetId: 'fine-1',
+      actorId: 'pol-1',
+      action: 'ISSUE_FINE',
+      issuedPlate: 'AB-123-CD',
+      timestamp: now,
+    });
+    await db.collection('car_audit_logs').doc('car-1').set({
+      carId: 'AB123CD',
+      actorId: 'pol-1',
+      action: 'APPROVED',
+      timestamp: now,
+    });
+
+    const first = await migrateV6({ firestore: db } as any);
+    expect(first).toEqual({ created: 2, skipped: 0, errors: 0 });
+    const enfAuditSnap = await db.collection('police_audit_logs').doc('v6_enf_enf-1').get();
+    expect(enfAuditSnap.data()).toMatchObject({
+      targetType: 'fine',
+      targetId: 'fine-1',
+      ownerId: 'owner-a',
+      plateNumberNormalized: 'AB123CD',
+      action: 'ISSUE_FINE',
+      reason: null,
+    });
+    const carAuditSnap = await db.collection('police_audit_logs').doc('v6_car_car-1').get();
+    expect(carAuditSnap.data()).toMatchObject({
+      targetType: 'car',
+      targetId: 'AB123CD',
+      ownerId: 'owner-a',
+      plateNumberNormalized: 'AB123CD',
+      action: 'CAR_APPROVED',
+      reason: null,
+    });
+
+    const second = await migrateV6({ firestore: db } as any);
+    expect(second).toEqual({ created: 0, skipped: 2, errors: 0 });
   });
 });

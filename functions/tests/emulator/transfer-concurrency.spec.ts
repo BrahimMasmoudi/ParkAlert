@@ -7,6 +7,8 @@ import { FirestoreCarRepository } from '../../src/infrastructure/adapters/persis
 import { FirestoreFineRepository } from '../../src/infrastructure/adapters/persistence/FirestoreFineRepository';
 import { FirestoreReportRepository } from '../../src/infrastructure/adapters/persistence/FirestoreReportRepository';
 import { FirestoreUserRepository } from '../../src/infrastructure/adapters/persistence/FirestoreUserRepository';
+import { EnforcementAuditHelper } from '../../src/infrastructure/adapters/persistence/EnforcementAuditHelper';
+import { PoliceAuditHelper } from '../../src/infrastructure/adapters/persistence/PoliceAuditHelper';
 import { AddCarUseCase } from '../../src/application/usecases/car/add-car';
 import { ApproveTransferUseCase } from '../../src/application/usecases/car/approve-transfer';
 import { RequestOwnershipTransferUseCase } from '../../src/application/usecases/car/request-ownership-transfer';
@@ -22,6 +24,8 @@ const carRepo = new FirestoreCarRepository(connector);
 const fineRepo = new FirestoreFineRepository(connector);
 const reportRepo = new FirestoreReportRepository(connector);
 const userRepo = new FirestoreUserRepository(connector);
+const enforcementAuditHelper = new EnforcementAuditHelper(connector);
+const policeAuditHelper = new PoliceAuditHelper(connector);
 
 async function clearCollection(name: string) {
   const snap = await db.collection(name).get();
@@ -32,16 +36,26 @@ async function clearCollection(name: string) {
 }
 
 describe('US3: Atomic Concurrency & Unpaid-Fines Enforcement (Emulator)', () => {
+  const collectionsToClear = [
+    'users',
+    'cars',
+    'fines',
+    'reports',
+    'car_audit_logs',
+    'enforcement_audit_logs',
+    'police_audit_logs',
+  ];
+
   beforeAll(async () => {
-    await Promise.all([clearCollection('users'), clearCollection('cars'), clearCollection('fines'), clearCollection('reports'), clearCollection('car_audit_logs')]);
+    await Promise.all(collectionsToClear.map(clearCollection));
   });
 
   afterAll(async () => {
-    await Promise.all([clearCollection('users'), clearCollection('cars'), clearCollection('fines'), clearCollection('reports'), clearCollection('car_audit_logs')]);
+    await Promise.all(collectionsToClear.map(clearCollection));
   });
 
   beforeEach(async () => {
-    await Promise.all([clearCollection('users'), clearCollection('cars'), clearCollection('fines'), clearCollection('reports'), clearCollection('car_audit_logs')]);
+    await Promise.all(collectionsToClear.map(clearCollection));
     await db.collection('users').doc('owner-a').set({ uid: 'owner-a', roles: ['owner'] });
     await db.collection('users').doc('owner-b').set({ uid: 'owner-b', roles: ['owner'] });
     await db.collection('users').doc('police-1').set({ uid: 'police-1', roles: ['police', 'owner'] });
@@ -63,7 +77,7 @@ describe('US3: Atomic Concurrency & Unpaid-Fines Enforcement (Emulator)', () => 
       createdAt: new Date(),
     });
 
-    const uc = new ApproveTransferUseCase(carRepo, fineRepo, userRepo, txRunner);
+    const uc = new ApproveTransferUseCase(carRepo, fineRepo, userRepo, txRunner, policeAuditHelper);
     const results = await Promise.allSettled([
       uc.execute({ carId: 'AB123CD', actorId: 'police-1' }),
       uc.execute({ carId: 'AB123CD', actorId: 'police-1' }),
@@ -76,6 +90,8 @@ describe('US3: Atomic Concurrency & Unpaid-Fines Enforcement (Emulator)', () => 
 
     const auditSnap = await db.collection('car_audit_logs').where('carId', '==', 'AB123CD').where('action', '==', 'TRANSFER_APPROVED').get();
     expect(auditSnap.size).toBe(1);
+    const policeAuditSnap = await db.collection('police_audit_logs').where('targetId', '==', 'AB123CD').where('action', '==', 'TRANSFER_APPROVED').get();
+    expect(policeAuditSnap.size).toBe(1);
   });
 
   it('never leaves an approved transfer coexisting with a newly issued unpaid fine on Owner A', async () => {
@@ -98,8 +114,16 @@ describe('US3: Atomic Concurrency & Unpaid-Fines Enforcement (Emulator)', () => 
       status: 'pending',
     });
 
-    const approve = new ApproveTransferUseCase(carRepo, fineRepo, userRepo, txRunner);
-    const issueFine = new IssueFineUseCase(reportRepo, fineRepo, userRepo, carRepo, txRunner);
+    const approve = new ApproveTransferUseCase(carRepo, fineRepo, userRepo, txRunner, policeAuditHelper);
+    const issueFine = new IssueFineUseCase(
+      reportRepo,
+      fineRepo,
+      userRepo,
+      carRepo,
+      txRunner,
+      enforcementAuditHelper,
+      policeAuditHelper
+    );
 
     const [approveRes, fineRes] = await Promise.allSettled([
       approve.execute({ carId: 'AB123CD', actorId: 'police-1' }),
@@ -187,7 +211,7 @@ describe('US3: Atomic Concurrency & Unpaid-Fines Enforcement (Emulator)', () => 
       status: 'transfer_pending_police',
       createdAt: new Date(),
     });
-    const approve = new ApproveTransferUseCase(carRepo, fineRepo, userRepo, txRunner);
+    const approve = new ApproveTransferUseCase(carRepo, fineRepo, userRepo, txRunner, policeAuditHelper);
     await expect(approve.execute({ carId: 'SL111SL', actorId: 'police-1' })).rejects.toMatchObject({
       code: 'PERMISSION_DENIED',
     });

@@ -68,6 +68,17 @@ describe('Release 2 Firestore Rules: /reports, /fines, and /enforcement_audit_lo
         targetId: 'fine-1',
         action: 'DISPUTE_FINE',
       });
+      await setDoc(doc(db, 'police_audit_logs/pa-1'), {
+        targetType: 'fine',
+        targetId: 'fine-1',
+        actorId: 'police-1',
+        ownerId: 'owner-1',
+        plateNumber: 'AB-123-CD',
+        plateNumberNormalized: 'AB123CD',
+        action: 'ISSUE_FINE',
+        reason: null,
+        timestamp: new Date(),
+      });
     });
   });
 
@@ -90,8 +101,8 @@ describe('Release 2 Firestore Rules: /reports, /fines, and /enforcement_audit_lo
         query(
           collection(policeDb, 'fines'),
           where('disputeStatus', '==', 'pending'),
-          orderBy('disputedAt', 'desc'),
-          limit(50)
+          orderBy('disputedAt', 'asc'),
+          limit(250)
         )
       )
     );
@@ -136,10 +147,28 @@ describe('Release 2 Firestore Rules: /reports, /fines, and /enforcement_audit_lo
       cardLast4: '4242',
     });
 
-    // Other owners and police-only users (without 'owner' role) cannot read receipt/summary
+    // Other owners, dual-role police users reading another owner's receipt, and police-only users cannot read receipt/summary
+    const police1Db = testEnv.authenticatedContext('police-1').firestore();
     await assertFails(getDoc(doc(owner2Db, 'fines/fine-1/receipt/summary')));
     await assertSucceeds(getDoc(doc(policeOnlyDb, 'fines/fine-1')));
     await assertFails(getDoc(doc(policeOnlyDb, 'fines/fine-1/receipt/summary')));
+    await assertSucceeds(getDoc(doc(police1Db, 'fines/fine-1')));
+    await assertFails(getDoc(doc(police1Db, 'fines/fine-1/receipt/summary')));
+
+    await testEnv.withSecurityRulesDisabled(async (ctx) => {
+      const db = ctx.firestore();
+      await setDoc(doc(db, 'fines/fine-pol-own'), {
+        ownerId: 'police-1',
+        reportId: 'rep-1',
+        status: 'paid',
+      });
+      await setDoc(doc(db, 'fines/fine-pol-own/receipt/summary'), {
+        cardholderName: 'Officer Self',
+        cardBrand: 'mastercard',
+        cardLast4: '8888',
+      });
+    });
+    await assertSucceeds(getDoc(doc(police1Db, 'fines/fine-pol-own/receipt/summary')));
 
     // Client writes are denied
     await assertFails(
@@ -160,5 +189,36 @@ describe('Release 2 Firestore Rules: /reports, /fines, and /enforcement_audit_lo
         cardLast4: '1111',
       })
     );
+  });
+
+  it('allows police role reads on /police_audit_logs, blocks owners/agents/legacy/unauthenticated reads, and denies all client writes', async () => {
+    const anonDb = testEnv.unauthenticatedContext().firestore();
+    const owner1Db = testEnv.authenticatedContext('owner-1').firestore();
+    const agentDb = testEnv.authenticatedContext('agent-1').firestore();
+    const legacyPoliceDb = testEnv.authenticatedContext('legacy-police').firestore();
+    const police1Db = testEnv.authenticatedContext('police-1').firestore();
+    const policeOnlyDb = testEnv.authenticatedContext('police-only').firestore();
+
+    const policeSnap = await assertSucceeds(getDoc(doc(police1Db, 'police_audit_logs/pa-1')));
+    expect(policeSnap.exists()).toBe(true);
+    await assertSucceeds(getDoc(doc(policeOnlyDb, 'police_audit_logs/pa-1')));
+
+    const listSnap = await assertSucceeds(
+      getDocs(query(collection(police1Db, 'police_audit_logs'), orderBy('timestamp', 'desc'), limit(25)))
+    );
+    expect(listSnap.size).toBe(1);
+
+    await assertFails(getDoc(doc(anonDb, 'police_audit_logs/pa-1')));
+    await assertFails(getDoc(doc(owner1Db, 'police_audit_logs/pa-1')));
+    await assertFails(getDoc(doc(agentDb, 'police_audit_logs/pa-1')));
+    await assertFails(getDoc(doc(legacyPoliceDb, 'police_audit_logs/pa-1')));
+
+    await assertFails(
+      setDoc(doc(police1Db, 'police_audit_logs/pa-2'), { action: 'ISSUE_FINE' })
+    );
+    await assertFails(
+      updateDoc(doc(police1Db, 'police_audit_logs/pa-1'), { reason: 'Tamper' })
+    );
+    await assertFails(deleteDoc(doc(police1Db, 'police_audit_logs/pa-1')));
   });
 });

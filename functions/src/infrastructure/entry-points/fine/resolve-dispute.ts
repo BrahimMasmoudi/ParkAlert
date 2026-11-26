@@ -3,6 +3,7 @@ import { ResolveDisputeUseCase } from '../../../application/usecases/fine/resolv
 import {
   enforcementAuditPort,
   fineRepository,
+  policeAuditPort,
   reportRepository,
   transactionRunner,
   userRepository,
@@ -14,7 +15,8 @@ const resolveDisputeUseCase = new ResolveDisputeUseCase(
   reportRepository,
   userRepository,
   enforcementAuditPort,
-  transactionRunner
+  transactionRunner,
+  policeAuditPort
 );
 
 export const resolveDispute = onCall(

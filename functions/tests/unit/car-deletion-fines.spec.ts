@@ -63,7 +63,8 @@ describe('Car deletion unpaid-fine guards', () => {
       blocked.carRepository as any,
       blocked.fineRepository as any,
       blocked.userRepository as any,
-      fakeRunner
+      fakeRunner,
+      { addLog: vi.fn() }
     );
 
     await expect(
@@ -76,7 +77,8 @@ describe('Car deletion unpaid-fine guards', () => {
       clear.carRepository as any,
       clear.fineRepository as any,
       clear.userRepository as any,
-      fakeRunner
+      fakeRunner,
+      { addLog: vi.fn() }
     );
 
     await expect(

@@ -1,4 +1,4 @@
-import { doc, getDoc } from 'firebase/firestore'
+import { collection, doc, documentId, getDocs, query, where } from 'firebase/firestore'
 import { httpsCallable } from 'firebase/functions'
 import { useDocument, useFirestore } from 'vuefire'
 import { resolveUserRoles, type UserRole } from '~/utils/roles'
@@ -63,27 +63,82 @@ export const useUserStore = defineStore('user', () => {
   }
 
   const usersCache = ref<Record<string, any>>({})
+  const inFlightUsers = new Map<string, Promise<void>>()
+
+  /** Fetches user profiles in batches of 30 via documentId IN queries and deduplicates concurrent requests. */
+  async function fetchUsers(uids: string[]): Promise<void> {
+    const uniqueUids = [...new Set(uids.filter(Boolean))]
+    if (uniqueUids.length === 0) return
+
+    const activePromises = new Set<Promise<void>>()
+    const toFetch: string[] = []
+
+    for (const uid of uniqueUids) {
+      const existingPromise = inFlightUsers.get(uid)
+      if (existingPromise) {
+        activePromises.add(existingPromise)
+        continue
+      }
+      if (!usersCache.value[uid] || usersCache.value[uid]._loading) {
+        toFetch.push(uid)
+      }
+    }
+
+    const batchSize = 30
+    for (let i = 0; i < toFetch.length; i += batchSize) {
+      const chunk = toFetch.slice(i, i + batchSize)
+      for (const uid of chunk) {
+        usersCache.value[uid] = { _loading: true }
+      }
+
+      const chunkPromise = (async () => {
+        try {
+          const q = query(collection(db, 'users'), where(documentId(), 'in', chunk))
+          const snap = await getDocs(q)
+          const foundIds = new Set<string>()
+
+          snap.docs.forEach((docSnap) => {
+            foundIds.add(docSnap.id)
+            usersCache.value[docSnap.id] = { id: docSnap.id, ...docSnap.data() }
+          })
+
+          for (const uid of chunk) {
+            if (!foundIds.has(uid)) {
+              usersCache.value[uid] = { name: 'Unknown User' }
+            }
+          }
+        }
+        catch (e) {
+          console.error('Failed to fetch users:', e)
+          for (const uid of chunk) {
+            if (usersCache.value[uid]?._loading) {
+              usersCache.value[uid] = undefined
+            }
+          }
+        }
+        finally {
+          for (const uid of chunk) {
+            inFlightUsers.delete(uid)
+          }
+        }
+      })()
+
+      for (const uid of chunk) {
+        inFlightUsers.set(uid, chunkPromise)
+      }
+      activePromises.add(chunkPromise)
+    }
+
+    if (activePromises.size > 0) {
+      await Promise.all(activePromises)
+    }
+  }
 
   async function fetchUser(uid: string) {
-    if (usersCache.value[uid] || !uid) return usersCache.value[uid]
-
-    // Mark as fetching to prevent duplicate calls
-    usersCache.value[uid] = { _loading: true }
-
-    try {
-      const snap = await getDoc(doc(db, 'users', uid))
-      if (snap.exists()) {
-        usersCache.value[uid] = { id: snap.id, ...snap.data() }
-      }
-      else {
-        usersCache.value[uid] = { name: 'Unknown User' }
-      }
+    if (!uid) return undefined
+    if (!usersCache.value[uid] || usersCache.value[uid]._loading || inFlightUsers.has(uid)) {
+      await fetchUsers([uid])
     }
-    catch (e) {
-      console.error('Failed to fetch user:', e)
-      usersCache.value[uid] = { name: 'Unknown User' }
-    }
-
     return usersCache.value[uid]
   }
 
@@ -97,5 +152,6 @@ export const useUserStore = defineStore('user', () => {
     updateProfile,
     usersCache,
     fetchUser,
+    fetchUsers,
   }
 })

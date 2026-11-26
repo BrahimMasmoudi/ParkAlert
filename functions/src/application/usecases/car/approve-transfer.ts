@@ -1,5 +1,6 @@
 import { CarRepository } from '../../../domain/repositories/car.repository';
 import { FineRepository } from '../../../domain/repositories/fine.repository';
+import { PoliceAuditPort } from '../../../domain/repositories/police-audit.port';
 import { UserRepository } from '../../../domain/repositories/user.repository';
 import { TransactionRunner } from '../../../domain/repositories/transaction.port';
 import { DomainError } from '../../../domain/errors/domain.error';
@@ -16,7 +17,8 @@ export class ApproveTransferUseCase {
     private readonly carRepository: CarRepository,
     private readonly fineRepository: FineRepository,
     private readonly userRepository: UserRepository,
-    private readonly transactionRunner: TransactionRunner
+    private readonly transactionRunner: TransactionRunner,
+    private readonly policeAuditPort: PoliceAuditPort
   ) {}
 
   async execute(request: ApproveTransferRequest) {
@@ -53,11 +55,12 @@ export class ApproveTransferUseCase {
       }
 
       const previousOwnerId = car.ownerId;
+      const nextOwnerId = car.transferToOwnerId;
       await this.carRepository.update(
         carId,
         {
           status: 'active',
-          ownerId: car.transferToOwnerId,
+          ownerId: nextOwnerId,
           carteGriseUrl: car.transferCarteGriseUrl,
           ownershipHistory: [...(car.ownershipHistory || []), previousOwnerId],
           transferToOwnerId: null,
@@ -73,8 +76,22 @@ export class ApproveTransferUseCase {
           carId,
           actorId,
           action: 'TRANSFER_APPROVED',
-          details: `Transferred from ${previousOwnerId} to ${car.transferToOwnerId}`,
+          details: `Transferred from ${previousOwnerId} to ${nextOwnerId}`,
           timestamp: new Date(),
+        },
+        tx
+      );
+
+      await this.policeAuditPort.addLog(
+        {
+          targetType: 'car',
+          targetId: carId,
+          actorId,
+          ownerId: nextOwnerId,
+          plateNumber: car.plateNumber,
+          plateNumberNormalized: normalizedPlate,
+          action: 'TRANSFER_APPROVED',
+          reason: null,
         },
         tx
       );

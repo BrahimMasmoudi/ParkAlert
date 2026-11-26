@@ -4,6 +4,7 @@ import { User } from '../../src/domain/entities/user.entity';
 import { DomainError } from '../../src/domain/errors/domain.error';
 import { CarRepository } from '../../src/domain/repositories/car.repository';
 import { FineRepository } from '../../src/domain/repositories/fine.repository';
+import { PoliceAuditPort } from '../../src/domain/repositories/police-audit.port';
 import { TransactionContext, TransactionRunner } from '../../src/domain/repositories/transaction.port';
 import { UserRepository } from '../../src/domain/repositories/user.repository';
 import { AcknowledgeTransferUseCase } from '../../src/application/usecases/car/acknowledge-transfer';
@@ -16,6 +17,9 @@ import { RequestOwnershipTransferUseCase } from '../../src/application/usecases/
 const fakeTx = {} as TransactionContext;
 const fakeRunner: TransactionRunner = {
   run: async <T>(work: (tx: TransactionContext) => Promise<T>) => work(fakeTx),
+};
+const fakePoliceAuditPort: PoliceAuditPort = {
+  addLog: async () => undefined,
 };
 
 const ALL_STATUSES: CarStatus[] = [
@@ -131,7 +135,8 @@ describe('US4: State Machine & Eligibility Matrix', () => {
       missingRecipient.carRepo,
       missingRecipient.fineRepo,
       missingRecipient.userRepo,
-      fakeRunner
+      fakeRunner,
+      fakePoliceAuditPort
     );
     await expect(approve1.execute({ carId: 'AB123CD', actorId: 'police-1' })).rejects.toMatchObject({
       code: 'FAILED_PRECONDITION',
@@ -141,7 +146,7 @@ describe('US4: State Machine & Eligibility Matrix', () => {
       transferToOwnerId: 'owner-b',
       transferCarteGriseUrl: 'transfers/owner-b/doc.pdf',
     });
-    const approve2 = new ApproveTransferUseCase(valid.carRepo, valid.fineRepo, valid.userRepo, fakeRunner);
+    const approve2 = new ApproveTransferUseCase(valid.carRepo, valid.fineRepo, valid.userRepo, fakeRunner, fakePoliceAuditPort);
     await expect(approve2.execute({ carId: 'AB123CD', actorId: 'police-1' })).resolves.toEqual({ ok: true });
     expect(valid.cars.get('AB123CD')?.ownerId).toBe('owner-b');
     expect(valid.cars.get('AB123CD')?.status).toBe('active');
@@ -164,7 +169,7 @@ describe('US4: State Machine & Eligibility Matrix', () => {
       }
 
       const s2 = setup(status);
-      const rej = new RejectTransferUseCase(s2.carRepo, s2.userRepo, fakeRunner);
+      const rej = new RejectTransferUseCase(s2.carRepo, s2.userRepo, fakeRunner, fakePoliceAuditPort);
       const actorId = status === 'transfer_pending_police' ? 'police-1' : 'owner-a';
       if (status === 'transfer_pending_owner' || status === 'transfer_pending_police') {
         await expect(rej.execute({ carId: 'AB123CD', actorId, reason: 'Cancelled deal' })).resolves.toEqual({ ok: true });
