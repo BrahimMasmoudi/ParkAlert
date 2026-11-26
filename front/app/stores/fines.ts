@@ -1,10 +1,11 @@
-import { collection, query, where, orderBy, limit } from 'firebase/firestore'
+import { collection, doc, getDoc, getDocs, limit, orderBy, query, where } from 'firebase/firestore'
 import { httpsCallable } from 'firebase/functions'
 import { useCollection, useFirestore } from 'vuefire'
 import { defineStore } from 'pinia'
 import { computed, ref } from 'vue'
 import type { ReportPhoto } from '~/stores/reports'
 import type { CardBrand } from '~/composables/useCardValidation'
+import { getOptionalTimestampMillis, getTimestampMillis } from '~/utils/timestamp'
 
 export type DisputeStatus = 'none' | 'pending' | 'accepted' | 'rejected'
 
@@ -28,34 +29,6 @@ export interface Fine {
   disputedAt?: number
   resolutionReason?: string
   resolvedAt?: number
-}
-
-function parseTimestampMillis(ts: any): number | undefined {
-  if (ts === null || ts === undefined || ts === '') return undefined
-  if (typeof ts === 'number') return Number.isFinite(ts) ? ts : undefined
-  if (typeof ts.toMillis === 'function') {
-    const ms = ts.toMillis()
-    return Number.isFinite(ms) ? ms : undefined
-  }
-  if (typeof ts.seconds === 'number') {
-    return Number.isFinite(ts.seconds) ? ts.seconds * 1000 : undefined
-  }
-  if (typeof ts._seconds === 'number') {
-    return Number.isFinite(ts._seconds) ? ts._seconds * 1000 : undefined
-  }
-  if (typeof ts === 'string' || ts instanceof Date) {
-    const ms = new Date(ts).getTime()
-    return Number.isFinite(ms) ? ms : undefined
-  }
-  return undefined
-}
-
-function getTimestampMillis(ts: any): number {
-  return parseTimestampMillis(ts) ?? Date.now()
-}
-
-function getOptionalTimestampMillis(ts: any): number | undefined {
-  return parseTimestampMillis(ts)
 }
 
 export function normalizeFineFromFirestore(id: string, data: Record<string, any>): Fine {
@@ -214,16 +187,33 @@ export const useFinesStore = defineStore('fines', () => {
     }
   }
 
-  // ── Police: reactive list of ALL fines (role + route gated) ──────────────────
-  const allFinesQuery = computed(() =>
-    authStore.currentUser?.uid && userStore.hasRole('police') && route.meta.role === 'police'
-      ? query(
-          collection(db, 'fines').withConverter(fineConverter),
-          orderBy('issuedAt', 'desc'),
-        )
-      : null,
-  )
-  const { data: allFines, pending: allFinesLoading } = useCollection(allFinesQuery, { ssrKey: 'allFines' })
+  // ── Police: point-lookup helpers for audit receipts (role + route gated) ──────
+  async function fetchFineById(fineId: string): Promise<Fine | null> {
+    const trimmed = fineId.trim()
+    if (!trimmed) return null
+    if (!authStore.currentUser?.uid || !userStore.hasRole('police') || route.meta.role !== 'police') {
+      return null
+    }
+    const snap = await getDoc(doc(db, 'fines', trimmed).withConverter(fineConverter))
+    return snap.exists() ? snap.data() : null
+  }
+
+  async function fetchFineByPaymentReference(paymentRef: string): Promise<Fine | null> {
+    const trimmed = paymentRef.trim()
+    if (!trimmed) return null
+    if (!authStore.currentUser?.uid || !userStore.hasRole('police') || route.meta.role !== 'police') {
+      return null
+    }
+    const snap = await getDocs(
+      query(
+        collection(db, 'fines').withConverter(fineConverter),
+        where('paymentReference', '==', trimmed),
+        limit(1),
+      ),
+    )
+    if (snap.empty) return null
+    return snap.docs[0]!.data()
+  }
 
   // ── Police: indexed pending disputes query (role + route gated) ──────────────
   const pendingDisputesQuery = computed(() =>
@@ -231,8 +221,8 @@ export const useFinesStore = defineStore('fines', () => {
       ? query(
           collection(db, 'fines').withConverter(fineConverter),
           where('disputeStatus', '==', 'pending'),
-          orderBy('disputedAt', 'desc'),
-          limit(50),
+          orderBy('disputedAt', 'asc'),
+          limit(250),
         )
       : null,
   )
@@ -244,12 +234,12 @@ export const useFinesStore = defineStore('fines', () => {
   return {
     myFines,
     finesLoading,
-    allFines,
-    allFinesLoading,
     pendingDisputes,
     pendingDisputesLoading,
     hasUnpaidFines,
     acting,
+    fetchFineById,
+    fetchFineByPaymentReference,
     issueFine,
     payFine,
     disputeFine,

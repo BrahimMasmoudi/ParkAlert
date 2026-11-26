@@ -1,9 +1,14 @@
 import { onCall, HttpsError } from 'firebase-functions/v2/https';
 import { ApproveCarUseCase } from '../../../application/usecases/car/approve-car';
-import { carRepository, transactionRunner, userRepository } from '../index';
+import { carRepository, policeAuditPort, transactionRunner, userRepository } from '../index';
 import { mapDomainErrorToHttpsError } from '../shared/error-mapper';
 
-const approveCarUseCase = new ApproveCarUseCase(carRepository, userRepository, transactionRunner);
+const approveCarUseCase = new ApproveCarUseCase(
+  carRepository,
+  userRepository,
+  transactionRunner,
+  policeAuditPort
+);
 
 export const approveCar = onCall(
   { region: 'europe-west3', enforceAppCheck: true },

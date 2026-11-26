@@ -3,6 +3,7 @@ import { DismissReportUseCase } from '../../../application/usecases/report/dismi
 import {
   carRepository,
   enforcementAuditPort,
+  policeAuditPort,
   reportRepository,
   transactionRunner,
   userRepository,
@@ -14,7 +15,8 @@ const dismissReportUseCase = new DismissReportUseCase(
   userRepository,
   enforcementAuditPort,
   transactionRunner,
-  carRepository
+  carRepository,
+  policeAuditPort
 );
 
 export const dismissReport = onCall(

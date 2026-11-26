@@ -1,9 +1,11 @@
 <template>
   <UContainer class="w-full">
-    <MoleculesPoliceSearchBar v-model="searchQuery" />
+    <MoleculesPoliceSearchBar v-if="activeTab !== 'audit'" v-model="searchQuery" />
 
     <UTabs
+      v-model="activeTab"
       :items="tabs"
+      :unmount-on-hide="false"
       :ui="{
         list: 'bg-elevated border border-default p-1 mb-8',
         indicator: 'bg-primary',
@@ -28,6 +30,7 @@
           :reports="filteredPendingReports"
           :loading="reportsStore.reportsLoading"
           :columns="columns"
+          :at-cap="(reportsStore.pendingReports?.length ?? 0) >= 250"
           @open="openReport"
         />
       </template>
@@ -37,17 +40,13 @@
           :fines="filteredPendingDisputes"
           :loading="finesStore.pendingDisputesLoading"
           :columns="disputeColumns"
+          :at-cap="(finesStore.pendingDisputes?.length ?? 0) >= 250"
           @open="openDispute"
         />
       </template>
 
       <template #audit>
-        <OrganismsPoliceAuditTab
-          :fines="filteredAllFines"
-          :loading="finesStore.allFinesLoading"
-          :columns="auditColumns"
-          @receipt="openAuditReceipt"
-        />
+        <OrganismsPoliceAuditTab :active="activeTab === 'audit'" />
       </template>
     </UTabs>
 
@@ -400,15 +399,10 @@
       </template>
     </UModal>
 
-    <OrganismsPoliceReceiptModal
-      v-model:open="isAuditReceiptModalOpen"
-      :fine="selectedAuditReceiptFine"
-    />
   </UContainer>
 </template>
 
 <script setup lang="ts">
-import type { TableColumn } from '@nuxt/ui'
 import { useReportsStore } from '~/stores/reports'
 import { useCarsStore } from '~/stores/cars'
 import { useUserStore } from '~/stores/user'
@@ -433,6 +427,7 @@ const { fetchEvidenceUrls, loadingEvidence } = useDocumentViewer()
 const { isFrenchPlateValid, formatFrenchPlate } = useVehicleValidation()
 
 const searchQuery = ref('')
+const activeTab = ref('cars')
 
 function filterList<T extends { plateNumber?: string; ownerId?: string }>(list: T[] | null) {
   if (!list) return []
@@ -451,41 +446,25 @@ const filteredDeletionPending = computed(() => filterList(carsStore.deletionPend
 const filteredTransferPendingPolice = computed(() => filterList(carsStore.transferPendingPoliceCars))
 const filteredPendingReports = computed(() => filterList(reportsStore.pendingReports))
 const filteredPendingDisputes = computed(() => filterList(finesStore.pendingDisputes))
-const filteredAllFines = computed<Fine[]>(() => {
-  const list = finesStore.allFines
-  if (!list) return []
-  const q = searchQuery.value.trim().toLowerCase()
-  if (!q) return list
-  return list.filter((fine) => {
-    const plateMatch = fine.plateNumber?.toLowerCase().includes(q)
-    const idMatch = fine.id?.toLowerCase().includes(q)
-    const refMatch = fine.paymentReference?.toLowerCase().includes(q)
-    const owner = fine.ownerId ? userStore.usersCache[fine.ownerId] : null
-    const ownerMatch = owner?.fullName?.toLowerCase().includes(q) || owner?.name?.toLowerCase().includes(q)
-    return Boolean(plateMatch || idMatch || refMatch || ownerMatch)
-  })
-})
 
-watch(() => carsStore.activationPendingCars, (cars) => {
-  cars.forEach(car => userStore.fetchUser(car.ownerId))
-}, { immediate: true })
-
-watch(() => carsStore.deletionPendingCars, (cars) => {
-  cars.forEach(car => userStore.fetchUser(car.ownerId))
-}, { immediate: true })
-
-watch(() => carsStore.transferPendingPoliceCars, (cars) => {
-  cars.forEach(car => userStore.fetchUser(car.ownerId))
-}, { immediate: true })
-
-watch(() => finesStore.allFines, (fines) => {
-  if (!fines) return
-  fines.forEach(fine => userStore.fetchUser(fine.ownerId))
-}, { immediate: true })
+watch(
+  () => [
+    carsStore.activationPendingCars,
+    carsStore.deletionPendingCars,
+    carsStore.transferPendingPoliceCars,
+  ] as const,
+  ([activations, deletions, transfers]) => {
+    const uids = [...activations, ...deletions, ...transfers]
+      .map(car => car.ownerId)
+      .filter(Boolean)
+    userStore.fetchUsers(uids)
+  },
+  { immediate: true },
+)
 
 watch(() => finesStore.pendingDisputes, (fines) => {
   if (!fines) return
-  fines.forEach(fine => userStore.fetchUser(fine.ownerId))
+  userStore.fetchUsers(fines.map(fine => fine.ownerId).filter(Boolean))
 }, { immediate: true })
 
 const selected = ref<Report | null>(null)
@@ -496,8 +475,6 @@ const evidenceItems = ref<EvidenceUrlItem[]>([])
 
 const selectedDispute = ref<Fine | null>(null)
 const isDisputeModalOpen = ref(false)
-const selectedAuditReceiptFine = ref<Fine | null>(null)
-const isAuditReceiptModalOpen = ref(false)
 const disputeEvidenceItems = ref<EvidenceUrlItem[]>([])
 const isResolveDisputeModalOpen = ref(false)
 const disputeResolveAction = ref<'cancel_fine' | 'dismiss_dispute'>('cancel_fine')
@@ -559,6 +536,7 @@ watch(() => fineForm.plateNumber, (val) => {
 
 const tabs = computed(() => [
   {
+    value: 'cars',
     label: t('police.tabs.cars'),
     icon: 'i-lucide-car-front',
     slot: 'cars',
@@ -567,22 +545,28 @@ const tabs = computed(() => [
       + filteredTransferPendingPolice.value.length,
   },
   {
+    value: 'reports',
     label: t('police.tabs.reports'),
     icon: 'i-lucide-camera',
     slot: 'reports',
-    badge: filteredPendingReports.value.length,
+    badge: (reportsStore.pendingReports?.length ?? 0) >= 250
+      ? '250+'
+      : filteredPendingReports.value.length,
   },
   {
+    value: 'disputes',
     label: t('police.tabs.disputes'),
     icon: 'i-lucide-scale',
     slot: 'disputes',
-    badge: filteredPendingDisputes.value.length,
+    badge: (finesStore.pendingDisputes?.length ?? 0) >= 250
+      ? '250+'
+      : filteredPendingDisputes.value.length,
   },
   {
+    value: 'audit',
     label: t('police.tabs.audit'),
     icon: 'i-lucide-history',
     slot: 'audit',
-    badge: filteredAllFines.value.length,
   },
 ])
 
@@ -714,12 +698,6 @@ async function loadDisputeEvidence() {
   }
 }
 
-function openAuditReceipt(fine: Fine) {
-  if (fine.status !== 'paid') return
-  selectedAuditReceiptFine.value = fine
-  isAuditReceiptModalOpen.value = true
-}
-
 async function openDispute(fine: Fine) {
   selectedDispute.value = fine
   disputeEvidenceItems.value = []
@@ -765,7 +743,7 @@ const carColumns = [
   { accessorKey: 'vehicle', header: 'Vehicle' },
   { accessorKey: 'ownerId', header: 'Owner' },
   { accessorKey: 'status', header: 'Status' },
-  { accessorKey: 'createdAt', header: 'Requested' },
+  { id: 'requestedAt', header: 'Requested' },
   { id: 'actions', header: 'Actions' },
 ]
 
@@ -774,7 +752,7 @@ const deleteColumns = [
   { accessorKey: 'vehicle', header: 'Vehicle' },
   { accessorKey: 'ownerId', header: 'Owner' },
   { accessorKey: 'status', header: 'Status' },
-  { accessorKey: 'createdAt', header: 'Requested' },
+  { id: 'requestedAt', header: 'Requested' },
   { id: 'actions', header: 'Actions' },
 ]
 
@@ -785,15 +763,6 @@ const columns = [
   { accessorKey: 'timestamp', header: 'Time' },
   { id: 'actions', header: 'Actions' },
 ]
-
-const auditColumns = computed<TableColumn<Fine>[]>(() => [
-  { accessorKey: 'plateNumber', header: t('police.audit.columns.plate') },
-  { accessorKey: 'ownerId', header: t('police.audit.columns.owner') },
-  { accessorKey: 'amount', header: t('police.audit.columns.amount') },
-  { accessorKey: 'status', header: t('police.audit.columns.status') },
-  { accessorKey: 'issuedAt', header: t('police.audit.columns.issued') },
-  { id: 'actions', header: t('police.audit.columns.actions') },
-])
 
 const disputeColumns = [
   { accessorKey: 'plateNumber', header: 'Plate' },

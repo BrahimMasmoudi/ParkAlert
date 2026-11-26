@@ -51,20 +51,22 @@ describe('ResolveDisputeUseCase', () => {
       update: vi.fn(),
     };
     const enforcementAuditPort = { addAuditLog: vi.fn().mockResolvedValue(undefined) };
+    const policeAuditPort = { addLog: vi.fn().mockResolvedValue(undefined) };
 
     const useCase = new ResolveDisputeUseCase(
       fineRepository as any,
       reportRepository as any,
       userRepository as any,
       enforcementAuditPort,
-      fakeRunner
+      fakeRunner,
+      policeAuditPort
     );
 
-    return { getFine: () => fine, reportUpdates, reportRepository, enforcementAuditPort, useCase };
+    return { getFine: () => fine, reportUpdates, reportRepository, enforcementAuditPort, policeAuditPort, useCase };
   }
 
   it('cancels the fine, sets disputeStatus=accepted, and closes the linked report on cancel_fine', async () => {
-    const { getFine, reportUpdates, enforcementAuditPort, useCase } = setup();
+    const { getFine, reportUpdates, enforcementAuditPort, policeAuditPort, useCase } = setup();
 
     const res = await useCase.execute({
       fineId: 'fine-1',
@@ -91,10 +93,23 @@ describe('ResolveDisputeUseCase', () => {
       expect.objectContaining({ action: 'CANCEL_FINE', targetId: 'fine-1', actorId: 'pol-2' }),
       fakeTx
     );
+    expect(policeAuditPort.addLog).toHaveBeenCalledWith(
+      expect.objectContaining({
+        action: 'CANCEL_FINE',
+        targetType: 'fine',
+        targetId: 'fine-1',
+        plateNumber: 'AB-123-CD',
+        plateNumberNormalized: 'AB123CD',
+        actorId: 'pol-2',
+        ownerId: 'owner-1',
+        reason: 'Confirmed misread plate',
+      }),
+      fakeTx
+    );
   });
 
   it('marks disputeStatus=rejected on dismiss_dispute without altering unpaid fine status', async () => {
-    const { getFine, reportUpdates, enforcementAuditPort, useCase } = setup();
+    const { getFine, reportUpdates, enforcementAuditPort, policeAuditPort, useCase } = setup();
 
     await useCase.execute({
       fineId: 'fine-1',
@@ -112,6 +127,19 @@ describe('ResolveDisputeUseCase', () => {
     expect(reportUpdates).toHaveLength(0);
     expect(enforcementAuditPort.addAuditLog).toHaveBeenCalledWith(
       expect.objectContaining({ action: 'DISMISS_DISPUTE', targetId: 'fine-1', actorId: 'pol-2' }),
+      fakeTx
+    );
+    expect(policeAuditPort.addLog).toHaveBeenCalledWith(
+      expect.objectContaining({
+        action: 'DISMISS_DISPUTE',
+        targetType: 'fine',
+        targetId: 'fine-1',
+        plateNumber: 'AB-123-CD',
+        plateNumberNormalized: 'AB123CD',
+        actorId: 'pol-2',
+        ownerId: 'owner-1',
+        reason: 'Plate clearly visible in evidence photo',
+      }),
       fakeTx
     );
   });
@@ -164,7 +192,8 @@ describe('ResolveDisputeUseCase', () => {
       reportRepository as any,
       { getById: vi.fn(async () => ({ uid: 'pol-2', roles: ['police', 'owner'] })), update: vi.fn() } as any,
       { addAuditLog: vi.fn() },
-      fakeRunner
+      fakeRunner,
+      { addLog: vi.fn() }
     );
 
     await expect(

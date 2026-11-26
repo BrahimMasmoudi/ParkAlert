@@ -1,9 +1,10 @@
-import { collection, query, where } from 'firebase/firestore'
+import { collection, limit, orderBy, query, where } from 'firebase/firestore'
 import type { QueryDocumentSnapshot, SnapshotOptions, DocumentData } from 'firebase/firestore'
 import { httpsCallable } from 'firebase/functions'
 import { useCollection, useFirestore, useCurrentUser } from 'vuefire'
 import { defineStore } from 'pinia'
 import { computed, ref } from 'vue'
+import { getOptionalTimestampMillis, getTimestampMillis } from '~/utils/timestamp'
 
 export type ReportPhotoSlot = 'context' | 'plate' | 'extra'
 
@@ -30,14 +31,6 @@ export interface Report {
   address?: string
 }
 
-function getTimestampMillis(ts: any): number {
-  if (!ts) return Date.now()
-  if (typeof ts.toMillis === 'function') return ts.toMillis()
-  if (ts.seconds) return ts.seconds * 1000
-  if (ts._seconds) return ts._seconds * 1000
-  return new Date(ts).getTime()
-}
-
 export function normalizeReportFromFirestore(id: string, data: DocumentData): Report {
   const legacyUrl = typeof data.photoUrl === 'string' ? data.photoUrl.trim() : ''
   const rawPhotos = Array.isArray(data.photos) ? data.photos : []
@@ -54,10 +47,10 @@ export function normalizeReportFromFirestore(id: string, data: DocumentData): Re
     status: data.status || 'pending',
     originalPlateNumber: data.originalPlateNumber || undefined,
     plateCorrectedBy: data.plateCorrectedBy || undefined,
-    plateCorrectedAt: data.plateCorrectedAt ? getTimestampMillis(data.plateCorrectedAt) : undefined,
+    plateCorrectedAt: getOptionalTimestampMillis(data.plateCorrectedAt),
     resolutionReason: data.resolutionReason || undefined,
     resolvedBy: data.resolvedBy || undefined,
-    resolvedAt: data.resolvedAt ? getTimestampMillis(data.resolvedAt) : undefined,
+    resolvedAt: getOptionalTimestampMillis(data.resolvedAt),
     address: data.address || '',
     timestamp: getTimestampMillis(data.timestamp),
     location: data.location
@@ -92,6 +85,8 @@ export const useReportsStore = defineStore('reports', () => {
     return query(
       collection(db, 'reports').withConverter(reportConverter),
       where('status', '==', 'pending'),
+      orderBy('timestamp', 'asc'),
+      limit(250),
     )
   })
 

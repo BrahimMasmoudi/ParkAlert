@@ -30,6 +30,19 @@ rules_version = '2';
 // Collection: enforcement_audit_logs/{logId}
 //   - Server-only immutable audit logs (no client read or write access).
 //
+// Collection: police_audit_logs/{logId}
+//   - targetType: string ('car' | 'report' | 'fine')
+//   - targetId: string
+//   - actorId: string
+//   - ownerId: string
+//   - plateNumber: string
+//   - plateNumberNormalized: string
+//   - action: string
+//   - reason: string | null
+//   - metadata: map (optional)
+//   - timestamp: timestamp
+//   - Police read-only; writes are restricted to Cloud Functions (Admin SDK).
+//
 // ===============================================================
 
 service cloud.firestore {
@@ -101,6 +114,12 @@ service cloud.firestore {
     match /enforcement_audit_logs/{logId} {
       // Server-only immutable audit logs written by Admin SDK transactions
       allow read, write: if false;
+    }
+
+    match /police_audit_logs/{logId} {
+      // Police can read unified police audit logs; all client writes are denied
+      allow read: if isSecureRequest() && hasRole('police');
+      allow write: if false;
     }
   }
 }

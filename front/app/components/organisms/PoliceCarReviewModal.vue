@@ -30,7 +30,16 @@
             <div>
               <p class="text-[10px] text-dimmed uppercase tracking-wider mb-1">{{ $t('police.review.requested') }}
               </p>
-              <p class="text-sm text-muted">{{ new Date(car.createdAt).toLocaleString() }}</p>
+              <div class="flex flex-wrap items-center gap-2">
+                <p class="text-sm text-muted">{{ new Date(requestedTimestamp).toLocaleString($i18n.locale) }}</p>
+                <UBadge
+                  :color="requestedWait.isStale ? 'warning' : 'neutral'"
+                  variant="soft"
+                  size="xs"
+                >
+                  {{ requestedWaitLabel }}
+                </UBadge>
+              </div>
             </div>
           </div>
         </div>
@@ -179,12 +188,26 @@
 import { useUserStore } from '~/stores/user'
 import { useCarsStore } from '~/stores/cars'
 import { useDocumentViewer } from '~/composables/useDocumentViewer'
+import { formatWaitDuration, getCarQueueTimestamp } from '~/utils/timestamp'
 
 const { t } = useI18n()
 const props = defineProps<{
   car: any | null
   mode: 'activation' | 'deletion' | 'transfer'
 }>()
+
+const requestedTimestamp = computed(() =>
+  props.car ? getCarQueueTimestamp(props.car, props.mode) : Date.now(),
+)
+
+const requestedWait = computed(() => formatWaitDuration(requestedTimestamp.value))
+
+const requestedWaitLabel = computed(() => {
+  const wait = requestedWait.value
+  return wait.bucket === 'just_now'
+    ? t('police.wait_age.just_now')
+    : t(`police.wait_age.${wait.bucket}`, { count: wait.count })
+})
 
 const emit = defineEmits<{
   (e: 'approve'): void

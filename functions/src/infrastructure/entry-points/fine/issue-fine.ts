@@ -4,6 +4,7 @@ import {
   carRepository,
   enforcementAuditPort,
   fineRepository,
+  policeAuditPort,
   reportRepository,
   transactionRunner,
   userRepository,
@@ -16,7 +17,8 @@ const issueFineUseCase = new IssueFineUseCase(
   userRepository,
   carRepository,
   transactionRunner,
-  enforcementAuditPort
+  enforcementAuditPort,
+  policeAuditPort
 );
 
 export const issueFine = onCall(

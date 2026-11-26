@@ -1,15 +1,16 @@
 import * as logger from 'firebase-functions/logger';
+import { Car } from '../../../domain/entities/car.entity';
 import { CarRepository } from '../../../domain/repositories/car.repository';
+import { PoliceAuditPort } from '../../../domain/repositories/police-audit.port';
 import { ReportRepository } from '../../../domain/repositories/report.repository';
 import { UserRepository } from '../../../domain/repositories/user.repository';
 import { EnforcementAuditPort } from '../../../domain/repositories/enforcement-audit.port';
 import { TransactionRunner } from '../../../domain/repositories/transaction.port';
 import { DomainError } from '../../../domain/errors/domain.error';
-import { validateRejectionReason } from '../../../domain/value-objects/plate';
+import { normalizePlate, validateRejectionReason } from '../../../domain/value-objects/plate';
 import {
   assertHasRole,
   assertNotSelfEnforcement,
-  collectPlateOwnerIds,
 } from '../shared/user-authorization';
 
 export interface DismissReportRequest {
@@ -28,7 +29,8 @@ export class DismissReportUseCase {
     private readonly userRepository: UserRepository,
     private readonly enforcementAuditPort: EnforcementAuditPort,
     private readonly transactionRunner: TransactionRunner,
-    private readonly carRepository: CarRepository
+    private readonly carRepository: CarRepository,
+    private readonly policeAuditPort: PoliceAuditPort
   ) {}
 
   async execute(request: DismissReportRequest): Promise<{ ok: true }> {
@@ -50,15 +52,36 @@ export class DismissReportUseCase {
         throw new DomainError('FAILED_PRECONDITION', 'Only pending reports can be dismissed');
       }
 
-      const plateOwnerIds = await collectPlateOwnerIds(
-        this.carRepository,
-        [report.plateNumber, report.originalPlateNumber],
-        tx
-      );
+      const carsByNormalizedPlate = new Map<string, Car[]>();
+      const plateOwnerIds: string[] = [];
+      for (const rawPlate of [report.plateNumber, report.originalPlateNumber]) {
+        const normalized = normalizePlate(rawPlate || '');
+        if (!normalized || carsByNormalizedPlate.has(normalized)) continue;
+
+        const cars = await this.carRepository.getAllByPlateNumber(rawPlate!, tx, {
+          includeRejected: true,
+          includeArchived: true,
+        });
+        carsByNormalizedPlate.set(normalized, cars);
+        for (const car of cars) {
+          if (car.ownerId) plateOwnerIds.push(car.ownerId);
+          if (car.transferToOwnerId) plateOwnerIds.push(car.transferToOwnerId);
+        }
+      }
+
       assertNotSelfEnforcement(actorId, plateOwnerIds, {
         targetType: 'report',
         targetId: reportId,
       });
+
+      const normalizedReportPlate = normalizePlate(report.plateNumber || '');
+      const reportCars = normalizedReportPlate
+        ? (carsByNormalizedPlate.get(normalizedReportPlate) ?? [])
+        : [];
+      const eligibleCars = reportCars.filter(
+        (car) => car.status !== 'archived' && car.status !== 'rejected'
+      );
+      const attributedCar = eligibleCars.find((car) => car.status === 'active') ?? eligibleCars[0];
 
       await this.reportRepository.update(
         reportId,
@@ -79,6 +102,20 @@ export class DismissReportUseCase {
           action: 'DISMISS_REPORT',
           reason: cleanReason,
           timestamp: new Date(),
+        },
+        tx
+      );
+
+      await this.policeAuditPort.addLog(
+        {
+          targetType: 'report',
+          targetId: reportId,
+          actorId,
+          ownerId: attributedCar?.ownerId ?? '',
+          plateNumber: report.plateNumber ?? '',
+          plateNumberNormalized: normalizedReportPlate,
+          action: 'DISMISS_REPORT',
+          reason: cleanReason?.trim() || null,
         },
         tx
       );

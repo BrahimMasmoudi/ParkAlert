@@ -192,6 +192,17 @@
         "rejected": "Rejeté"
       }
     },
+    "sort": {
+      "oldest_first": "Plus anciennes d'abord",
+      "newest_first": "Plus récentes d'abord",
+      "oldest_cap_notice": "Affichage des 250 demandes en attente les plus anciennes. Traitez les demandes plus anciennes ou filtrez dans cette sélection."
+    },
+    "wait_age": {
+      "just_now": "à l'instant",
+      "minutes": "il y a {count} min",
+      "hours": "il y a {count} h",
+      "days": "il y a {count} j"
+    },
     "reject": {
       "title": "Rejeter la Demande",
       "description": "Veuillez fournir une raison pour le rejet.",
@@ -222,20 +233,54 @@
       "reason_length_error": "Le motif doit contenir entre 3 et 500 caractères."
     },
     "audit": {
-      "title": "Journal d'Audit des Amendes",
-      "no_fines": "Aucune amende n'a encore été délivrée",
+      "title": "Journal d'Audit Police",
+      "subtitle": "Chronique unifiée des décisions policières sur les véhicules, signalements, amendes et litiges.",
+      "refresh": "Actualiser",
+      "load_more": "Charger plus",
+      "retry": "Réessayer",
+      "no_entries": "Aucune décision policière enregistrée pour le moment.",
+      "no_filtered_entries": "Aucune ligne chargée ne correspond à votre filtre.",
+      "plate_search_placeholder": "Recherche serveur par plaque (ex. AB-123-CD)...",
+      "plate_search_button": "Rechercher Plaque",
+      "plate_clear_button": "Effacer",
+      "plate_active_filter": "Filtre plaque : {plate}",
+      "filter_loaded_placeholder": "Filtrer les lignes chargées...",
+      "receipt_lookup_placeholder": "ID Amende ou Réf. Paiement (PA-...)...",
+      "find_receipt_button": "Chercher Reçu",
+      "receipt_not_found": "Aucune amende correspondante trouvée.",
+      "receipt_not_paid": "Cette amende n'est pas encore payée ; aucun reçu n'existe.",
+      "unregistered_owner": "Véhicule non immatriculé ou sans propriétaire lié",
+      "original_plate": "Orig. : {plate}",
       "paid": "Payée",
       "unpaid": "Non payée",
       "cancelled": "Annulée",
+      "categories": {
+        "all": "Tout",
+        "car": "Véhicules",
+        "report": "Signalements",
+        "fine": "Amendes"
+      },
+      "actions": {
+        "CAR_APPROVED": "Véhicule approuvé",
+        "CAR_REJECTED": "Véhicule refusé",
+        "CAR_DELETION_APPROVED": "Suppression approuvée",
+        "TRANSFER_APPROVED": "Transfert approuvé",
+        "TRANSFER_REJECTED": "Transfert refusé",
+        "DISMISS_REPORT": "Signalement classé",
+        "ISSUE_FINE": "Amende émise",
+        "CANCEL_FINE": "Amende annulée",
+        "DISMISS_DISPUTE": "Litige rejeté"
+      },
       "columns": {
+        "timestamp": "Horodatage",
+        "action": "Action",
         "plate": "Plaque",
+        "actor": "Agent",
         "owner": "Propriétaire",
-        "amount": "Montant",
-        "status": "Statut",
-        "issued": "Émise le",
+        "reason": "Motif / Note",
         "actions": "Actions"
       },
-      "view_receipt_button": "Reçu",
+      "view_receipt_button": "Voir le reçu",
       "receipt_modal_title": "Reçu de Vérification de Paiement",
       "receipt_modal_desc": "Vérification d'audit en lecture seule issue des métadonnées de règlement.",
       "verification_only_notice": "Vue de vérification uniquement : les détails de carte, le téléchargement et l'impression sont désactivés."
